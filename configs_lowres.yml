@@ -1,0 +1,67 @@
+rng_seed: 1234
+dungeon:
+  max_enemies_per_encounter: 4
+  max_traps_per_encounter: 1
+  max_treasures_per_encounter: 1
+  corridor_min_length: 1
+  corridor_max_length: 3
+  min_hp: 1
+  max_hp: 30
+  min_dodge: 1
+  max_dodge: 10
+  min_prot: 0.01
+  max_prot: 0.99
+  min_spd: 1
+  max_spd: 10
+ui:
+  entity_scale: 0.35
+  minimap_room_scale: 0.15
+  minimap_corridor_scale: 0.075
+  selected_color: '#ffbf00'
+  unselected_color: '#b38600'
+llm:
+  system_prompt: "You are a mission designer's assistant for the game Dungeon Despair. You give short, detailed objective descriptions. Your responses should be a couple of sentences long at most. Make sure to call the relevant functions to process the input. You will fill out missing parameters in the functions and not ask for clarifications to the user. Do not tell to the user the details of the code."
+  model_name: "gpt-3.5-turbo-1106"
+  temperature: 0.2
+  top_p: 0.1
+room:
+  mask: './assets/controlnet_masks/room_mask.png'
+  prompt: "darkest dungeon, a (side view)+++ screenshot of a room set in {room_name}, {room_description}, best quality"
+  negative_prompt: "top-down, (logo)++, (creature)++, (people)++, (animal)++, (face)++, ugly, badly drawn, worst quality, frame, glare, solar flare, text, monochromatic, duplication, repetition"
+  inference_steps: 10
+  guidance_scale: 5.0
+  height: 256
+  width: 512
+  save_dir: './test_results/'
+entity:
+  prompt: "darkest dungeon, (full body)+++ {entity_name}: ({entity_description})++, set in {place_name}: {place_description}, masterpiece++, highly detailed+"
+  negative_prompt: "(close-up)+++, out of shot, (multiple characters)++, (many characters)++, not centered, floor, walls, pedestal, duplication, repetition, bad anatomy, monochromatic, disfigured, badly drawn, bad hands, naked, nude"
+  height: 384
+  width: 256
+  inference_steps: 10
+  guidance_scale: 5.0
+  eta: 1.0
+  save_dir: './test_results/'
+corridor:
+  column_mask: './assets/controlnet_masks/column_tile_mask.png'
+  wall_mask: './assets/controlnet_masks/column_inpaint_mask.png'
+  height: 256
+  width: 384
+  column_prompt: "darkest dungeon, a (side view)++ of a (column)++, ceiling, and floor, of {room_a_name} and {room_b_name}, best quality"
+  wall_prompt: "darkest dungeon, a (wall-painting)++ merging {room_a_name} and {room_b_name}, ceiling and floor, best quality"
+  door_prompt: "darkest dungeon, an (open door)++ to a '({room_name})++', best quality, (no people)+"
+  negative_prompt: "top-down, (logo)++, (creature)++, (people)++, (animal)++, (face)++, ugly, badly drawn, worst quality, frame, glare, solar flare, text, monochromatic, duplication, repetition"
+  inference_steps: 5
+  guidance_scale: 5.0
+  eta: 1.0
+  save_dir: './test_results/'
+sd_model:
+  ambient_lora: 'DarkestDungeonV2.safetensors'
+  entity_lora: 'DarkestDungeonV2.safetensors'#'NecroSketcherAlpha.safetensors'
+  vae: 'vaeFtMse840000EmaPruned_vae.safetensors'
+  stable_diffusion: 'aZovyaRPGArtistTools_v3.safetensors'
+  controlnet_mlsd: 'lllyasviel/control_v11p_sd15_mlsd'
+  controlnet_inpaint: 'lllyasviel/control_v11p_sd15_inpaint'
+  controlnet_softedge: 'lllyasviel/control_v11p_sd15_softedge'
+  cache_dir: './models'
+  disable_progress_bar: true
