@@ -106,7 +106,8 @@ class DungeonCrawlerFunctions(GPTFunctionLibrary):
 	                name: str,
 	                description: str) -> str:
 		assert room_reference_name in level.rooms.keys(), f'Could not update {room_reference_name}: {room_reference_name} is not in the level.'
-		assert name not in level.rooms.keys(), f'Could not update {room_reference_name}: {name} already exists in the level.'
+		if name != room_reference_name:
+			assert name not in level.rooms.keys(), f'Could not update {room_reference_name}: {name} already exists in the level.'
 		# get the current room
 		room = level.rooms[room_reference_name]
 		# remove it from the list of rooms (since room name can change)
