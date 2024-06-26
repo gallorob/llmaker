@@ -85,7 +85,7 @@ class Encounter(BaseModel):
 		for k in self.entities.keys():
 			all_type_str = [str(x) for x in self.entities[k]]
 			unique_with_count = [f'{all_type_str.count(x)}x {x}' for x in all_type_str]
-			s += f'\n\t{str(k).lower()}: {", ".join(unique_with_count)}'
+			s += f'\n\t\t{str(k).lower()}: {", ".join(unique_with_count)}'
 		return s
 	
 	def try_add_entity(self, entity: Entity) -> bool:
@@ -147,7 +147,7 @@ class Corridor(BaseModel):
 	def __str__(self):
 		s = f'{self.name}: from {self.room_from} to {self.room_to}, {self.length} cells long;'
 		for i, e in enumerate(self.encounters):
-			s += f'\nCell {i+1} {str(e)}'
+			s += f'\n\tCell {i+1} {str(e)}'
 		return s
 
 
@@ -165,7 +165,19 @@ class Level(BaseModel):
 	
 	def save_to_file(self, filename: str, conversation: str) -> None:
 		# get all images
-		all_images = os.listdir(config.temp_dir)
+		# all_images = os.listdir(config.temp_dir)
+		all_images = []
+		for room in self.rooms.values():
+			all_images.append(room.sprite)
+			for entity_type in room.encounter.entities.keys():
+				for entity in room.encounter.entities[entity_type]:
+					all_images.append(entity.sprite)
+		for corridor in self.corridors:
+			all_images.append(corridor.sprite)
+			for encounter in corridor.encounters:
+				for entity_type in encounter.entities.keys():
+					for entity in encounter.entities[entity_type]:
+						all_images.append(entity.sprite)
 		images = {image_path: PIL.Image.open(os.path.join(config.temp_dir, image_path)) for image_path in all_images}
 		bin_data = {
 			'level': self,
@@ -187,8 +199,8 @@ class Level(BaseModel):
 	def __str__(self) -> str:
 		# This is the GLOBAL level description
 		# TODO: Implement the LOCAL level description that only gives specific information for the current room
-		level_description = 'Rooms:\n' + '\n'.join([str(self.rooms[k]) for k in self.rooms.keys()]) + '\n'
-		level_description += 'Corridors:\n' + '\n'.join([str(c) for c in self.corridors]) + '\n'
+		level_description = 'Rooms:\n' + '\n\t'.join([str(self.rooms[k]) for k in self.rooms.keys()]) + '\n'
+		level_description += 'Corridors:\n' + '\n\t'.join([str(c) for c in self.corridors]) + '\n'
 		level_description += f'Current room: {self.current_room}'
 		return level_description
 	

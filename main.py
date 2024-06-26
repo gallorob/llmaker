@@ -15,9 +15,9 @@ from sd_backend import generate_corridor, generate_entity, generate_room, load_s
 from ui.ui_elements import MainWindow, get_splash_screen
 
 
-STARTING_LEVEL = 'empty'
+# STARTING_LEVEL = 'empty'
 # STARTING_LEVEL = 'random'
-# STARTING_LEVEL = 'from_file'
+STARTING_LEVEL = 'from_file'
 
 
 # TODO: Add a bunch more logging everywhere
@@ -167,14 +167,14 @@ if __name__ == '__main__':
 	
 	win = MainWindow(level=Level())
 	
-	if STARTING_LEVEL == 'from_file' and os.path.exists('my_awesome_level_v0.bin'):
+	if STARTING_LEVEL == 'from_file' and os.path.exists('my_levels/t1.bin'):
 		logging.info('Loading level from file: T1.bin')
 		splash_screen.showMessage('Loading level from file...')
 		# TODO: Regenerate T1 and save it so we can load it whenever later
-		# level, conversation = Level.load_from_file(f'T1.bin')
-		# win.set_level(level)
-		# for i, line in enumerate(conversation.split('\n')):
-		# 	win.chat_area.append(f'{"<b>You</b>" if i % 2 == 0 else "<b>AI</b>"}: {line}')
+		level, conversation = Level.load_from_file('my_levels/t1.bin')
+		win.set_level(level)
+		for i, line in enumerate(conversation.split('\n')):
+			win.chat_area.append(f'{"<b>You</b>" if i % 2 == 0 else "<b>AI</b>"}: {line}')
 		logging.info('Updating GUI...')
 		win.map_preview.show_map_preview()
 		win.room_preview.show_room_preview()

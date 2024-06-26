@@ -354,8 +354,7 @@ class DungeonCrawlerFunctions(GPTFunctionLibrary):
 	
 	@AILibFunction(name='update_enemies_properties',
 	               description="Update properties of enemies in a room or corridor. Pass the current properties if they're not being updated.",
-	               required=['room_name', 'cell_index', 'reference_names', 'names', 'descriptions', 'species', 'hps',
-	                         'dodges', 'prots', 'spds'])
+	               required=['room_name', 'cell_index', 'reference_names', 'names', 'descriptions', 'species', 'hps', 'dodges', 'prots', 'spds'])
 	@LibParam(room_name='The room (or corridor) name')
 	@LibParam(
 		cell_index='The corridor cell. Set to -1 when targeting a room, otherwise set to a value between 1 and the length of the corridor.')
@@ -364,13 +363,13 @@ class DungeonCrawlerFunctions(GPTFunctionLibrary):
 	@LibParam(descriptions='The unique updated physical characteristics of each enemy')
 	@LibParam(species='The updated species of each enemy')
 	@LibParamSpec(name='hps',
-	              description=f'The health points of each enemy, each value must be between {config.dungeon.min_hp} and  {config.dungeon.max_hp}.')
+	              description=f'The health points of each enemy, each value must be between {config.dungeon.min_hp} and {config.dungeon.max_hp}.')
 	@LibParamSpec(name='dodges',
-	              description=f'The dodge points of each enemy, each value must be between {config.dungeon.min_dodge} and  {config.dungeon.max_dodge}.')
+	              description=f'The dodge points of each enemy, each value must be between {config.dungeon.min_dodge} and {config.dungeon.max_dodge}.')
 	@LibParamSpec(name='prots',
-	              description=f'The protection points of each enemy, each value must be between {config.dungeon.min_prot} and  {config.dungeon.max_prot}.')
+	              description=f'The protection points of each enemy, each value must be between {config.dungeon.min_prot} and {config.dungeon.max_prot}.')
 	@LibParamSpec(name='spds',
-	              description=f'The speed points of each enemy, each value must be between {config.dungeon.min_spd} and  {config.dungeon.max_spd}.')
+	              description=f'The speed points of each enemy, each value must be between {config.dungeon.min_spd} and {config.dungeon.max_spd}.')
 	def update_enemies_properties(self, level: Level,
 	                              room_name: str,
 	                              reference_names: List[str],
