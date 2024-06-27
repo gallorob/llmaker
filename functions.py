@@ -350,8 +350,7 @@ class DungeonCrawlerFunctions(GPTFunctionLibrary):
 		return f'Added {name} in {corridor_name} in cell {cell_index}.' if encounter.try_add_entity(
 			trap) else f'Could not add {name} in {corridor_name} in cell {cell_index}.'
 	
-	# TODO: Updating names of entities should be checked against existing names of entities in the same room!
-	
+		
 	@AILibFunction(name='update_enemies_properties',
 	               description="Update properties of enemies in a room or corridor. Pass the current properties if they're not being updated.",
 	               required=['room_name', 'cell_index', 'reference_names', 'names', 'descriptions', 'species', 'hps', 'dodges', 'prots', 'spds'])

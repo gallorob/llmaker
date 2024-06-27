@@ -92,6 +92,9 @@ class Encounter(BaseModel):
 		klass = entityclass_to_str[entity.__class__]
 		if klass not in self.entities.keys(): self.entities[klass] = []
 		if len(self.entities[klass]) < entityclass_thresolds[entity.__class__]:
+			for other_entity in self.entities[klass]:
+				if other_entity.name == entity.name:
+					return False
 			# add the entity
 			self.entities[klass].append(entity)
 			return True
@@ -109,6 +112,7 @@ class Encounter(BaseModel):
 		return False
 	
 	def try_update_entity(self, entity_reference_name: str, entity_reference_type: str, updated_entity: Entity) -> bool:
+		# TODO: Updating names of entities should be checked against existing names of entities in the same room!
 		for i, entity in enumerate(self.entities[entity_reference_type]):
 			if entity.name == entity_reference_name:
 				if updated_entity.description == self.entities[entity_reference_type][i].description:

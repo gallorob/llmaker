@@ -8,7 +8,7 @@ import torch as th
 from PIL import Image, ImageFilter
 from PIL.ImageOps import invert
 from compel import Compel
-from diffusers import AutoencoderKL, ControlNetModel, DPMSolverMultistepScheduler, \
+from diffusers import AutoencoderKL, ControlNetModel, UniPCMultistepScheduler, UniPCMultistepScheduler, \
 	EulerDiscreteScheduler, StableDiffusionControlNetInpaintPipeline, StableDiffusionControlNetPipeline
 from diffusers import StableDiffusionPipeline
 from diffusers.utils import load_image
@@ -48,19 +48,19 @@ def load_stablediff_models(splash: Any):
 	                                     torch_dtype=th.float16,
 	                                     cache_dir=config.sd_model.cache_dir,
 	                                     use_safetensors=True,
-	                                     safety_checker=None).to(device)
+	                                     safety_checker=None)#.to(device)
 
 	splash.showMessage('Loaded VAE')
-	logging.getLogger().info('Loaded VAE')
+	logging.getLogger('llmaker').info('Loaded VAE')
 	
 	controlnet_mlsd = ControlNetModel.from_pretrained(config.sd_model.controlnet_mlsd,
 	                                                  torch_dtype=th.float16,
 	                                                  cache_dir=config.sd_model.cache_dir,
 	                                                  use_safetensors=True,
-	                                                  safety_checker=None).to(device)
+	                                                  safety_checker=None)#.to(device)
 
 	splash.showMessage('Loaded ControlNet MLSD')
-	logging.getLogger().info('Loaded ControlNet MLSD')
+	logging.getLogger('llmaker').info('Loaded ControlNet MLSD')
 	
 	stablediff_controlnet_mlsd = StableDiffusionControlNetPipeline.from_single_file(
 		os.path.join(config.sd_model.cache_dir, config.sd_model.stable_diffusion),
@@ -68,9 +68,9 @@ def load_stablediff_models(splash: Any):
 		cache_dir=config.sd_model.cache_dir,
 		controlnet=controlnet_mlsd,
 		use_safetensors=True,
-		torch_dtype=th.float16).to(device)
+		torch_dtype=th.float16)#.to(device)
 	stablediff_controlnet_mlsd.safety_checker = None
-	stablediff_controlnet_mlsd.scheduler = DPMSolverMultistepScheduler.from_config(
+	stablediff_controlnet_mlsd.scheduler = UniPCMultistepScheduler.from_config(
 		stablediff_controlnet_mlsd.scheduler.config,
 		use_karras=True,
 		algorithm_type='sde-dpmsolver++')
@@ -79,19 +79,20 @@ def load_stablediff_models(splash: Any):
 	stablediff_controlnet_mlsd.vae = vae
 	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
 	stablediff_controlnet_mlsd.enable_model_cpu_offload()
+	stablediff_controlnet_mlsd.enable_xformers_memory_efficient_attention()
 	compel_stablediff_controlnet_mlsd = Compel(tokenizer=stablediff_controlnet_mlsd.tokenizer,
 	                                           text_encoder=stablediff_controlnet_mlsd.text_encoder,
 	                                           truncate_long_prompts=False)
 	splash.showMessage('Loaded Stable Diffusion w/ ControlNet MLSD')
-	logging.getLogger().info('Loaded Stable Diffusion w/ ControlNet MLSD')
+	logging.getLogger('llmaker').info('Loaded Stable Diffusion w/ ControlNet MLSD')
 	
 	stablediff = StableDiffusionPipeline.from_single_file(
 		os.path.join(config.sd_model.cache_dir, config.sd_model.stable_diffusion),
 		torch_dtype=th.float16,
 		cache_dir=config.sd_model.cache_dir,
-		safety_checker=None).to(device)
+		safety_checker=None)#.to(device)
 	stablediff.safety_checker = None
-	stablediff.scheduler = DPMSolverMultistepScheduler.from_config(stablediff.scheduler.config,
+	stablediff.scheduler = UniPCMultistepScheduler.from_config(stablediff.scheduler.config,
 	                                                               use_karras=True,
 	                                                               algorithm_type='sde-dpmsolver++')
 	# stablediff.scheduler = EulerDiscreteScheduler.from_config(stablediff.scheduler.config)
@@ -99,18 +100,19 @@ def load_stablediff_models(splash: Any):
 	stablediff.vae = vae
 	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.entity_lora)
 	stablediff.enable_model_cpu_offload()
+	stablediff.enable_xformers_memory_efficient_attention()
 	compel_stablediff = Compel(tokenizer=stablediff.tokenizer, text_encoder=stablediff.text_encoder,
 	                           truncate_long_prompts=False)
 	splash.showMessage('Loaded Stable Diffusion')
-	logging.getLogger().info('Loaded Stable Diffusion')
+	logging.getLogger('llmaker').info('Loaded Stable Diffusion')
 
 	controlnet_softedge = ControlNetModel.from_pretrained(config.sd_model.controlnet_softedge,
 	                                                      torch_dtype=th.float16,
 	                                                      use_safetensors=True,
 	                                                      cache_dir=config.sd_model.cache_dir,
-	                                                      safety_checker=None).to(device)
+	                                                      safety_checker=None)#.to(device)
 	splash.showMessage('Loaded ControlNet SoftEdge')
-	logging.getLogger().info('Loaded ControlNet SoftEdge')
+	logging.getLogger('llmaker').info('Loaded ControlNet SoftEdge')
 
 	# stablediff_controlnet_softedge = StableDiffusionControlNetInpaintPipeline.from_single_file(
 	# 	os.path.join(config.sd_model.cache_dir, config.sd_model.stable_diffusion),
@@ -119,9 +121,9 @@ def load_stablediff_models(splash: Any):
 	# 	cache_dir=config.sd_model.cache_dir,
 	# 	use_safetensors=True,
 	# 	num_in_channels=4,
-	# 	safety_checker=None).to(device)
+	# 	safety_checker=None)#.to(device)
 	# stablediff_controlnet_softedge.safety_checker = None
-	# # stablediff_controlnet_softedge.scheduler = DPMSolverMultistepScheduler.from_config(
+	# # stablediff_controlnet_softedge.scheduler = UniPCMultistepScheduler.from_config(
 	# # 	stablediff_controlnet_softedge.scheduler.config,
 	# # 	use_karras=True,
 	# # 	algorithm_type='sde-dpmsolver++')
@@ -135,15 +137,15 @@ def load_stablediff_models(splash: Any):
 	#                                                text_encoder=stablediff_controlnet_softedge.text_encoder,
 	#                                                truncate_long_prompts=False)
 	# splash.showMessage('Loaded Stable Diffusion w/ ControlNet SoftEdge')
-	# logging.getLogger().info('Loaded Stable Diffusion w/ ControlNet SoftEdge')
+	# logging.getLogger('llmaker').info('Loaded Stable Diffusion w/ ControlNet SoftEdge')
 
 	controlnet_inpaint = ControlNetModel.from_pretrained(config.sd_model.controlnet_inpaint,
 	                                                     torch_dtype=th.float16,
 	                                                     use_safetensors=True,
 	                                                     cache_dir=config.sd_model.cache_dir,
-	                                                     safety_checker=None).to(device)
+	                                                     safety_checker=None)#.to(device)
 	splash.showMessage('Loaded ControlNet InPaint')
-	logging.getLogger().info('Loaded ControlNet InPaint')
+	logging.getLogger('llmaker').info('Loaded ControlNet InPaint')
 
 	stablediff_controlnet_inpaint = StableDiffusionControlNetInpaintPipeline.from_single_file(
 		os.path.join(config.sd_model.cache_dir, config.sd_model.stable_diffusion),
@@ -152,9 +154,9 @@ def load_stablediff_models(splash: Any):
 		cache_dir=config.sd_model.cache_dir,
 		use_safetensors=True,
 		num_in_channels=4,
-		safety_checker=None).to(device)
+		safety_checker=None)#.to(device)
 	stablediff_controlnet_inpaint.safety_checker = None
-	stablediff_controlnet_inpaint.scheduler = DPMSolverMultistepScheduler.from_config(
+	stablediff_controlnet_inpaint.scheduler = UniPCMultistepScheduler.from_config(
 		stablediff_controlnet_inpaint.scheduler.config,
 		use_karras=True,
 		algorithm_type='sde-dpmsolver++')
@@ -165,11 +167,12 @@ def load_stablediff_models(splash: Any):
 	                                                weight_name=config.sd_model.ambient_lora)
 	stablediff_controlnet_inpaint.enable_model_cpu_offload()
 	stablediff_controlnet_inpaint.enable_attention_slicing()
+	stablediff_controlnet_inpaint.enable_xformers_memory_efficient_attention()
 	compel_stablediff_controlnet_inpaint = Compel(tokenizer=stablediff_controlnet_inpaint.tokenizer,
 	                                              text_encoder=stablediff_controlnet_inpaint.text_encoder,
 	                                              truncate_long_prompts=False)
 	splash.showMessage('Loaded Stable Diffusion w/ ControlNet InPaint')
-	logging.getLogger().info('Loaded Stable Diffusion w/ ControlNet InPaint')
+	logging.getLogger('llmaker').info('Loaded Stable Diffusion w/ ControlNet InPaint')
 
 
 def generate_room(room_name: str,
@@ -179,7 +182,7 @@ def generate_room(room_name: str,
 	try:
 		room_name, room_description = clear_strings_for_prompt([room_name, room_description])
 		formatted_prompt = config.room.prompt.format(room_name=room_name, room_description=room_description)
-		logging.getLogger().debug(f'generate_room {formatted_prompt=}')
+		logging.getLogger('llmaker').debug(f'generate_room {formatted_prompt=}')
 		conditioning = compel_stablediff_controlnet_mlsd.build_conditioning_tensor(formatted_prompt)
 		negative_conditioning = compel_stablediff_controlnet_mlsd.build_conditioning_tensor(
 			config.room.negative_prompt)
@@ -194,7 +197,7 @@ def generate_room(room_name: str,
 		                                        generator=th.Generator(device=device).manual_seed(
 			                                        config.rng_seed)).images[0]
 		filename = os.path.join(config.room.save_dir, f'{room_name}.png')
-		logging.getLogger().debug(f'generate_room {filename=}')
+		logging.getLogger('llmaker').debug(f'generate_room {filename=}')
 		room_image.save(filename)
 		return filename
 	except Exception as e:
@@ -223,7 +226,7 @@ def generate_corridor(room_names: List[str],
 		# generate base tile (column)
 		formatted_prompt = config.corridor.column_prompt.format(room_a_name=room_names[0],
 		                                                        room_b_name=room_names[1])
-		logging.getLogger().debug(f'generate_corridor {formatted_prompt=}')
+		logging.getLogger('llmaker').debug(f'generate_corridor {formatted_prompt=}')
 		conditioning = compel_stablediff_controlnet_mlsd.build_conditioning_tensor(formatted_prompt)
 		negative_conditioning = compel_stablediff_controlnet_mlsd.build_conditioning_tensor(
 			config.corridor.negative_prompt)
@@ -238,7 +241,7 @@ def generate_corridor(room_names: List[str],
 		                                          generator=th.Generator(device=device).manual_seed(
 			                                          config.rng_seed)).images[0]
 		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_initial.png')
-		logging.getLogger().debug(f'generate_corridor {debugging_image=}')
+		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
 		column_image.save(debugging_image)
 		# get tileable image
 		width, height = column_image.size
@@ -249,7 +252,7 @@ def generate_corridor(room_names: List[str],
 		swapped_image.paste(right_side, (0, 0))
 		swapped_image.paste(left_side, (midpoint, 0))
 		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_swapped.png')
-		logging.getLogger().debug(f'generate_corridor {debugging_image=}')
+		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
 		swapped_image.save(debugging_image)
 		# build corridor image
 		control_image = __make_inpaint_condition(swapped_image, wall_control_image)
@@ -273,7 +276,7 @@ def generate_corridor(room_names: List[str],
 			control_image=control_image,
 		).images[0]
 		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_door1.png')
-		logging.getLogger().debug(f'generate_corridor {debugging_image=}')
+		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
 		tmp_image.save(debugging_image)
 		corridor_image.paste(tmp_image, (0, 0))
 		# door 2
@@ -296,7 +299,7 @@ def generate_corridor(room_names: List[str],
 			control_image=control_image,
 		).images[0]
 		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_door2.png')
-		logging.getLogger().debug(f'generate_corridor {debugging_image=}')
+		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
 		tmp_image.save(debugging_image)
 		corridor_image.paste(tmp_image, (corridor_image.width - width, 0))
 		# ecounters images
@@ -320,11 +323,11 @@ def generate_corridor(room_names: List[str],
 			control_image=control_image).images[0] for i in range(corridor_length - 2)]
 		for i, tmp_image in enumerate(tmp_images):
 			debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_cell{i}.png')
-			logging.getLogger().debug(f'generate_corridor {debugging_image=}')
+			logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
 			tmp_image.save(debugging_image)
 			corridor_image.paste(tmp_image, (width * (i + 1), 0))
 		filename = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_corridor.png')
-		logging.getLogger().debug(f'generate_corridor {filename=}')
+		logging.getLogger('llmaker').debug(f'generate_corridor {filename=}')
 		corridor_image.save(filename)
 		return filename
 	except Exception as e:
@@ -350,7 +353,7 @@ def generate_entity(entity_name: str,
 		formatted_prompt = entity_prompt.format(entity_name=entity_name,
 		                                               entity_description=entity_description,
 		                                               place_description=place_description, place_name=place_name)
-		logging.getLogger().debug(f'generate_entity {formatted_prompt=}')
+		logging.getLogger('llmaker').debug(f'generate_entity {formatted_prompt=}')
 		conditioning = compel_stablediff.build_conditioning_tensor(formatted_prompt)
 		negative_conditioning = compel_stablediff.build_conditioning_tensor(negative_prompt)
 		[conditioning, negative_conditioning] = compel_stablediff.pad_conditioning_tensors_to_same_length(
@@ -360,7 +363,7 @@ def generate_entity(entity_name: str,
 		                          num_inference_steps=config.entity.inference_steps,
 		                          generator=th.Generator(device=device).manual_seed(config.rng_seed)).images[0]
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}_wb.png')
-		logging.getLogger().debug(f'generate_entity {filename=}')
+		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
 		entity_image.save(filename)
 		entity_image = rembg.remove(entity_image, alpha_matting=True)
 		# if room_image:
@@ -397,7 +400,7 @@ def generate_entity(entity_name: str,
 		
 		# save and return filename
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}.png')
-		logging.getLogger().debug(f'generate_entity {filename=}')
+		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
 		entity_image.save(filename)
 		return filename
 	except Exception as e:

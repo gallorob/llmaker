@@ -30,14 +30,14 @@ def filter_schema(schema: List[Dict[str, Any]], to_remove: List[str]) -> List[Di
 
 def filter_tools(level: Level):
 	if len(level.rooms) == 0:
-		logging.getLogger().debug('filter_tools No rooms found in the level')
+		logging.getLogger('llmaker').debug('filter_tools No rooms found in the level')
 		to_remove = ['remove_room', 'update_room',
 		             'add_corridor', 'remove_corridor', 'update_corridor',
 		             'add_enemies', 'add_trap', 'add_treasure',
 		             'update_enemies', 'update_traps', 'update_treasures',
 		             'remove_entities']
 	elif len(level.corridors) == 0:
-		logging.getLogger().debug('filter_tools No corridors found in the level')
+		logging.getLogger('llmaker').debug('filter_tools No corridors found in the level')
 		to_remove = ['remove_corridor', 'update_corridor']
 	# TODO: More filter logic (enemies, treasures, traps) here...
 	else:
@@ -49,15 +49,15 @@ def filter_tools(level: Level):
 def chat_llm(user_message: str,
              conversation_history: str,
              level: Level):
-	logging.getLogger().debug(f'chat_llm {user_message=}')
+	logging.getLogger('llmaker').debug(f'chat_llm {user_message=}')
 	
 	# tools = filter_tools(level)
 	tools = all_functions.get_tool_schema()
-	logging.getLogger().debug(f'chat_llm available_tools={[x["function"]["name"] for x in tools]}')
+	logging.getLogger('llmaker').debug(f'chat_llm available_tools={[x["function"]["name"] for x in tools]}')
 	
 	output = ChatCompletionMessage(content=None, role='assistant')
 	
-	logging.getLogger().debug(f'chat_llm {conversation_history=}')
+	logging.getLogger('llmaker').debug(f'chat_llm {conversation_history=}')
 	
 	if len(conversation_history) > 0:
 		conversation_history = [{'role': f"{'user' if i % 2 == 0 else 'assistant'}", 'content': msg} for i, msg in
@@ -65,13 +65,13 @@ def chat_llm(user_message: str,
 	else:
 		conversation_history = []
 	
-	logging.getLogger().debug(f'chat_llm llm_level={str(level)}')
-	logging.getLogger().debug(f'chat_llm level={level.model_dump_json()}')
+	logging.getLogger('llmaker').debug(f'chat_llm llm_level={str(level)}')
+	logging.getLogger('llmaker').debug(f'chat_llm level={level.model_dump_json()}')
 	
 	messages = [
 		{'role': 'system', 'content': system_prompt},
 		*conversation_history,
-		{'role': 'system', 'content': f'<Current Level>\n{str(level)}'},
+		{'role': 'system', 'content': f'Current Level:\n{str(level)}'},
 		{'role': 'user', 'content': f'User: {user_message}'}
 	]
 	
@@ -87,12 +87,12 @@ def chat_llm(user_message: str,
 		messages.append(output)
 		if output.tool_calls:
 			for tool_call in output.tool_calls:
-				logging.getLogger().debug(f'chat_llm {tool_call.function.name=} {tool_call.function.arguments=}')
+				logging.getLogger('llmaker').debug(f'chat_llm {tool_call.function.name=} {tool_call.function.arguments=}')
 				
 				operation_result = all_functions.try_call_func(func_name=tool_call.function.name,
 				                                               func_args=tool_call.function.arguments,
 				                                               level=level)
-				logging.getLogger().debug(f'chat_llm {operation_result=}')
+				logging.getLogger('llmaker').debug(f'chat_llm {operation_result=}')
 				
 				messages.append({
 					'tool_call_id': tool_call.id,
@@ -101,5 +101,5 @@ def chat_llm(user_message: str,
 					'content':      operation_result
 				})
 	
-	logging.getLogger().debug(f'chat_llm response={output.content}')
+	logging.getLogger('llmaker').debug(f'chat_llm response={output.content}')
 	return output.content
