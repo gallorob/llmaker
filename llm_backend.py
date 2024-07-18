@@ -83,23 +83,23 @@ def chat_llm(user_message: str,
 		                                        tools=tools,
 		                                        seed=config.rng_seed
 		                                        ).choices[0].message
-		
+
 		messages.append(output)
 		if output.tool_calls:
 			for tool_call in output.tool_calls:
 				logging.getLogger('llmaker').debug(f'chat_llm {tool_call.function.name=} {tool_call.function.arguments=}')
-				
+
 				operation_result = all_functions.try_call_func(func_name=tool_call.function.name,
 				                                               func_args=tool_call.function.arguments,
 				                                               level=level)
 				logging.getLogger('llmaker').debug(f'chat_llm {operation_result=}')
-				
+
 				messages.append({
 					'tool_call_id': tool_call.id,
 					'role':         'tool',
 					'name':         tool_call.function.name,
 					'content':      operation_result
 				})
-	
+
 	logging.getLogger('llmaker').debug(f'chat_llm response={output.content}')
 	return output.content

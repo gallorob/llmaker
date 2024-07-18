@@ -11,14 +11,17 @@ from PyQt6.QtGui import QBrush
 from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, \
 	QGraphicsView, \
 	QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QProgressBar, QPushButton, QSplashScreen, \
-	QTextEdit, \
-	QVBoxLayout, QWidget
+	QVBoxLayout, QWidget, QSizePolicy, QScrollArea, QSpacerItem
 
 from configs import config
 from level import Corridor, DIRECTIONS, Entity, Level, OPPOSITE_DIRECTIONS, Room
 from llm_backend import chat_llm
 from sd_backend import generate_corridor, generate_entity, generate_room
 from utils import basic_corridor_description, basic_room_description, rich_entity_description
+
+
+# TODO: Reformat stylesheets (avoid hardcoded colors in components here)
+# TODO: Set message property (user/assistant) instead of assuming alternating roles in conversation
 
 
 def get_splash_screen():
@@ -61,7 +64,8 @@ class InputProcessor(QObject):
 				for entity in room.encounter.entities[entity_type]:
 					if entity.sprite is None:
 						to_process.append(entity)
-						additional_data.append({'entity_type': entity_type, 'room_name': room.name, 'room_description': room.description})
+						additional_data.append(
+							{'entity_type': entity_type, 'room_name': room.name, 'room_description': room.description})
 		for corridor in self.level.corridors:
 			if corridor.sprite is None:
 				to_process.append(corridor)
@@ -74,7 +78,8 @@ class InputProcessor(QObject):
 							to_process.append(entity)
 							room_from = self.level.rooms[corridor.room_from]
 							additional_data.append(
-								{'entity_type': entity_type, 'room_name': room_from.name, 'room_description': room_from.description})
+								{'entity_type': entity_type, 'room_name': room_from.name,
+								 'room_description': room_from.description})
 		
 		progress_delta = int((1 / (1 + len(to_process))) * 100)
 		
@@ -124,7 +129,8 @@ class RoomPreviewWidget(QWidget):
 		self.show_room_preview()
 	
 	def show_room_preview(self):
-		self.scene.setBackgroundBrush(QBrush(QColor('#121212')))
+		self.scene.setBackgroundBrush(
+			QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == 'DARK' else '#ececec')))
 		
 		if self.level.current_room != '':
 			if self.level.current_room in self.level.rooms:
@@ -178,6 +184,64 @@ class RoomPreviewWidget(QWidget):
 					if len(enemies) > 1:
 						x_offset -= (scaled_entity_width * (len(enemies) - 1)) / 2
 					__draw_entities(enemies, x_offset, y_offset, scaled_entity_width)
+
+
+class ConversationWidget(QWidget):
+	def __init__(self, parent):
+		super(ConversationWidget, self).__init__(parent)
+		
+		self.scroll_area = QScrollArea(self)
+		self.scroll_area.setWidgetResizable(True)
+		
+		self.central_widget = QWidget(self)
+		self.central_widget.setProperty('conversation', 'yes')
+		self.scroll_area.setWidget(self.central_widget)
+		
+		self.central_layout = QVBoxLayout(self.central_widget)
+		self.central_layout.setSpacing(0)
+		self.central_layout.setContentsMargins(0, 0, 0, 0)
+		
+		# Add a spacer item at the bottom to push all widgets up
+		self.spacer = QSpacerItem(1, self.scroll_area.height(), QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+		self.central_layout.addItem(self.spacer)
+		
+		main_layout = QVBoxLayout(self)
+		main_layout.addWidget(self.scroll_area)
+		self.setLayout(main_layout)
+		
+		self.messages: List[QLabel] = []
+	
+	def reset(self):
+		for message in self.messages:
+			self.central_layout.removeWidget(message)
+			message.deleteLater()
+		self.messages.clear()
+		self.update()
+	
+	def add_message(self, message):
+		new_message = QLabel(parent=self.central_widget, text=message)
+		new_message.setProperty('messageType', 'me' if len(self.messages) % 2 == 0 else 'them')
+		
+		new_message.setWordWrap(True)
+		new_message.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+		
+		# Set maximum width to prevent horizontal stretching
+		new_message.setMaximumWidth(int(self.width()))
+		
+		self.messages.append(new_message)
+		# Add the new message before the spacer item
+		self.central_layout.insertWidget(self.central_layout.count() - 1, new_message)
+		
+		self.update()
+	
+	def resizeEvent(self, event):
+		# Adjust maximum width of all messages on resize
+		for message in self.messages:
+			message.setMaximumWidth(self.width())
+		super().resizeEvent(event)
+	
+	def get_conversation(self):
+		return '\n'.join([message.text() for message in self.messages])
 
 
 class MapPreviewWidget(QWidget):
@@ -250,7 +314,7 @@ class MapPreviewWidget(QWidget):
 				draw_offset_x, draw_offset_y = offset_x, offset_y
 				corridor_draw_length_offset = self.corridor_draw_size * room.length / 2
 				if self.level.level_geometry[room.room_from]['UP'] == room.room_to or \
-					self.level.level_geometry[room.room_from]['DOWN'] == room.room_to:
+						self.level.level_geometry[room.room_from]['DOWN'] == room.room_to:
 					draw_direction = 'DOWN'
 					draw_offset_y -= corridor_draw_length_offset
 				else:
@@ -305,7 +369,8 @@ class MapPreviewWidget(QWidget):
 		self.room_draw_size = self.rect().height() * config.ui.minimap_room_scale
 		
 		self.scene.clear()
-		self.scene.setBackgroundBrush(QBrush(QColor('#121212')))
+		self.scene.setBackgroundBrush(
+			QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == 'DARK' else '#ececec')))
 		
 		if self.level.current_room != '':
 			if self.level.current_room in self.level.rooms.keys():
@@ -339,10 +404,10 @@ class MainWindow(QMainWindow):
 		self.resize(1280, 720)
 		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
 		
-		with open('ui/stylesheet.css', 'r') as f:
-			self.setStyleSheet(f.read())
-		
 		self.main_ui_widget = QWidget(parent=self)
+		
+		self.theme = 'LIGHT'
+		self.apply_theme()
 		
 		self.main_ui_layout = QHBoxLayout(self.main_ui_widget)
 		
@@ -377,9 +442,9 @@ class MainWindow(QMainWindow):
 		
 		self.actions_vertical_layout = QVBoxLayout(self.actions_groupbox)
 		
-		self.chat_area = QTextEdit(parent=self.actions_groupbox)
-		self.chat_area.setPlaceholderText('Your conversation history will be displayed here...')
-		self.chat_area.setReadOnly(True)
+		self.chat_area = ConversationWidget(parent=self.actions_groupbox)
+		# self.chat_area.setPlaceholderText('Your conversation history will be displayed here...')
+		# self.chat_area.setReadOnly(True)
 		self.actions_vertical_layout.addWidget(self.chat_area, 8)
 		
 		self.chat_box = QLineEdit(parent=self.actions_groupbox)
@@ -482,6 +547,11 @@ class MainWindow(QMainWindow):
 		self.actionSwitchMode.setToolTip(f'Switch LLMaker to {"LLM" if self.mode == ToolMode.USER else "USER"} mode.')
 		self.menuOptions.addAction(self.actionSwitchMode)
 		
+		self.actionSwitchTheme = QAction(f'Switch to {"Light" if self.theme == "DARK" else "Dark"} theme',
+		                                 parent=self)
+		self.actionSwitchTheme.setToolTip(f'Switch LLMaker to {"Light" if self.theme == "DARK" else "Dark"} theme.')
+		self.menuOptions.addAction(self.actionSwitchTheme)
+		
 		self.actionAbout = QAction('About', parent=self)
 		self.actionAbout.setToolTip('About LLMaker')
 		self.menuHelp.addAction(self.actionAbout)
@@ -495,6 +565,7 @@ class MainWindow(QMainWindow):
 		self.actionLoad.triggered.connect(self.load_level)
 		self.actionClear.triggered.connect(self.clear_level)
 		self.actionSwitchMode.triggered.connect(self.switch_mode)
+		self.actionSwitchTheme.triggered.connect(self.switch_theme)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
 		self.chat_box.setFocus()
@@ -507,7 +578,7 @@ class MainWindow(QMainWindow):
 	@pyqtSlot(str)
 	def handle_result(self, result):
 		logging.getLogger().debug(f'handle_result Received LLM response')
-		self.chat_area.append(f'<b>AI</b>: {result}')
+		self.chat_area.add_message(result)
 	
 	@pyqtSlot()
 	def task_finished(self):
@@ -521,12 +592,12 @@ class MainWindow(QMainWindow):
 	@pyqtSlot()
 	def process_user_input(self):
 		user_input = self.chat_box.text()
-		conversation_history = self.chat_area.toPlainText().replace('You: ', '').replace('AI: ', '')
+		conversation_history = self.chat_area.get_conversation()
 		
 		logging.getLogger().debug(f'process_user_input Received input')
 		
 		self.chat_box.clear()
-		self.chat_area.append(f'<b>You</b>: {user_input}')
+		self.chat_area.add_message(user_input)
 		
 		self.chat_box.setDisabled(True)
 		
@@ -560,7 +631,8 @@ class MainWindow(QMainWindow):
 				self.room_description.setText(f'<i>{self.level.rooms[self.level.current_room].description}</i>')
 			else:
 				corridor = self.level.get_corridor(*self.level.current_room.split('-'))
-				self.room_label.setText(f'Corridor between <b><i>{corridor.room_from}</i></b> and <b><i>{corridor.room_to}</i></b>')
+				self.room_label.setText(
+					f'Corridor between <b><i>{corridor.room_from}</i></b> and <b><i>{corridor.room_to}</i></b>')
 				self.room_description.setText('')
 		else:
 			self.room_label.setText('<i>No current room</i>')
@@ -585,7 +657,7 @@ class MainWindow(QMainWindow):
 			if tmp_filename:
 				assert len(self.level.rooms) > 0, 'Can\'t save an empty level!'
 				self.level.save_to_file(filename=tmp_filename,
-				                        conversation=self.chat_area.toPlainText())
+				                        conversation=self.chat_area.get_conversation())
 				
 				dlg = QMessageBox(self)
 				dlg.setWindowTitle("LLMaker Message")
@@ -600,20 +672,18 @@ class MainWindow(QMainWindow):
 	@pyqtSlot()
 	def load_level(self):
 		tmp_filename, _ = QFileDialog.getOpenFileName(self,
-		                                           caption="Load Level",
-		                                           directory=config.levels_dir,
-		                                           filter="All Files(*);;Binary Files(*.bin)")
+		                                              caption="Load Level",
+		                                              directory=config.levels_dir,
+		                                              filter="All Files(*);;Binary Files(*.bin)")
 		
 		if tmp_filename:
 			try:
 				level, conversation = Level.load_from_file(tmp_filename)
 				self.set_level(level)
 				
-				self.chat_box.clear()
-				self.chat_area.clear()
-				
 				for i, line in enumerate(conversation.split('\n')):
-					self.chat_area.append(f'{"<b>You</b>" if i % 2 == 0 else "<b>AI</b>"}: {line}')
+					line = line.replace('You: ', '').replace('AI: ', '')
+					self.chat_area.add_message(line)
 				
 				dlg = QMessageBox(self)
 				dlg.setWindowTitle("LLMaker Message")
@@ -631,7 +701,7 @@ class MainWindow(QMainWindow):
 	def clear_level(self):
 		self.set_level(Level())
 		self.chat_box.clear()
-		self.chat_area.clear()
+		self.chat_area.reset()
 		self.update()
 	
 	@pyqtSlot()
@@ -655,6 +725,15 @@ class MainWindow(QMainWindow):
 		self.update()
 	
 	@pyqtSlot()
+	def switch_theme(self):
+		self.actionSwitchTheme.setText(f'Switch to {"Light" if self.theme == "LIGHT" else "Dark"} theme')
+		self.actionSwitchMode.setToolTip(f'Switch LLMaker to {"Light" if self.theme == "LIGHT" else "Dark"} theme.')
+		self.theme = 'DARK' if self.theme == 'LIGHT' else 'LIGHT'
+		self.apply_theme()
+		self.update()
+		logging.info(f'Switched theme to {"Light" if self.theme == "LIGHT" else "Dark"}')
+	
+	@pyqtSlot()
 	def show_about_dialog(self):
 		QMessageBox.about(self, 'About LLMaker',
 		                  f'LLMaker v0.1\nIEEE Conference on Games 2024 Demo\n\nDeveloped by: Roberto Gallota (Institute of Digital Games, University of Malta)')
@@ -663,3 +742,10 @@ class MainWindow(QMainWindow):
 		self.level = level
 		self.room_preview.level = level
 		self.map_preview.level = level
+	
+	def apply_theme(self):
+		try:
+			with open(f'assets/themes/stylesheet_{self.theme.lower()}.css', 'r') as f:
+				self.setStyleSheet(f.read())
+		except FileNotFoundError:
+			raise ValueError(f'Unknown theme: {self.theme}')

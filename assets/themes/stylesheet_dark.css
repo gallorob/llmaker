@@ -1,25 +1,54 @@
 /*
 Material Dark Style Sheet for QT Applications
 Author: Jaime A. Quiroga P.
-Inspired on https://github.com/jxfwinter/qt-material-stylesheet
+Inspired by https://github.com/jxfwinter/qt-material-stylesheet
 Company: GTRONICK
 Last updated: 04/12/2018, 15:00.
 Available at: https://github.com/GTRONICK/QSS/blob/master/MaterialDark.qss
 */
+
 QMainWindow {
-    background-color: #121212; /*#1e1d23;*/
+    background-color: #1e1d23; /*#1e1d23;*/
 }
 
+/*QGraphicsView {*/
+/*    background-color: #1e1d23;*/
+/*}*/
+
 QDialog {
-    background-color: #121212;
+    background-color: #1e1d23;
+}
+
+QWidget[conversation="yes"] {
+    background-color: #1e1d23;
+}
+
+QLabel[messageType="me"] {
+    background-color: #4d4958;
+    border: 1px solid #a9b7c6;
+    color: #a9b7c6;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 2px 5px 2px 50px;
+    align-self: flex-end;
+}
+
+QLabel[messageType="them"] {
+    background-color: #a9b7c6;
+    border: 1px solid #FFFFFF;
+    color: #1e1d23;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 2px 50px 2px 5px;
+    align-self: flex-start;
 }
 
 QColorDialog {
-    background-color: #121212;
+    background-color: #1e1d23;
 }
 
 QTextEdit {
-    background-color: #121212;
+    background-color: #1e1d23;
     color: #a9b7c6;
     /*font-size: 24pt;*/
 }
@@ -29,7 +58,7 @@ QGroupBox {
 }
 
 QToolTip {
-   background-color: #121212;
+   background-color: #1e1d23;
    color: #a9b7c6;
    border: #a9b7c6 solid 1px;
     /*font-size: 18pt;*/
@@ -464,4 +493,157 @@ QSlider::sub-page:horizontal {
 
 QSlider::sub-page:vertical {
     background: #04b97f;
+}
+
+QScrollBar:horizontal {
+	max-height: 20px;
+	border: 1px transparent grey;
+	margin: 0px 20px 0px 20px;
+}
+QScrollBar:vertical {
+	max-width: 20px;
+	border: 1px transparent grey;
+	margin: 20px 0px 20px 0px;
+}
+QScrollBar::handle:horizontal {
+	background: rgb(253,253,253);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(207,207,207);
+	border-radius: 7px;
+	min-width: 25px;
+}
+QScrollBar::handle:horizontal:hover {
+	background: rgb(253,253,253);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(147, 200, 200);
+	border-radius: 7px;
+	min-width: 25px;
+}
+QScrollBar::handle:vertical {
+	background: rgb(253,253,253);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(207,207,207);
+	border-radius: 7px;
+	min-height: 25px;
+}
+QScrollBar::handle:vertical:hover {
+	background: rgb(253,253,253);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(147, 200, 200);
+	border-radius: 7px;
+	min-height: 25px;
+}
+QScrollBar::add-line:horizontal {
+   border: 2px transparent grey;
+   border-top-right-radius: 7px;
+   border-bottom-right-radius: 7px;
+   background: rgba(34, 142, 255, 255);
+   width: 20px;
+   subcontrol-position: right;
+   subcontrol-origin: margin;
+}
+QScrollBar::add-line:horizontal:pressed {
+   border: 2px transparent grey;
+   border-top-right-radius: 7px;
+   border-bottom-right-radius: 7px;
+   background: rgb(181,181,181);
+   width: 20px;
+   subcontrol-position: right;
+   subcontrol-origin: margin;
+}
+QScrollBar::add-line:vertical {
+   border: 2px transparent grey;
+   border-bottom-left-radius: 7px;
+   border-bottom-right-radius: 7px;
+   background: rgba(34, 142, 255, 255);
+   height: 20px;
+   subcontrol-position: bottom;
+   subcontrol-origin: margin;
+}
+QScrollBar::add-line:vertical:pressed {
+   border: 2px transparent grey;
+   border-bottom-left-radius: 7px;
+   border-bottom-right-radius: 7px;
+   background: rgb(181,181,181);
+   height: 20px;
+   subcontrol-position: bottom;
+   subcontrol-origin: margin;
+}
+QScrollBar::sub-line:horizontal {
+   border: 2px transparent grey;
+   border-top-left-radius: 7px;
+   border-bottom-left-radius: 7px;
+   background: rgba(34, 142, 255, 255);
+   width: 20px;
+   subcontrol-position: left;
+   subcontrol-origin: margin;
+}
+QScrollBar::sub-line:horizontal:pressed {
+   border: 2px transparent grey;
+   border-top-left-radius: 7px;
+   border-bottom-left-radius: 7px;
+   background: rgb(181,181,181);
+   width: 20px;
+   subcontrol-position: left;
+   subcontrol-origin: margin;
+}
+QScrollBar::sub-line:vertical {
+   border: 2px transparent grey;
+   border-top-left-radius: 7px;
+   border-top-right-radius: 7px;
+   background: rgba(34, 142, 255, 255);
+   height: 20px;
+   subcontrol-position: top;
+   subcontrol-origin: margin;
+}
+QScrollBar::sub-line:vertical:pressed {
+   border: 2px transparent grey;
+   border-top-left-radius: 7px;
+   border-top-right-radius: 7px;
+   background: rgb(181,181,181);
+   height: 20px;
+   subcontrol-position: top;
+   subcontrol-origin: margin;
+}
+QScrollBar::left-arrow:horizontal {
+   border: 1px transparent grey;
+   border-top-left-radius: 3px;
+   border-bottom-left-radius: 3px;
+   width: 6px;
+   height: 6px;
+   background: white;
+}
+QScrollBar::right-arrow:horizontal {
+   border: 1px transparent grey;
+   border-top-right-radius: 3px;
+   border-bottom-right-radius: 3px;
+   width: 6px;
+   height: 6px;
+   background: white;
+}
+QScrollBar::up-arrow:vertical {
+   border: 1px transparent grey;
+   border-top-left-radius: 3px;
+   border-top-right-radius: 3px;
+   width: 6px;
+   height: 6px;
+   background: white;
+}
+QScrollBar::down-arrow:vertical {
+   border: 1px transparent grey;
+   border-bottom-left-radius: 3px;
+   border-bottom-right-radius: 3px;
+   width: 6px;
+   height: 6px;
+   background: white;
+}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+   background: none;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+   background: none;
 }

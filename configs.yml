@@ -17,8 +17,8 @@ dungeon:
   max_spd: 10
 ui:
   entity_scale: 0.35
-  minimap_room_scale: 0.15
-  minimap_corridor_scale: 0.075
+  minimap_room_scale: 0.25
+  minimap_corridor_scale: 0.15
   selected_color: '#ffbf00'
   unselected_color: '#b38600'
 llm:
