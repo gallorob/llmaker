@@ -11,7 +11,7 @@ from PyQt6.QtGui import QBrush
 from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsScene, \
 	QGraphicsView, \
 	QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QProgressBar, QPushButton, QSplashScreen, \
-	QVBoxLayout, QWidget, QSizePolicy, QScrollArea, QSpacerItem
+	QVBoxLayout, QWidget, QSizePolicy, QScrollArea
 
 from configs import config
 from level import Corridor, DIRECTIONS, Entity, Level, OPPOSITE_DIRECTIONS, Room
@@ -201,9 +201,9 @@ class ConversationWidget(QWidget):
 		self.central_layout.setSpacing(0)
 		self.central_layout.setContentsMargins(0, 0, 0, 0)
 		
-		# Add a spacer item at the bottom to push all widgets up
-		self.spacer = QSpacerItem(1, self.scroll_area.height(), QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-		self.central_layout.addItem(self.spacer)
+		# Hacky way to avoid resizing messages when they are too few
+		# Praise https://stackoverflow.com/questions/63438039/qt-dont-stretch-widgets-in-qvboxlayout
+		self.central_layout.addStretch()
 		
 		main_layout = QVBoxLayout(self)
 		main_layout.addWidget(self.scroll_area)
@@ -218,19 +218,23 @@ class ConversationWidget(QWidget):
 		self.messages.clear()
 		self.update()
 	
+	def load_conversation(self, conversation):
+		for i, line in enumerate(conversation.split('\n')):
+			line = line.replace('You: ', '').replace('AI: ', '')
+			self.add_message(line)
+	
 	def add_message(self, message):
 		new_message = QLabel(parent=self.central_widget, text=message)
 		new_message.setProperty('messageType', 'me' if len(self.messages) % 2 == 0 else 'them')
 		
 		new_message.setWordWrap(True)
-		new_message.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+		new_message.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
 		
 		# Set maximum width to prevent horizontal stretching
 		new_message.setMaximumWidth(int(self.width()))
 		
 		self.messages.append(new_message)
-		# Add the new message before the spacer item
-		self.central_layout.insertWidget(self.central_layout.count() - 1, new_message)
+		self.central_layout.addWidget(new_message)
 		
 		self.update()
 	
@@ -406,7 +410,7 @@ class MainWindow(QMainWindow):
 		
 		self.main_ui_widget = QWidget(parent=self)
 		
-		self.theme = 'LIGHT'
+		self.theme = 'DARK'
 		self.apply_theme()
 		
 		self.main_ui_layout = QHBoxLayout(self.main_ui_widget)

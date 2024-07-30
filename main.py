@@ -47,8 +47,7 @@ if __name__ == '__main__':
 		splash_screen.showMessage('Loading level from file...')
 		level, conversation = Level.load_from_file('my_levels/t1.bin')
 		win.set_level(level)
-		for i, line in enumerate(conversation.split('\n')):
-			win.chat_area.append(f'{"<b>You</b>" if i % 2 == 0 else "<b>AI</b>"}: {line}')
+		win.chat_area.load_conversation(conversation)
 		logging.getLogger('llmaker').info('Updating GUI...')
 		win.map_preview.show_map_preview()
 		win.room_preview.show_room_preview()
@@ -58,10 +57,9 @@ if __name__ == '__main__':
 		logging.getLogger('llmaker').info('No initial level set')
 	else:
 		raise ValueError(f'STARTING_LEVEL {STARTING_LEVEL} is not valid')
-	
-	win.update()
-	
+
 	win.show()
+	win.update()
 	
 	splash_screen.finish(win)
 	
