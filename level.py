@@ -182,7 +182,7 @@ class Level(BaseModel):
 				for entity_type in encounter.entities.keys():
 					for entity in encounter.entities[entity_type]:
 						all_images.append(entity.sprite)
-		images = {image_path: PIL.Image.open(os.path.join(config.temp_dir, image_path)) for image_path in all_images}
+		images = {image_path.split('/')[-1]: PIL.Image.open(image_path) for image_path in all_images}
 		bin_data = {
 			'level': self,
 			'images': images,
