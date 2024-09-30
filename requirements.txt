@@ -1,0 +1,15 @@
+diffusers
+transformers
+xformers
+git+https://github.com/huggingface/accelerate.git
+opencv-contrib-python
+controlnet_aux
+pyyaml
+gptfunctionutil
+pydantic
+pillow
+openai
+pyqt6
+numpy
+rembg
+compel

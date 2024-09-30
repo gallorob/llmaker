@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
 		super().__init__()
 		self.level = level
 		
-		self.mode = ToolMode.USER
+		self.mode = ToolMode.LLM
 		
 		self.setObjectName("LLMaker")
 		
@@ -90,7 +90,6 @@ class MainWindow(QMainWindow):
 		self.actions_vertical_layout.addWidget(self.pbar)
 		
 		self.actions_buttons = []
-		
 		for k, func in DungeonCrawlerFunctions().FunctionDict.items():
 			button = QPushButton(k)
 			button.clicked.connect(self.create_button_handler(func))
@@ -143,7 +142,7 @@ class MainWindow(QMainWindow):
 		self.actionSwitchMode.triggered.connect(self.switch_mode)
 		self.actionSwitchTheme.triggered.connect(self.switch_theme)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
-
+		
 		self.switch_mode()
 		
 		self.chat_box.setFocus()

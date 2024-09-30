@@ -21,7 +21,6 @@ STARTING_LEVEL = 'empty'
 
 if __name__ == '__main__':
 	domain_config.temp_dir = './test_results/'
-	
 	logging.getLogger('llmaker').setLevel(logging.DEBUG)
 	log_filename = f'./logs/log_{datetime.now().strftime("%Y%m%d%H%M%S")}.log'
 	handler = logging.FileHandler(log_filename)

@@ -18,7 +18,8 @@ class ToolMode(Enum):
 class ThemeMode(Enum):
 	LIGHT = auto()
 	DARK = auto()
-
+	
+	
 def basic_room_description(room: Room) -> str:
 	return f'<h2>{room.name}</h2><h3><i>{room.description}</i></h3>'
 
