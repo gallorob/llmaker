@@ -1,0 +1,7 @@
+models
+test_results
+secret
+logs
+*.pyc
+.idea
+/dungeon-despair-domain
