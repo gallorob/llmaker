@@ -9,8 +9,8 @@ dungeon:
   corridor_max_length: 4
   min_hp: 1
   max_hp: 30
-  min_dodge: 1
-  max_dodge: 10
+  min_dodge: 0.01
+  max_dodge: 0.99
   min_prot: 0.01
   max_prot: 0.99
   min_spd: 1
@@ -19,6 +19,7 @@ ui:
   entity_scale: 0.35
   minimap_room_scale: 0.25
   minimap_corridor_scale: 0.15
+  minimap_zoom_step: 0.5
   selected_color: '#ffbf00'
   unselected_color: '#b38600'
 llm:

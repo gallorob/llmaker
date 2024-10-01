@@ -1,7 +1,8 @@
 from functools import partial
 from typing import Union, Tuple, List, Optional
 
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QBrush, QColor, QWheelEvent, QDragMoveEvent
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsRectItem
 
 from configs import config
@@ -21,13 +22,15 @@ class MapPreviewWidget(QWidget):
 		self.scene = QGraphicsScene(self)
 		self.view = QGraphicsView(self.scene)
 		
+		self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+		
 		self.view_layout = QVBoxLayout(self)
 		self.view_layout.addWidget(self.view)
 		
 		self.drawn_rooms = []
 		
-		self.corridor_draw_size = self.rect().height() * config.ui.minimap_corridor_scale
-		self.room_draw_size = self.rect().height() * config.ui.minimap_room_scale
+		self.corridor_draw_size = None
+		self.room_draw_size = None
 	
 	def paintEvent(self, a0):
 		self.show_map_preview()
@@ -137,8 +140,10 @@ class MapPreviewWidget(QWidget):
 	def show_map_preview(self):
 		self.drawn_rooms = []
 		x, y = self.rect().x(), self.rect().y()
-		self.corridor_draw_size = self.rect().height() * config.ui.minimap_corridor_scale
-		self.room_draw_size = self.rect().height() * config.ui.minimap_room_scale
+		if self.corridor_draw_size is None:
+			self.corridor_draw_size = self.rect().height() * config.ui.minimap_corridor_scale
+		if self.room_draw_size is None:
+			self.room_draw_size = self.rect().height() * config.ui.minimap_room_scale
 
 		self.scene.clear()
 		self.scene.setBackgroundBrush(
@@ -156,3 +161,11 @@ class MapPreviewWidget(QWidget):
 			
 			for rect in rects:
 				self.scene.addItem(rect)
+	
+	def wheelEvent(self, a0: QWheelEvent):
+		num_degrees = a0.angleDelta().y() / 8
+		num_steps = num_degrees / 15
+		self.room_draw_size += (config.ui.minimap_zoom_step * config.ui.minimap_room_scale) * num_steps
+		self.corridor_draw_size += (config.ui.minimap_zoom_step * config.ui.minimap_corridor_scale) * num_steps
+		
+		self.update()
