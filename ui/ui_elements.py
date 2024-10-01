@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
 		self.actions_buttons = []
 		for k, func in DungeonCrawlerFunctions().FunctionDict.items():
 			button = QPushButton(k)
-			button.clicked.connect(self.create_button_handler(func))
+			button.clicked.connect(self.create_button_handler(func, button))
 			button.hide()
 			self.actions_buttons.append(button)
 			self.actions_vertical_layout.addWidget(button)
@@ -147,9 +147,9 @@ class MainWindow(QMainWindow):
 		
 		self.chat_box.setFocus()
 	
-	def create_button_handler(self, func):
+	def create_button_handler(self, func, button):
 		def handler():
-			dialog = DynamicDialog(self.level, func)
+			dialog = DynamicDialog(self.level, func, button)
 			dialog.exec()
 		
 		return handler
