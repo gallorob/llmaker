@@ -1,6 +1,7 @@
 rng_seed: 1234
 temp_dir: './test_results'
 levels_dir: './my_levels'
+scenarios_dir: './my_scenarios'
 dungeon:
   max_enemies_per_encounter: 4
   max_traps_per_encounter: 1
@@ -17,8 +18,8 @@ dungeon:
   max_spd: 10
 ui:
   entity_scale: 0.35
-  minimap_room_scale: 0.25
-  minimap_corridor_scale: 0.15
+  minimap_room_scale: 0.5
+  minimap_corridor_scale: 0.3
   minimap_zoom_step: 0.5
   selected_color: '#ffbf00'
   unselected_color: '#b38600'

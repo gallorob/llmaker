@@ -2,7 +2,7 @@ from functools import partial
 from typing import Union, Tuple, List, Optional
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QBrush, QColor, QWheelEvent, QDragMoveEvent
+from PyQt6.QtGui import QBrush, QColor, QWheelEvent
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsRectItem
 
 from configs import config

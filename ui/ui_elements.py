@@ -116,6 +116,12 @@ class MainWindow(QMainWindow):
 		self.actionClear.setToolTip('Clear the current level and dialogue.')
 		self.menuFile.addAction(self.actionClear)
 		
+		self.menuFile.addSeparator()
+		
+		self.actionExport = QAction('Export', parent=self)
+		self.actionExport.setToolTip('Finalize and export the current level as scenario.')
+		self.menuFile.addAction(self.actionExport)
+		
 		self.actionSwitchMode = QAction(f'Switch to {"LLM" if self.mode == ToolMode.USER else "USER"} mode',
 		                                parent=self)
 		self.actionSwitchMode.setToolTip(f'Switch LLMaker to {"LLM" if self.mode == ToolMode.USER else "USER"} mode.')
@@ -139,6 +145,7 @@ class MainWindow(QMainWindow):
 		self.actionSave.triggered.connect(self.save_level)
 		self.actionLoad.triggered.connect(self.load_level)
 		self.actionClear.triggered.connect(self.clear_level)
+		self.actionExport.triggered.connect(self.export_level)
 		self.actionSwitchMode.triggered.connect(self.switch_mode)
 		self.actionSwitchTheme.triggered.connect(self.switch_theme)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
@@ -245,7 +252,7 @@ class MainWindow(QMainWindow):
 				
 				dlg = QMessageBox(self)
 				dlg.setWindowTitle("LLMaker Message")
-				dlg.setText(f"The level has been successfully saved to <i>{os.path.split(tmp_filename)[1]}</i>!")
+				dlg.setText(f"The level has been successfully saved to <i>{os.path.basename(tmp_filename)}</i>!")
 				_ = dlg.exec()
 		except Exception as e:
 			dlg = QErrorMessage(self)
@@ -287,6 +294,27 @@ class MainWindow(QMainWindow):
 		self.chat_box.clear()
 		self.chat_area.reset()
 		self.update()
+	
+	@pyqtSlot()
+	def export_level(self):
+		try:
+			tmp_filename, _ = QFileDialog.getSaveFileName(self,
+			                                              caption="Save Level",
+			                                              directory=config.scenarios_dir,
+			                                              filter="All Files(*);;Binary Files(*.bin)")
+			if tmp_filename:
+				# TODO: Check if level can be converted to scenario
+				self.level.export_level_as_scenario(filename=tmp_filename)
+				
+				dlg = QMessageBox(self)
+				dlg.setWindowTitle("LLMaker Message")
+				dlg.setText(f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!")
+				_ = dlg.exec()
+		except Exception as e:
+			dlg = QErrorMessage(self)
+			dlg.setWindowTitle("LLMaker Error")
+			dlg.showMessage(str(e))
+			_ = dlg.exec()
 	
 	@pyqtSlot()
 	def switch_mode(self):
