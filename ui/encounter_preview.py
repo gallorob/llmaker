@@ -5,11 +5,14 @@ from PyQt6.QtGui import QBrush, QColor, QPixmap
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsPixmapItem
 
 from configs import config
+from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
 from dungeon_despair.domain.utils import derive_rooms_from_corridor_name, is_corridor
-from level import Entity
 from utils import ThemeMode, rich_entity_description
+
+
+# TODO: Clicking on an entity shows up a more detailed dialog for that enemy
 
 
 class EncounterPreviewWidget(QWidget):
@@ -20,6 +23,8 @@ class EncounterPreviewWidget(QWidget):
 		
 		self.scene = QGraphicsScene(self)
 		self.view = QGraphicsView(self.scene)
+		self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+		self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 		
 		self.view_layout = QVBoxLayout(self)
 		self.view_layout.addWidget(self.view)
@@ -37,13 +42,15 @@ class EncounterPreviewWidget(QWidget):
 				room = self.level.rooms[self.level.current_room]
 			else:
 				room = self.level.get_corridor(*derive_rooms_from_corridor_name(self.level.current_room), ordered=True)
-			
-			# background_image = QPixmap.fromImage(ImageQt(room.sprite.convert("RGBA")))
+				
 			background_image = QPixmap(room.sprite)
 			self.scene.setSceneRect(0, 0, background_image.width(), background_image.height())
 			item = self.scene.addPixmap(background_image)
 			item.setPos(0, 0)
-			self.view.fitInView(item, Qt.AspectRatioMode.KeepAspectRatio)
+			self.view.fitInView(item, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+			
+			if is_corridor(self.level.current_room):
+				self.view.horizontalScrollBar().setValue(0)
 			
 			w, h = self.scene.width(), self.scene.height()
 			
