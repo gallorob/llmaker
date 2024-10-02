@@ -5,3 +5,5 @@ logs
 *.pyc
 .idea
 /dungeon-despair-domain
+my_levels
+my_scenarios

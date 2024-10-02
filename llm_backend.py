@@ -5,8 +5,8 @@ import openai
 from openai.types.chat import ChatCompletionMessage
 
 from configs import config
-from functions import DungeonCrawlerFunctions
-from level import Level
+from dungeon_despair.domain.level import Level
+from dungeon_despair.functions import DungeonCrawlerFunctions
 
 with open('./secret', 'r') as f:
 	openai.api_key = f.read().strip()
