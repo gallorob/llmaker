@@ -1,5 +1,6 @@
 import logging
 import os
+from logging import debug
 from typing import Any, List, Optional
 
 import numpy as np
@@ -206,8 +207,8 @@ def generate_room(room_name: str,
 
 def generate_corridor(room_names: List[str],
                       room_descriptions: List[str],
-                      corridor_length: int) -> str:
-	column_control_image = load_image(config.corridor.column_mask).resize((config.corridor.width, config.corridor.height), Image.Resampling.NEAREST)
+                      corridor_length: int,
+                      corridor_sprites: List[str]) -> List[str]:
 	wall_control_image = invert(load_image(config.corridor.wall_mask)).resize((config.corridor.width, config.corridor.height), Image.Resampling.NEAREST)
 	
 	def __make_inpaint_condition(image, image_mask):
@@ -219,11 +220,14 @@ def generate_corridor(room_names: List[str],
 		image = th.from_numpy(image)
 		return image
 	
-	try:
-		corridor_image = Image.new('RGB', (config.corridor.width * corridor_length, config.corridor.height))
-		room_names = clear_strings_for_prompt(room_names)
-		room_descriptions = clear_strings_for_prompt(room_descriptions)
+	base_fname = f'{"-".join(room_names)}_initial.png'
+	tile_fname = f'{"-".join(room_names)}_swapped.png'
+	door_fname = f'{"-".join(room_names)}' + '_door{n}.png'
+	cells_fname = f'{"-".join(room_names)}' + '_cell{n}.png'
+	
+	def __generate_base_image(room_names: List[str]):
 		# generate base tile (column)
+		column_control_image = load_image(config.corridor.column_mask).resize((config.corridor.width, config.corridor.height), Image.Resampling.NEAREST)
 		formatted_prompt = config.corridor.column_prompt.format(room_a_name=room_names[0],
 		                                                        room_b_name=room_names[1])
 		logging.getLogger('llmaker').debug(f'generate_corridor {formatted_prompt=}')
@@ -233,75 +237,66 @@ def generate_corridor(room_names: List[str],
 		[conditioning,
 		 negative_conditioning] = compel_stablediff_controlnet_mlsd.pad_conditioning_tensors_to_same_length(
 			[conditioning, negative_conditioning])
-		column_image = stablediff_controlnet_mlsd(image=column_control_image,
+		image = stablediff_controlnet_mlsd(image=column_control_image,
 		                                          prompt_embeds=conditioning,
 		                                          negative_prompt_embeds=negative_conditioning,
 		                                          num_inference_steps=config.corridor.inference_steps,
 		                                          guidance_scale=config.corridor.guidance_scale,
 		                                          generator=th.Generator(device=device).manual_seed(
 			                                          config.rng_seed)).images[0]
-		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_initial.png')
+		debugging_image = os.path.join(config.corridor.save_dir,
+		                               base_fname)
 		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
-		column_image.save(debugging_image)
+		image.save(debugging_image)
+	
+	def __generate_tileable_image(base_image: Image):
 		# get tileable image
-		width, height = column_image.size
+		width, height = base_image.size
 		midpoint = width // 2
-		left_side = column_image.crop((0, 0, midpoint, height))
-		right_side = column_image.crop((midpoint, 0, width, height))
-		swapped_image = Image.new("RGB", (width, height))
-		swapped_image.paste(right_side, (0, 0))
-		swapped_image.paste(left_side, (midpoint, 0))
-		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_swapped.png')
+		left_side = base_image.crop((0, 0, midpoint, height))
+		right_side = base_image.crop((midpoint, 0, width, height))
+		tile_image = Image.new("RGB", (width, height))
+		tile_image.paste(right_side, (0, 0))
+		tile_image.paste(left_side, (midpoint, 0))
+		debugging_image = os.path.join(config.corridor.save_dir,
+		                               tile_fname)
 		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
-		swapped_image.save(debugging_image)
+		tile_image.save(debugging_image)
+	
+	def __generate_door_image(tile_image: Image,
+	                          control_image: Image,
+	                          room_names: List[str],
+	                          room_descriptions: List[str],
+	                          door_n: int):
 		# build corridor image
-		control_image = __make_inpaint_condition(swapped_image, wall_control_image)
 		# door 1
 		conditioning = compel_stablediff_controlnet_inpaint.build_conditioning_tensor(
-			config.corridor.door_prompt.format(room_name=room_descriptions[0]))
+			config.corridor.door_prompt.format(room_name=room_descriptions[door_n - 1]))
 		negative_conditioning = compel_stablediff_controlnet_inpaint.build_conditioning_tensor(
 			config.corridor.negative_prompt)
 		[conditioning,
 		 negative_conditioning] = compel_stablediff_controlnet_inpaint.pad_conditioning_tensors_to_same_length(
 			[conditioning, negative_conditioning])
 		# generate image
-		tmp_image = stablediff_controlnet_inpaint(
+		door_image = stablediff_controlnet_inpaint(
 			prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
 			num_inference_steps=config.corridor.inference_steps,
 			generator=th.Generator(device=device).manual_seed(config.rng_seed),
 			eta=config.corridor.eta,
 			guidance_scale=config.corridor.guidance_scale / 2,
-			image=swapped_image,
+			image=tile_image,
 			mask_image=wall_control_image,
 			control_image=control_image,
 		).images[0]
-		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_door1.png')
+		debugging_image = os.path.join(config.corridor.save_dir, door_fname.format(n=door_n))
 		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
-		tmp_image.save(debugging_image)
-		corridor_image.paste(tmp_image, (0, 0))
-		# door 2
-		conditioning = compel_stablediff_controlnet_inpaint.build_conditioning_tensor(
-			config.corridor.door_prompt.format(room_name=room_descriptions[1]))
-		negative_conditioning = compel_stablediff_controlnet_inpaint.build_conditioning_tensor(
-			config.corridor.negative_prompt)
-		[conditioning,
-		 negative_conditioning] = compel_stablediff_controlnet_inpaint.pad_conditioning_tensors_to_same_length(
-			[conditioning, negative_conditioning])
-		# generate image
-		tmp_image = stablediff_controlnet_inpaint(
-			prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
-			num_inference_steps=config.corridor.inference_steps,
-			generator=th.Generator(device=device).manual_seed(config.rng_seed),
-			eta=config.corridor.eta,
-			guidance_scale=config.corridor.guidance_scale / 2,
-			image=swapped_image,
-			mask_image=wall_control_image,
-			control_image=control_image,
-		).images[0]
-		debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_door2.png')
-		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
-		tmp_image.save(debugging_image)
-		corridor_image.paste(tmp_image, (corridor_image.width - width, 0))
+		door_image.save(debugging_image)
+		
+	def __generate_encounter_image(room_names: List[str],
+	                               room_descriptions: List[str],
+	                               tile_image: Image,
+	                               control_image: Image,
+	                               encounter_ns: List[int]):
 		# ecounters images
 		conditioning = compel_stablediff_controlnet_inpaint.build_conditioning_tensor(
 			config.corridor.wall_prompt.format(room_a_name=room_descriptions[0],
@@ -312,24 +307,56 @@ def generate_corridor(room_names: List[str],
 		 negative_conditioning] = compel_stablediff_controlnet_inpaint.pad_conditioning_tensors_to_same_length(
 			[conditioning, negative_conditioning])
 		# generate image
-		tmp_images = [stablediff_controlnet_inpaint(
-			prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
-			num_inference_steps=config.corridor.inference_steps,
-			generator=th.Generator(device=device).manual_seed(config.rng_seed + i),
-			eta=config.corridor.eta,
-			guidance_scale=config.corridor.guidance_scale / 2,
-			image=swapped_image,
-			mask_image=wall_control_image,
-			control_image=control_image).images[0] for i in range(corridor_length - 2)]
-		for i, tmp_image in enumerate(tmp_images):
-			debugging_image = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_cell{i}.png')
+		for i in encounter_ns:
+			tmp_image = stablediff_controlnet_inpaint(
+				prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
+				num_inference_steps=config.corridor.inference_steps,
+				generator=th.Generator(device=device).manual_seed(config.rng_seed + i),
+				eta=config.corridor.eta,
+				guidance_scale=config.corridor.guidance_scale / 2,
+				image=tile_image,
+				mask_image=wall_control_image,
+				control_image=control_image).images[0]
+			debugging_image = os.path.join(config.corridor.save_dir,
+			                               cells_fname.format(n=i))
 			logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
 			tmp_image.save(debugging_image)
-			corridor_image.paste(tmp_image, (width * (i + 1), 0))
-		filename = os.path.join(config.corridor.save_dir, f'{"-".join(room_names)}_{corridor_length}_corridor.png')
-		logging.getLogger('llmaker').debug(f'generate_corridor {filename=}')
-		corridor_image.save(filename)
-		return filename
+	
+	try:
+		room_names = clear_strings_for_prompt(room_names)
+		room_descriptions = clear_strings_for_prompt(room_descriptions)
+		
+		if len(corridor_sprites) == 0:
+			# brand new corridor
+			__generate_base_image(room_names)
+			base_image = Image.open(os.path.join(config.corridor.save_dir, base_fname))
+			__generate_tileable_image(base_image)
+			tile_image = Image.open(os.path.join(config.corridor.save_dir, tile_fname))
+			control_image = __make_inpaint_condition(tile_image, wall_control_image)
+			for door_n in [1, 2]:
+				__generate_door_image(tile_image,
+				                      control_image,
+				                      room_names,
+				                      room_descriptions,
+				                      door_n)
+			__generate_encounter_image(room_names, room_descriptions, tile_image, control_image,
+			                           list(range(corridor_length - 2)))
+		
+		else:
+			tile_image = Image.open(os.path.join(config.corridor.save_dir, tile_fname))
+			control_image = __make_inpaint_condition(tile_image, wall_control_image)
+			to_generate = []
+			for i, sprite in enumerate(corridor_sprites):
+				if sprite is None:
+					to_generate.append(i)
+			__generate_encounter_image(room_names, room_descriptions, tile_image, control_image,
+			                           to_generate)
+						
+		return [
+			os.path.join(config.corridor.save_dir, door_fname.format(n=1)),
+			*[os.path.join(config.corridor.save_dir, cells_fname.format(n=i)) for i in range(corridor_length - 2)],
+			os.path.join(config.corridor.save_dir, door_fname.format(room_names=room_names, n=2)),
+		]
 	except Exception as e:
 		print(e)
 

@@ -56,6 +56,8 @@ class DynamicDialog(QDialog):
 		self.setLayout(layout)
 	
 	def submit(self):
+		# TODO: Would be nice to have it wait while the program generates sprites etc before the dialog closes...
+		#  Use the thread thingy and a progress bar like in the main window
 		kwargs = {'self': None, 'level': self.level}
 		for param_name, widget in self.inputs.items():
 			if isinstance(widget, QLineEdit):
@@ -70,10 +72,11 @@ class DynamicDialog(QDialog):
 				self.close()
 		except Exception as e:
 			QMessageBox.critical(self, "Error", str(e))
+			raise e
 		
 		try:
 			to_process, additional_data = compute_level_diffs(level=self.level)
-			
+
 			for i, obj in enumerate(to_process):
 				if isinstance(obj, Room):
 					logging.info(f'Room {obj.name} has no sprite; generating...')
@@ -82,9 +85,10 @@ class DynamicDialog(QDialog):
 				elif isinstance(obj, Corridor):
 					logging.info(f'Room {obj.name} has no sprite; generating...')
 					obj_data = additional_data[i]
-					obj.sprite = generate_corridor(room_names=[obj.room_from, obj.room_to],
+					obj.sprites = generate_corridor(room_names=[obj.room_from, obj.room_to],
 					                               corridor_length=obj.length + 2,
-					                               **obj_data)
+					                               **obj_data,
+					                                corridor_sprites=obj.sprites)
 				elif isinstance(obj, Entity):
 					obj_data = additional_data[i]
 					logging.info(f'Entity {obj.name} has no sprite; generating...')
@@ -95,3 +99,4 @@ class DynamicDialog(QDialog):
 					raise ValueError(f'Unsupported object type: {type(obj)}')
 		except Exception as e:
 			QMessageBox.critical(self, "Error", str(e))
+			raise e

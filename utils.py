@@ -66,7 +66,7 @@ def compute_level_diffs(level: Level) -> Tuple[List[Union[Room, Corridor, Entity
 					additional_data.append(
 						{'entity_type': entity_type, 'room_name': room.name, 'room_description': room.description})
 	for corridor in level.corridors.values():
-		if corridor.sprite is None:
+		if len(corridor.sprites) == 0 or None in corridor.sprites:
 			to_process.append(corridor)
 			room_from, room_to = level.rooms[corridor.room_from], level.rooms[corridor.room_to]
 			additional_data.append({'room_descriptions': [room_from.description, room_to.description]})

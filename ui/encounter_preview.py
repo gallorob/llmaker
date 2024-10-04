@@ -1,7 +1,7 @@
 from typing import List
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QBrush, QColor, QPixmap
+from PyQt6.QtCore import Qt, QRectF
+from PyQt6.QtGui import QBrush, QColor, QPixmap, QPainter
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsPixmapItem
 
 from configs import config
@@ -40,10 +40,20 @@ class EncounterPreviewWidget(QWidget):
 		if self.level.current_room != '':
 			if not is_corridor(self.level.current_room):
 				room = self.level.rooms[self.level.current_room]
+				background_image = QPixmap(room.sprite)
 			else:
 				room = self.level.get_corridor(*derive_rooms_from_corridor_name(self.level.current_room), ordered=True)
+				corridor_chunks = [QPixmap(sprite) for sprite in room.sprites]
+				background_image = QPixmap(corridor_chunks[0].width() * len(corridor_chunks), corridor_chunks[0].height())
+				painter = QPainter(background_image)
+				for i, chunk in enumerate(corridor_chunks):
+					painter.drawPixmap(QRectF(i * chunk.width(), 0,
+					                          chunk.width(), chunk.height()),
+					                   chunk,
+					                   QRectF(0, 0, chunk.width(), chunk.height()))
+				painter.end()
 				
-			background_image = QPixmap(room.sprite)
+			
 			self.scene.setSceneRect(0, 0, background_image.width(), background_image.height())
 			item = self.scene.addPixmap(background_image)
 			item.setPos(0, 0)

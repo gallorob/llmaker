@@ -81,7 +81,8 @@ class InputProcessor(QObject):
 				obj_data = additional_data[i]
 				obj.sprite = generate_corridor(room_names=[obj.room_from, obj.room_to],
 				                               corridor_length=obj.length + 2,
-				                               **obj_data)
+				                               **obj_data,
+				                               corridor_sprites=obj.sprites)
 			elif isinstance(obj, Entity):
 				obj_data = additional_data[i]
 				logging.info(f'Entity {obj.name} has no sprite; generating...')
