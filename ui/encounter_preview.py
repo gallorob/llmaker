@@ -1,18 +1,25 @@
+from functools import partial
 from typing import List
 
 from PyQt6.QtCore import Qt, QRectF
-from PyQt6.QtGui import QBrush, QColor, QPixmap, QPainter
+from PyQt6.QtGui import QBrush, QColor, QPixmap, QPainter, QMouseEvent
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsPixmapItem
+from numba import typeof
 
 from configs import config
+from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
 from dungeon_despair.domain.utils import derive_rooms_from_corridor_name, is_corridor
-from utils import ThemeMode, rich_entity_description
+from ui.dyn_dialog import EnemyPreviewDialog
+from utils import ThemeMode, rich_entity_description, basic_entity_description
 
 
-# TODO: Clicking on an entity shows up a more detailed dialog for that enemy
+def show_enemy_dialog(event: QMouseEvent, parent: QWidget, enemy: Enemy):
+        if event.button() == Qt.MouseButton.LeftButton:
+            dialog = EnemyPreviewDialog(enemy=enemy, parent=parent)
+            dialog.exec()
 
 
 class EncounterPreviewWidget(QWidget):
@@ -68,13 +75,14 @@ class EncounterPreviewWidget(QWidget):
 				for i in range(config.dungeon.max_enemies_per_encounter):
 					if i < len(entities):
 						entity = entities[i]
-						# entity_sprite = QPixmap.fromImage(ImageQt(entity.sprite.convert("RGBA")))
 						entity_sprite = QPixmap(entity.sprite)
 						entity_rect = QGraphicsPixmapItem(entity_sprite)
 						entity_rect.setScale(config.ui.entity_scale)
-						entity_rect.setToolTip(rich_entity_description(entity=entity))
+						entity_rect.setToolTip(basic_entity_description(entity=entity))
 						entity_rect.setPos(x_offset + scaled_entity_width * i,
 						                   y_offset - (entity_sprite.height() * entity_rect.scale()))
+						if isinstance(entity, Enemy):
+							entity_rect.mousePressEvent = partial(show_enemy_dialog, enemy=entity, parent=self)
 						self.scene.addItem(entity_rect)
 			
 			if isinstance(room, Room):

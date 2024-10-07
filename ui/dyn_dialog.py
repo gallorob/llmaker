@@ -1,12 +1,13 @@
 import logging
 
-from PyQt6.QtCore import pyqtSlot, QThread
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
-	QDoubleSpinBox, QMessageBox, QProgressBar
+	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget
 from gptfunctionutil import LibCommand
 
 from dungeon_despair.domain.corridor import Corridor
+from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.room import Room
 from sd_backend import generate_room, generate_corridor, generate_entity
@@ -14,7 +15,76 @@ from ui.input_process import DebugInputProcessor
 from utils import compute_level_diffs
 
 
-class DynamicDialog(QDialog):
+class EnemyPreviewDialog(QDialog):
+	def __init__(self, enemy: Enemy, parent=None):
+		super().__init__(parent)
+		
+		self.setWindowTitle(f"Details for {enemy.name}")
+		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
+		self.setMinimumSize(QSize(400, 300))
+		
+		layout = QGridLayout(self)
+		
+		pixmap = QPixmap(enemy.sprite)
+		
+		sprite_label = QLabel()
+		sprite_label.setPixmap(pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+		
+		# Enemy details
+		details_layout = QVBoxLayout()
+		
+		details_layout.addWidget(QLabel(f"<b>Name</b>: {enemy.name}"))
+		details_layout.addWidget(QLabel(f"<b>Description</b>: {enemy.description}"))
+		details_layout.addWidget(QLabel(f"<b>Species</b>: {enemy.species}"))
+		details_layout.addWidget(QLabel(f"<b>HP</b>: {enemy.hp}"))
+		details_layout.addWidget(QLabel(f"<b>Dodge</b>: {enemy.dodge}"))
+		details_layout.addWidget(QLabel(f"<b>Prot</b>: {enemy.prot}"))
+		details_layout.addWidget(QLabel(f"<b>Spd</b>: {enemy.spd}"))
+		
+		# Layout for Attacks
+		attacks_layout = QVBoxLayout()
+		attacks_layout.addWidget(QLabel("<b>Attacks:</b>"))  # Section title
+		
+		# Create a scrollable area for attacks in case there are too many
+		attacks_scroll_area = QScrollArea(parent=self)
+		attacks_scroll_widget = QWidget(parent=self)
+		attacks_scroll_widget.setProperty('attacks_grid', 'yes')
+		attacks_grid_layout = QGridLayout(attacks_scroll_widget)
+		
+		# Add headers for the grid
+		attacks_grid_layout.addWidget(QLabel("<b>Name</b>"), 0, 0)
+		attacks_grid_layout.addWidget(QLabel("<b>Description</b>"), 0, 1)
+		attacks_grid_layout.addWidget(QLabel("<b>From</b>"), 0, 2)
+		attacks_grid_layout.addWidget(QLabel("<b>To</b>"), 0, 3)
+		attacks_grid_layout.addWidget(QLabel("<b>Base Damage</b>"), 0, 4)
+		
+		# Populate the grid with attacks
+		for row, attack in enumerate(enemy.attacks, start=1):
+			attacks_grid_layout.addWidget(QLabel(attack.name), row, 0)
+			attacks_grid_layout.addWidget(QLabel(attack.description), row, 1)
+			attacks_grid_layout.addWidget(QLabel(attack.starting_positions), row, 2)
+			attacks_grid_layout.addWidget(QLabel(attack.target_positions), row, 3)
+			attacks_grid_layout.addWidget(QLabel(str(attack.base_dmg)), row, 4)
+		
+		# Set up the scroll area for the attacks list
+		attacks_scroll_area.setWidget(attacks_scroll_widget)
+		attacks_scroll_area.setWidgetResizable(True)
+		
+		# Add the scroll area to the layout
+		attacks_layout.addWidget(attacks_scroll_area)
+		
+		# Add a button box for OK button
+		button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+		button_box.accepted.connect(self.accept)
+		
+		# Layout the dialog
+		layout.addWidget(sprite_label, 0, 0)
+		layout.addLayout(details_layout, 0, 1)
+		layout.addLayout(attacks_layout, 1, 0, 1, 2)
+		layout.addWidget(button_box, 2, 0, 1, 2)
+
+
+class DebugFunctionsDialog(QDialog):
 	def __init__(self, level, func, parent=None):
 		super().__init__(parent)
 		self.level = level

@@ -23,6 +23,15 @@ QWidget[conversation="yes"] {
     background-color: #1e1d23;
 }
 
+QWidget[attacks_grid="yes"] {
+    background-color: #1e1d23;
+}
+
+QLabel {
+    background-color: #1e1d23;
+    color: #a9b7c6;
+}
+
 QLabel[messageType="me"] {
     background-color: #4d4958;
     border: 1px solid #a9b7c6;
@@ -439,7 +448,7 @@ QToolBox::tab:selected {
 }
 
 QScrollArea {
-    color: #FFFFFF;
+    color: #a9b7c6;
     background-color: #1e1d23;
 }
 

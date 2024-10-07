@@ -9,9 +9,10 @@ from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGroupBox, QHBoxLayout, 
 
 from configs import config
 from dungeon_despair.domain.level import Level
+from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
 from dungeon_despair.functions import DungeonCrawlerFunctions
 from ui.chat import ConversationWidget
-from ui.dyn_dialog import DynamicDialog
+from ui.dyn_dialog import DebugFunctionsDialog
 from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
@@ -156,7 +157,7 @@ class MainWindow(QMainWindow):
 	
 	def create_button_handler(self, func, button):
 		def handler():
-			dialog = DynamicDialog(self.level, func, button)
+			dialog = DebugFunctionsDialog(self.level, func, button)
 			dialog.exec()
 		
 		return handler
@@ -303,13 +304,14 @@ class MainWindow(QMainWindow):
 			                                              directory=config.scenarios_dir,
 			                                              filter="All Files(*);;Binary Files(*.bin)")
 			if tmp_filename:
-				# TODO: Check if level can be converted to scenario
-				self.level.export_level_as_scenario(filename=tmp_filename)
 				
-				dlg = QMessageBox(self)
-				dlg.setWindowTitle("LLMaker Message")
-				dlg.setText(f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!")
-				_ = dlg.exec()
+				if check_level_playability(self.level, ScenarioType.EXPLORE):
+					self.level.export_level_as_scenario(filename=tmp_filename)
+				
+					dlg = QMessageBox(self)
+					dlg.setWindowTitle("LLMaker Message")
+					dlg.setText(f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!")
+					_ = dlg.exec()
 		except Exception as e:
 			dlg = QErrorMessage(self)
 			dlg.setWindowTitle("LLMaker Error")

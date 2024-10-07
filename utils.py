@@ -30,6 +30,19 @@ def basic_corridor_description(corridor: Corridor) -> str:
 	return f'<h3>Corridor between <i>{corridor.room_from}</i> and <i>{corridor.room_to}</i></h3>'
 
 
+def basic_entity_description(entity: Entity) -> str:
+	description = f'<h1>{entity.name}</h1>'
+	description += f'<h4>{entity.description}</h4>'
+	
+	if isinstance(entity, Enemy):
+		description += f'<h6>HP: {entity.hp}; DODGE: {entity.dodge}; PROT: {entity.prot:.2f}; SPD: {entity.spd}</h6>'
+	elif isinstance(entity, Treasure):
+		description += f'<h6>Loot: {entity.loot}</h6>'
+	elif isinstance(entity, Trap):
+		description += f'<h6>Effect: {entity.effect}</h6>'
+	
+	return description
+
 def rich_entity_description(entity: Entity) -> str:
 	rich_description = f'<h1>{entity.name}</h1>'
 	rich_description += f'<h4>{entity.description}</h4>'
