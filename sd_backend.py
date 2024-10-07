@@ -204,7 +204,7 @@ def generate_room(room_name: str,
 		filename = os.path.join(config.room.save_dir, f'{room_name}.png')
 		logging.getLogger('llmaker').debug(f'generate_room {filename=}')
 		room_image.save(filename)
-		return filename
+		return os.path.basename(filename)
 	except Exception as e:
 		print(e)
 
@@ -357,9 +357,9 @@ def generate_corridor(room_names: List[str],
 			                           to_generate)
 						
 		return [
-			os.path.join(config.corridor.save_dir, door_fname.format(n=1)),
-			*[os.path.join(config.corridor.save_dir, cells_fname.format(n=i)) for i in range(corridor_length - 2)],
-			os.path.join(config.corridor.save_dir, door_fname.format(room_names=room_names, n=2)),
+			door_fname.format(n=1),
+			*[cells_fname.format(n=i) for i in range(corridor_length - 2)],
+			door_fname.format(room_names=room_names, n=2),
 		]
 	except Exception as e:
 		print(e)
@@ -433,6 +433,6 @@ def generate_entity(entity_name: str,
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}.png')
 		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
 		entity_image.save(filename)
-		return filename
+		return os.path.basename(filename)
 	except Exception as e:
 		print(e)

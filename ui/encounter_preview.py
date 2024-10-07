@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from typing import List
 
@@ -47,10 +48,10 @@ class EncounterPreviewWidget(QWidget):
 		if self.level.current_room != '':
 			if not is_corridor(self.level.current_room):
 				room = self.level.rooms[self.level.current_room]
-				background_image = QPixmap(room.sprite)
+				background_image = QPixmap(os.path.join(config.room.save_dir, room.sprite))
 			else:
 				room = self.level.get_corridor(*derive_rooms_from_corridor_name(self.level.current_room), ordered=True)
-				corridor_chunks = [QPixmap(sprite) for sprite in room.sprites]
+				corridor_chunks = [QPixmap(os.path.join(config.corridor.save_dir, sprite)) for sprite in room.sprites]
 				background_image = QPixmap(corridor_chunks[0].width() * len(corridor_chunks), corridor_chunks[0].height())
 				painter = QPainter(background_image)
 				for i, chunk in enumerate(corridor_chunks):
@@ -75,7 +76,7 @@ class EncounterPreviewWidget(QWidget):
 				for i in range(config.dungeon.max_enemies_per_encounter):
 					if i < len(entities):
 						entity = entities[i]
-						entity_sprite = QPixmap(entity.sprite)
+						entity_sprite = QPixmap(os.path.join(config.entity.save_dir, entity.sprite))
 						entity_rect = QGraphicsPixmapItem(entity_sprite)
 						entity_rect.setScale(config.ui.entity_scale)
 						entity_rect.setToolTip(basic_entity_description(entity=entity))

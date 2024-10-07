@@ -1,4 +1,5 @@
 import logging
+import os
 
 from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
@@ -6,6 +7,7 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton
 	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget
 from gptfunctionutil import LibCommand
 
+from configs import config
 from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
@@ -25,7 +27,7 @@ class EnemyPreviewDialog(QDialog):
 		
 		layout = QGridLayout(self)
 		
-		pixmap = QPixmap(enemy.sprite)
+		pixmap = QPixmap(os.path.join(config.entity.save_dir, enemy.sprite))
 		
 		sprite_label = QLabel()
 		sprite_label.setPixmap(pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
