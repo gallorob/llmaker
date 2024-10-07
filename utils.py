@@ -1,5 +1,6 @@
+import logging
 from enum import Enum, auto
-from typing import List, Union, Any, Tuple
+from typing import List, Union, Any, Tuple, Dict
 
 from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.enemy import Enemy
@@ -8,16 +9,17 @@ from dungeon_despair.domain.entities.trap import Trap
 from dungeon_despair.domain.entities.treasure import Treasure
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
+from sd_backend import generate_room, generate_corridor, generate_entity
 
 
 class ToolMode(Enum):
-	USER = auto()
-	LLM = auto()
+	USER = 'user'
+	LLM = 'llm'
 
 
 class ThemeMode(Enum):
-	LIGHT = auto()
-	DARK = auto()
+	LIGHT = 'light'
+	DARK = 'dark'
 	
 	
 def basic_room_description(room: Room) -> str:
@@ -44,10 +46,6 @@ def rich_entity_description(entity: Entity) -> str:
 		rich_description += f'<h6>Effect: {entity.effect}</h6>'
 	
 	return rich_description
-
-
-def clear_strings_for_prompt(strings: List[str]):
-	return [s.lower().replace('.', '').strip() for s in strings]
 
 
 def compute_level_diffs(level: Level) -> Tuple[List[Union[Room, Corridor, Entity]], List[Any]]:
@@ -81,3 +79,25 @@ def compute_level_diffs(level: Level) -> Tuple[List[Union[Room, Corridor, Entity
 							 'room_description': room_from.description})
 	
 	return to_process, additional_data
+
+def process_diff(obj: Any,
+                 additional_data: Dict[str, str]) -> None:
+	if isinstance(obj, Room):
+		logging.info(f'Room {obj.name} has no sprite; generating...')
+		obj.sprite = generate_room(room_name=obj.name,
+		                           room_description=obj.description)
+	elif isinstance(obj, Corridor):
+		logging.info(f'Room {obj.name} has no sprite; generating...')
+		obj_data = additional_data
+		obj.sprites = generate_corridor(room_names=[obj.room_from, obj.room_to],
+		                               corridor_length=obj.length + 2,
+		                               **obj_data,
+		                               corridor_sprites=obj.sprites)
+	elif isinstance(obj, Entity):
+		obj_data = additional_data
+		logging.info(f'Entity {obj.name} has no sprite; generating...')
+		obj.sprite = generate_entity(entity_name=obj.name,
+		                             entity_description=obj.description,
+		                             **obj_data)
+	else:
+		raise ValueError(f'Unsupported object type: {type(obj)}')

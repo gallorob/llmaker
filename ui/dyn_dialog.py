@@ -1,14 +1,16 @@
 import logging
 
+from PyQt6.QtCore import pyqtSlot, QThread
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
-	QDoubleSpinBox, QMessageBox
+	QDoubleSpinBox, QMessageBox, QProgressBar
 from gptfunctionutil import LibCommand
 
 from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.room import Room
 from sd_backend import generate_room, generate_corridor, generate_entity
+from ui.input_process import DebugInputProcessor
 from utils import compute_level_diffs
 
 
@@ -53,11 +55,29 @@ class DynamicDialog(QDialog):
 		submit_btn.clicked.connect(self.submit)
 		layout.addWidget(submit_btn)
 		
+		self.pbar = QProgressBar(self)
+		self.pbar.setRange(0, 100)
+		self.pbar.setHidden(True)
+		
+		layout.addWidget(self.pbar)
+		
 		self.setLayout(layout)
 	
+	@pyqtSlot(int)
+	def update_progress(self, progress):
+		logging.getLogger().debug(f'update_progress Task progress: {progress}')
+		self.pbar.setValue(progress)
+	
+	@pyqtSlot(str)
+	def task_finished(self, result):
+		logging.getLogger().debug(f'task_finished Edit finished')
+		self.pbar.reset()
+		self.pbar.setHidden(True)
+		button_pressed = QMessageBox.information(self, "Output", f"{result}")
+		if button_pressed == QMessageBox.StandardButton.Ok:
+			self.close()
+	
 	def submit(self):
-		# TODO: Would be nice to have it wait while the program generates sprites etc before the dialog closes...
-		#  Use the thread thingy and a progress bar like in the main window
 		kwargs = {'self': None, 'level': self.level}
 		for param_name, widget in self.inputs.items():
 			if isinstance(widget, QLineEdit):
@@ -65,38 +85,21 @@ class DynamicDialog(QDialog):
 			elif isinstance(widget, QSpinBox) or isinstance(widget, QDoubleSpinBox):
 				kwargs[param_name] = widget.value()
 		
-		try:
-			result = self.func.command(**kwargs)
-			button_pressed = QMessageBox.information(self, "Output", f"{result}")
-			if button_pressed == QMessageBox.StandardButton.Ok:
-				self.close()
-		except Exception as e:
-			QMessageBox.critical(self, "Error", str(e))
-			raise e
+		self.worker = DebugInputProcessor(kwargs,
+		                                  self.func,
+		                                  self)
+		self.thread = QThread()
 		
-		try:
-			to_process, additional_data = compute_level_diffs(level=self.level)
-
-			for i, obj in enumerate(to_process):
-				if isinstance(obj, Room):
-					logging.info(f'Room {obj.name} has no sprite; generating...')
-					obj.sprite = generate_room(room_name=obj.name,
-					                           room_description=obj.description)
-				elif isinstance(obj, Corridor):
-					logging.info(f'Room {obj.name} has no sprite; generating...')
-					obj_data = additional_data[i]
-					obj.sprites = generate_corridor(room_names=[obj.room_from, obj.room_to],
-					                               corridor_length=obj.length + 2,
-					                               **obj_data,
-					                                corridor_sprites=obj.sprites)
-				elif isinstance(obj, Entity):
-					obj_data = additional_data[i]
-					logging.info(f'Entity {obj.name} has no sprite; generating...')
-					obj.sprite = generate_entity(entity_name=obj.name,
-					                             entity_description=obj.description,
-					                             **obj_data)
-				else:
-					raise ValueError(f'Unsupported object type: {type(obj)}')
-		except Exception as e:
-			QMessageBox.critical(self, "Error", str(e))
-			raise e
+		self.worker.moveToThread(self.thread)
+		
+		self.thread.started.connect(self.worker.run)
+		self.worker.finished.connect(self.task_finished)
+		self.worker.progress.connect(self.update_progress)
+		self.worker.finished.connect(self.thread.quit)
+		self.worker.finished.connect(self.worker.deleteLater)
+		self.thread.finished.connect(self.thread.deleteLater)
+		
+		self.pbar.setHidden(False)
+		self.pbar.reset()
+		
+		self.thread.start()

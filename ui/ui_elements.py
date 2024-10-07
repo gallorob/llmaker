@@ -13,7 +13,7 @@ from dungeon_despair.functions import DungeonCrawlerFunctions
 from ui.chat import ConversationWidget
 from ui.dyn_dialog import DynamicDialog
 from ui.encounter_preview import EncounterPreviewWidget
-from ui.input_process import InputProcessor
+from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
 from utils import ToolMode, ThemeMode
 
@@ -194,7 +194,7 @@ class MainWindow(QMainWindow):
 		
 		logging.getLogger().debug(f'process_user_input Starting separate thread')
 		
-		self.worker = InputProcessor(self.level, user_input, conversation_history)
+		self.worker = UIInputProcessor(self.level, user_input, conversation_history)
 		self.thread = QThread()
 		
 		self.worker.moveToThread(self.thread)
@@ -341,7 +341,7 @@ class MainWindow(QMainWindow):
 		self.actionSwitchTheme.setText(f'Switch to {"Light" if self.theme == ThemeMode.LIGHT else "Dark"} theme')
 		self.actionSwitchMode.setToolTip(
 			f'Switch LLMaker to {"Light" if self.theme == ThemeMode.LIGHT else "Dark"} theme.')
-		self.theme = 'DARK' if self.theme == ThemeMode.LIGHT else 'LIGHT'
+		self.theme = ThemeMode.DARK if self.theme == ThemeMode.LIGHT else ThemeMode.LIGHT
 		self.apply_theme()
 		self.update()
 		logging.info(f'Switched theme to {"Light" if self.theme == ThemeMode.LIGHT else "Dark"}')
@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
 	
 	def apply_theme(self):
 		try:
-			with open(f'assets/themes/stylesheet_{self.theme.name.lower()}.css', 'r') as f:
+			with open(f'assets/themes/stylesheet_{self.theme.value}.css', 'r') as f:
 				self.setStyleSheet(f.read())
 		except FileNotFoundError:
 			raise ValueError(f'Unknown theme: {self.theme.name}')

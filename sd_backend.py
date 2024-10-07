@@ -15,7 +15,11 @@ from diffusers import StableDiffusionPipeline
 from diffusers.utils import load_image
 
 from configs import config
-from utils import clear_strings_for_prompt
+
+
+def clear_strings_for_prompt(strings: List[str]):
+	return [s.lower().replace('.', '').strip() for s in strings]
+
 
 device = 'cuda' if th.cuda.is_available() else 'cpu'
 
