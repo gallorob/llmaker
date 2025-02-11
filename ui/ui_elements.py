@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 
@@ -30,6 +31,8 @@ class MainWindow(QMainWindow):
 	def __init__(self, level: Level):
 		super().__init__()
 		self.level = level
+		self.levels_hist = [copy.deepcopy(self.level)]
+		self.level_idx = 0
 		
 		self.mode = ToolMode.LLM
 		
@@ -103,6 +106,7 @@ class MainWindow(QMainWindow):
 		
 		self.menuFile = self.menuBar().addMenu('&File')
 		self.menuOptions = self.menuBar().addMenu('&Options')
+		self.menuEdit = self.menuBar().addMenu('&Edit')
 		self.menuHelp = self.menuBar().addMenu('&Help')
 		
 		# Actions
@@ -135,12 +139,20 @@ class MainWindow(QMainWindow):
 			f'Switch LLMaker to {"Light" if self.theme == ThemeMode.DARK else "Dark"} theme.')
 		self.menuOptions.addAction(self.actionSwitchTheme)
 		
+		self.actionUndo = QAction('Undo', parent=self)
+		self.actionUndo.setToolTip('Undo latest change')
+		self.menuEdit.addAction(self.actionUndo)
+		self.actionRedo = QAction('Redo', parent=self)
+		self.actionRedo.setToolTip('Redo latest change')
+		self.menuEdit.addAction(self.actionRedo)
+
 		self.actionAbout = QAction('About', parent=self)
 		self.actionAbout.setToolTip('About LLMaker')
 		self.menuHelp.addAction(self.actionAbout)
 		
 		self.menuBar().addAction(self.menuFile.menuAction())
 		self.menuBar().addAction(self.menuOptions.menuAction())
+		self.menuBar().addAction(self.menuEdit.menuAction())
 		self.menuBar().addAction(self.menuHelp.menuAction())
 		
 		self.chat_box.returnPressed.connect(self.process_user_input)
@@ -150,6 +162,8 @@ class MainWindow(QMainWindow):
 		self.actionExport.triggered.connect(self.export_level)
 		self.actionSwitchMode.triggered.connect(self.switch_mode)
 		self.actionSwitchTheme.triggered.connect(self.switch_theme)
+		self.actionUndo.triggered.connect(self.undo_edit)
+		self.actionRedo.triggered.connect(self.redo_edit)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
 		# self.switch_mode()
@@ -158,8 +172,14 @@ class MainWindow(QMainWindow):
 	
 	def create_button_handler(self, func, button):
 		def handler():
+			if self.level_idx < len(self.levels_hist) - 1:
+				self.levels_hist = self.levels_hist[:self.level_idx + 1]
+
 			dialog = DebugFunctionsDialog(self.level, func, button)
 			dialog.exec()
+
+			self.level_idx += 1
+			self.levels_hist.append(copy.deepcopy(self.level))
 		
 		return handler
 	
@@ -180,6 +200,8 @@ class MainWindow(QMainWindow):
 		self.chat_box.setFocus()
 		self.pbar.reset()
 		self.pbar.setHidden(True)
+		self.level_idx += 1
+		self.levels_hist.append(copy.deepcopy(self.level))
 		self.update()
 	
 	@pyqtSlot()
@@ -196,6 +218,9 @@ class MainWindow(QMainWindow):
 		
 		logging.getLogger().debug(f'process_user_input Starting separate thread')
 		
+		if self.level_idx < len(self.levels_hist) - 1:
+			self.levels_hist = self.levels_hist[:self.level_idx + 1]
+
 		self.worker = UIInputProcessor(self.level, user_input, conversation_history)
 		self.thread = QThread()
 		
@@ -319,6 +344,22 @@ class MainWindow(QMainWindow):
 			dlg.showMessage(str(e))
 			_ = dlg.exec()
 	
+	@pyqtSlot()
+	def undo_edit(self):
+		if self.level_idx > 0:
+			self.level_idx -= 1
+			self.set_level(copy.deepcopy(self.levels_hist[self.level_idx]))
+			# TODO: Should also handle chat messages
+			self.update()
+	
+	@pyqtSlot()
+	def redo_edit(self):
+		if self.level_idx < len(self.levels_hist) - 1:
+			self.level_idx += 1
+			self.set_level(copy.deepcopy(self.levels_hist[self.level_idx]))
+			# TODO: Should also handle chat messages
+			self.update()
+
 	@pyqtSlot()
 	def switch_mode(self):
 		self.actionSwitchMode.setText(f'Switch to {"USER" if self.mode == ToolMode.USER else "LLM"} mode')
