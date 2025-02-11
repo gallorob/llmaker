@@ -327,9 +327,13 @@ class MainWindow(QMainWindow):
 		if tmp_filename:
 			try:
 				level, conversation = Level.load_from_file(tmp_filename)
+				
+				self.levels_hist = [copy.deepcopy(level)]
+				self.level_idx = 0
+				
 				self.set_level(level)
 				
-				for i, line in enumerate(conversation.split('\n')):
+				for i, line in enumerate(conversation.split('\n\n\n')):
 					line = line.replace('You: ', '').replace('AI: ', '')
 					self.chat_area.add_message(line)
 				
