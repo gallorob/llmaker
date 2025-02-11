@@ -419,7 +419,7 @@ cache.try_add_model(role='params', model_name='qwen2.5')
 llm = FreyrLLM(cache=cache)
 
 def chat_llm(user_message: str,
-             conversation_history: str,
+             conversation_history: List[str],
              level: Level):
 	global llm
 	
@@ -428,8 +428,6 @@ def chat_llm(user_message: str,
 	# 	                        enumerate(conversation_history.split('\n'))]
 	# else:
 	# 	conversation_history = []
-	
-	conversation_history = conversation_history.split('\n')
 	
 	return llm(conversation_history=conversation_history,
 	           user_message=user_message,

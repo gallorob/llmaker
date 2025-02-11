@@ -24,7 +24,7 @@ class UIInputProcessor(QObject):
 	def __init__(self,
 	             level: Level,
 	             user_input: str,
-	             conversation_history: str):
+	             conversation_history: List[str]):
 		super(UIInputProcessor, self).__init__()
 		self.level = level
 		self.user_input = user_input
@@ -88,4 +88,4 @@ class DebugInputProcessor(QObject):
 			self.finished.emit(submission_output)
 		except Exception as e:
 			print(e)
-			QMessageBox.critical(self.dialog, "Error", str(e))
+			QMessageBox.critical(None, "Error", str(e))

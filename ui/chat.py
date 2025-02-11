@@ -61,5 +61,5 @@ class ConversationWidget(QWidget):
 			message.setMaximumWidth(self.width())
 		super().resizeEvent(event)
 	
-	def get_conversation(self):
-		return '\n'.join([message.text() for message in self.messages])
+	def get_conversation(self) -> List[str]:
+		return [message.text() for message in self.messages]
