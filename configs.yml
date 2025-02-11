@@ -31,6 +31,11 @@ llm:
   temperature: 0.8
   top_p: 0.6
   top_k: 10
+  roles:
+    chat: 'qwen2.5:0.5b'
+    summary: 'qwen2.5:0.5b'
+    intent: 'qwen2.5:latest'
+    params: 'qwen2.5:latest'
   intent:
     prompt: './assets/prompts/intent_system_prompt'
   params:

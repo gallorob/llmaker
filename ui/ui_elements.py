@@ -6,13 +6,14 @@ from PyQt6.QtCore import QThread, pyqtSlot
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, \
 	QMessageBox, QProgressBar, QPushButton, QSplashScreen, \
-	QVBoxLayout, QWidget
+	QVBoxLayout, QWidget, QMenu
 from dungeon_despair.domain.utils import make_corridor_name
 
 from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
 from dungeon_despair.functions import DungeonCrawlerFunctions
+from freyr_llm import LLMsCache, llms_cache, freyr_model
 from ui.chat import ConversationWidget
 from ui.dyn_dialog import DebugFunctionsDialog
 from ui.encounter_preview import EncounterPreviewWidget
@@ -138,6 +139,23 @@ class MainWindow(QMainWindow):
 		self.actionSwitchTheme.setToolTip(
 			f'Switch LLMaker to {"Light" if self.theme == ThemeMode.DARK else "Dark"} theme.')
 		self.menuOptions.addAction(self.actionSwitchTheme)
+
+		self.menuOptions.addSeparator()
+
+		self.freyr_menu = self.menuOptions.addMenu('FREYR')
+		self.freyr_intent = self.freyr_menu.addMenu('Intent')
+		self.freyr_params = self.freyr_menu.addMenu('Parameters')
+		self.freyr_chat = self.freyr_menu.addMenu('Chat')
+		self.freyr_summary = self.freyr_menu.addMenu('Summary')
+
+		for submenu, role in zip([self.freyr_intent, self.freyr_params, self.freyr_chat, self.freyr_summary],
+						   		 ['intent', 'params', 'chat', 'summary']):
+			for available_llm in LLMsCache.get_ollama_models():
+				llm_choice = QAction(available_llm, parent=submenu, checkable=True)
+				if llms_cache.get_model_by_role(role) == available_llm:
+					llm_choice.setChecked(True)
+				llm_choice.triggered.connect(self.create_freyr_models_handler(role, submenu, llm_choice))
+				submenu.addAction(llm_choice)
 		
 		self.actionUndo = QAction('Undo', parent=self)
 		self.actionUndo.setToolTip('Undo latest change')
@@ -182,6 +200,18 @@ class MainWindow(QMainWindow):
 			self.levels_hist.append(copy.deepcopy(self.level))
 		
 		return handler
+
+	def create_freyr_models_handler(self, role: str, menu: QMenu, action: QAction):
+		def handler():
+			# Action is checked before the handler is called, so we have to check LLMs cache to see if the user is switching models
+			if llms_cache.get_model_by_role(role) != action.text():
+				for other_action in menu.actions():
+					other_action.setChecked(False)
+				action.setChecked(True)
+				llms_cache.drop_model_by_role(role)
+				llms_cache.try_add_model(role=role, model_name=action.text())
+		
+		return handler				
 	
 	@pyqtSlot(int)
 	def update_progress(self, progress):

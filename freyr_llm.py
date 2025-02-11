@@ -47,7 +47,7 @@ class LLMsCache:
 	                  role: str,
 	                  model_name: str) -> None:
 		assert role not in self.roles, f'{role} already has a model: {self.__cache[role]}'
-		if f'{model_name}:latest' not in self.ollama_models or model_name not in self.ollama_models:
+		if model_name not in self.ollama_models:
 			ollama.pull(model_name)
 			self.ollama_models = LLMsCache.get_ollama_models()
 		ollama.generate(model=model_name, keep_alive=-1)
@@ -407,28 +407,17 @@ class FreyrLLM:
 		return response
 	
 
-# TODO: Models choice should be configurable
+llms_cache = LLMsCache()
+llms_cache.try_add_model(role='chat', model_name=config.llm.roles.chat)
+llms_cache.try_add_model(role='summary', model_name=config.llm.roles.summary)
+llms_cache.try_add_model(role='intent', model_name=config.llm.roles.intent)
+llms_cache.try_add_model(role='params', model_name=config.llm.roles.params)
 
-
-cache = LLMsCache()
-cache.try_add_model(role='chat', model_name='qwen2.5')
-cache.try_add_model(role='summary', model_name='qwen2.5')
-cache.try_add_model(role='intent', model_name='qwen2.5')
-cache.try_add_model(role='params', model_name='qwen2.5')
-
-llm = FreyrLLM(cache=cache)
+freyr_model = FreyrLLM(cache=llms_cache)
 
 def chat_llm(user_message: str,
              conversation_history: List[str],
              level: Level):
-	global llm
-	
-	# if len(conversation_history) > 0:
-	# 	conversation_history = [{'role': f"{'user' if i % 2 == 0 else 'assistant'}", 'content': msg} for i, msg in
-	# 	                        enumerate(conversation_history.split('\n'))]
-	# else:
-	# 	conversation_history = []
-	
-	return llm(conversation_history=conversation_history,
+	return freyr_model(conversation_history=conversation_history,
 	           user_message=user_message,
 	           level=level)
