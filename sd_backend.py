@@ -23,9 +23,6 @@ def clear_strings_for_prompt(strings: List[str]):
 
 device = 'cuda' if th.cuda.is_available() else 'cpu'
 
-
-vae: Optional[AutoencoderKL] = None
-
 controlnet_mlsd: Optional[ControlNetModel] = None
 stablediff_controlnet_mlsd: Optional[StableDiffusionControlNetPipeline] = None
 compel_stablediff_controlnet_mlsd: Optional[Compel] = None
@@ -33,30 +30,15 @@ compel_stablediff_controlnet_mlsd: Optional[Compel] = None
 stablediff: Optional[StableDiffusionPipeline] = None
 compel_stablediff: Optional[Compel] = None
 
-# controlnet_softedge: Optional[ControlNetModel] = None
-# stablediff_controlnet_softedge: Optional[StableDiffusionControlNetInpaintPipeline] =None
-# compel_stablediff_controlnet_softedge: Optional[Compel] = None
-
 controlnet_inpaint: Optional[ControlNetModel] = None
 stablediff_controlnet_inpaint: Optional[StableDiffusionControlNetInpaintPipeline] = None
 compel_stablediff_controlnet_inpaint: Optional[Compel] = None
 
 
 def load_stablediff_models(splash: Any):
-	global vae
 	global controlnet_mlsd, stablediff_controlnet_mlsd, compel_stablediff_controlnet_mlsd
 	global stablediff, compel_stablediff
-	# global controlnet_softedge, stablediff_controlnet_softedge, compel_stablediff_controlnet_softedge
 	global controlnet_inpaint, stablediff_controlnet_inpaint, compel_stablediff_controlnet_inpaint
-	
-	vae = AutoencoderKL.from_single_file(os.path.join(config.sd_model.cache_dir, config.sd_model.vae),
-	                                     torch_dtype=th.float16,
-	                                     cache_dir=config.sd_model.cache_dir,
-	                                     use_safetensors=True,
-	                                     safety_checker=None)#.to(device)
-
-	splash.showMessage('Loaded VAE')
-	logging.getLogger('llmaker').info('Loaded VAE')
 	
 	controlnet_mlsd = ControlNetModel.from_pretrained(config.sd_model.controlnet_mlsd,
 	                                                  torch_dtype=th.float16,
@@ -81,7 +63,7 @@ def load_stablediff_models(splash: Any):
 		algorithm_type='sde-dpmsolver++')
 	# stablediff_controlnet_mlsd.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_mlsd.scheduler.config)
 	stablediff_controlnet_mlsd.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff_controlnet_mlsd.vae = vae
+	# stablediff_controlnet_mlsd.vae = vae
 	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
 	stablediff_controlnet_mlsd.enable_model_cpu_offload()
 	stablediff_controlnet_mlsd.enable_xformers_memory_efficient_attention()
@@ -102,7 +84,6 @@ def load_stablediff_models(splash: Any):
 	                                                               algorithm_type='sde-dpmsolver++')
 	# stablediff.scheduler = EulerDiscreteScheduler.from_config(stablediff.scheduler.config)
 	stablediff.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff.vae = vae
 	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.entity_lora)
 	stablediff.enable_model_cpu_offload()
 	stablediff.enable_xformers_memory_efficient_attention()
@@ -118,31 +99,6 @@ def load_stablediff_models(splash: Any):
 	                                                      safety_checker=None)#.to(device)
 	splash.showMessage('Loaded ControlNet SoftEdge')
 	logging.getLogger('llmaker').info('Loaded ControlNet SoftEdge')
-
-	# stablediff_controlnet_softedge = StableDiffusionControlNetInpaintPipeline.from_single_file(
-	# 	os.path.join(config.sd_model.cache_dir, config.sd_model.stable_diffusion),
-	# 	controlnet=controlnet_softedge,
-	# 	torch_dtype=th.float16,
-	# 	cache_dir=config.sd_model.cache_dir,
-	# 	use_safetensors=True,
-	# 	num_in_channels=4,
-	# 	safety_checker=None)#.to(device)
-	# stablediff_controlnet_softedge.safety_checker = None
-	# # stablediff_controlnet_softedge.scheduler = UniPCMultistepScheduler.from_config(
-	# # 	stablediff_controlnet_softedge.scheduler.config,
-	# # 	use_karras=True,
-	# # 	algorithm_type='sde-dpmsolver++')
-	# stablediff_controlnet_softedge.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_softedge.scheduler.config)
-	# stablediff_controlnet_softedge.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	# stablediff_controlnet_softedge.vae = vae
-	# stablediff_controlnet_softedge.load_lora_weights(config.sd_model.cache_dir,
-	#                                                  weight_name=config.sd_model.entity_lora)
-	# stablediff_controlnet_softedge.enable_model_cpu_offload()
-	# compel_stablediff_controlnet_softedge = Compel(tokenizer=stablediff_controlnet_softedge.tokenizer,
-	#                                                text_encoder=stablediff_controlnet_softedge.text_encoder,
-	#                                                truncate_long_prompts=False)
-	# splash.showMessage('Loaded Stable Diffusion w/ ControlNet SoftEdge')
-	# logging.getLogger('llmaker').info('Loaded Stable Diffusion w/ ControlNet SoftEdge')
 
 	controlnet_inpaint = ControlNetModel.from_pretrained(config.sd_model.controlnet_inpaint,
 	                                                     torch_dtype=th.float16,
@@ -167,7 +123,6 @@ def load_stablediff_models(splash: Any):
 		algorithm_type='sde-dpmsolver++')
 	# stablediff_controlnet_inpaint.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_inpaint.scheduler.config)
 	stablediff_controlnet_inpaint.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff_controlnet_inpaint.vae = vae
 	stablediff_controlnet_inpaint.load_lora_weights(config.sd_model.cache_dir,
 	                                                weight_name=config.sd_model.ambient_lora)
 	stablediff_controlnet_inpaint.enable_model_cpu_offload()
