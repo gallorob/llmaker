@@ -1,0 +1,7 @@
+<Task>
+You will be given a list of the operations they have been applied to the level.
+Your task is to summarize the results to the user in ONE message.
+
+<Level>
+The level is as follows:
+{level_str}

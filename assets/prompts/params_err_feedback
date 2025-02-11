@@ -1,0 +1,4 @@
+There was an error with the operation {operation}: {func_err_msg}.
+These are the parameters that you passed to the operation: {func_args}.
+If you can solve this error by changing one or more of the parameters, regenerate the parameters.
+Otherwise, reply with "{err_msg}".

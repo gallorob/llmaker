@@ -13,3 +13,4 @@ pyqt6
 numpy
 rembg
 compel
+ollama

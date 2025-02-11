@@ -10,13 +10,17 @@ from dungeon_despair.domain.configs import config as domain_config
 
 from configs import config
 from dungeon_despair.domain.level import Level
-# from level import Level
+# from llm_backend import load_local_llm
 
 from sd_backend import load_stablediff_models
 from ui.ui_elements import MainWindow, get_splash_screen
 
 STARTING_LEVEL = 'empty'
 # STARTING_LEVEL = 'from_file'
+# FILE_NAME = './my_levels/baselevel.bin'
+FILE_NAME = './my_levels/t5_with_attacks.bin'
+
+logging.getLogger('llmaker').setLevel(logging.DEBUG)
 
 
 if __name__ == '__main__':
@@ -41,17 +45,20 @@ if __name__ == '__main__':
 	
 	logging.getLogger('llmaker').info('Started loading diffusion models...')
 	splash_screen.showMessage('Loading Stable Diffusion Models...')
-	load_stablediff_models(splash_screen)
+	# load_local_llm(splash_screen)
+	# load_stablediff_models(splash_screen)
 	splash_screen.showMessage('Loaded Stable Diffusion Models')
 	logging.getLogger('llmaker').info('Diffusion models loaded')
 	
 	win = MainWindow(level=Level())
 	
-	if STARTING_LEVEL == 'from_file' and os.path.exists('my_levels/v2.bin'):
-		logging.getLogger('llmaker').info('Loading level from file: v2.bin')
+	if STARTING_LEVEL == 'from_file' and os.path.exists(FILE_NAME):
+		logging.getLogger('llmaker').info(f'Loading level from file: {FILE_NAME}')
 		splash_screen.showMessage('Loading level from file...')
-		level, conversation = Level.load_from_file('my_levels/v2.bin')
+		level, _ = Level.load_from_file(FILE_NAME)
 		win.set_level(level)
+		with open('tmp_conversation.txt', 'r') as f:
+			conversation = f.read()
 		win.chat_area.load_conversation(conversation)
 		logging.getLogger('llmaker').info('Updating GUI...')
 		win.map_preview.show_map_preview()

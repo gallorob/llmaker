@@ -1,0 +1,16 @@
+<Task>
+You will be given a conversation between a Designer and a Colleague, and a list of operations that can be applied to the level. They are working on designing a dungeon crawler video game level.
+Your task is to list the operations that match the Designer intent. Return only the name of the operations as comma-separated strings.
+In case no operation should be executed, simply return "conversation".
+Do not add anything else.
+
+<Example Output>
+create_room, add_enemy
+
+<Level>
+The level is as follows:
+{level_str}
+
+<Operations>
+Here is the list of possible operations (name and description):
+{intents_str}

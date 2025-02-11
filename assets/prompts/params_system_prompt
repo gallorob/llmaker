@@ -1,0 +1,20 @@
+<Task>
+You will be given a conversation between a Designer and a Colleague, and an operation.
+Your task is to generate the values for the operation's parameters.
+You MUST use values based on the conversation IF specified. Otherwise, generate them accordingly (based on the level).
+Return the name of each parameter with its value in a list, like this:
+- parameter_name: parameter_value
+- another_parameter_name: another_parameter_value
+etc...
+Do not add anything else before or after each parameters value.
+
+<Level>
+The level is as follows:
+{level_str}
+
+<Operation>
+This is the operation: {operation}
+
+<Parameters>
+These are the operation's parameters:
+{op_params_str}
