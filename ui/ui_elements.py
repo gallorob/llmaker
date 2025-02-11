@@ -351,6 +351,8 @@ class MainWindow(QMainWindow):
 			self.set_level(copy.deepcopy(self.levels_hist[self.level_idx]))
 			# TODO: Should also handle chat messages
 			self.update()
+		else:
+			QMessageBox.warning(None, "LLMaker Warning", "No undos available!")
 	
 	@pyqtSlot()
 	def redo_edit(self):
@@ -359,6 +361,8 @@ class MainWindow(QMainWindow):
 			self.set_level(copy.deepcopy(self.levels_hist[self.level_idx]))
 			# TODO: Should also handle chat messages
 			self.update()
+		else:
+			QMessageBox.warning(None, "LLMaker Warning", "No redos available!")
 
 	@pyqtSlot()
 	def switch_mode(self):
