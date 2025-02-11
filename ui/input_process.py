@@ -10,7 +10,8 @@ from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
-from llm_backend import chat_llm
+# from llm_backend import chat_llm
+from freyr_llm import chat_llm
 from sd_backend import generate_room, generate_entity, generate_corridor
 from utils import compute_level_diffs, process_diff
 
@@ -87,5 +88,4 @@ class DebugInputProcessor(QObject):
 			self.finished.emit(submission_output)
 		except Exception as e:
 			print(e)
-			print(e.__traceback__)
 			QMessageBox.critical(self.dialog, "Error", str(e))

@@ -12,7 +12,7 @@ from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
-from dungeon_despair.domain.utils import derive_rooms_from_corridor_name, is_corridor
+# from dungeon_despair.domain.utils import derive_rooms_from_corridor_name, is_corridor
 from ui.dyn_dialog import EnemyPreviewDialog
 from utils import ThemeMode, rich_entity_description, basic_entity_description
 
@@ -46,11 +46,11 @@ class EncounterPreviewWidget(QWidget):
 			QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == ThemeMode.DARK else '#ececec')))
 		
 		if self.level.current_room != '':
-			if not is_corridor(self.level.current_room):
+			if self.level.current_room in self.level.rooms.keys():
 				room = self.level.rooms[self.level.current_room]
 				background_image = QPixmap(os.path.join(config.room.save_dir, room.sprite))
 			else:
-				room = self.level.get_corridor(*derive_rooms_from_corridor_name(self.level.current_room), ordered=True)
+				room = self.level.corridors[self.level.current_room]
 				corridor_chunks = [QPixmap(os.path.join(config.corridor.save_dir, sprite)) for sprite in room.sprites]
 				background_image = QPixmap(corridor_chunks[0].width() * len(corridor_chunks), corridor_chunks[0].height())
 				painter = QPainter(background_image)
@@ -67,7 +67,7 @@ class EncounterPreviewWidget(QWidget):
 			item.setPos(0, 0)
 			self.view.fitInView(item, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
 			
-			if is_corridor(self.level.current_room):
+			if self.level.current_room in self.level.corridors.keys():
 				self.view.horizontalScrollBar().setValue(0)
 			
 			w, h = self.scene.width(), self.scene.height()

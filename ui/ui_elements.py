@@ -6,6 +6,7 @@ from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, \
 	QMessageBox, QProgressBar, QPushButton, QSplashScreen, \
 	QVBoxLayout, QWidget
+from dungeon_despair.domain.utils import make_corridor_name
 
 from configs import config
 from dungeon_despair.domain.level import Level
@@ -151,7 +152,7 @@ class MainWindow(QMainWindow):
 		self.actionSwitchTheme.triggered.connect(self.switch_theme)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
-		self.switch_mode()
+		# self.switch_mode()
 		
 		self.chat_box.setFocus()
 	
@@ -222,7 +223,7 @@ class MainWindow(QMainWindow):
 				self.room_label.setText(f'Room: <b><i>{self.level.current_room}</i></b>')
 				self.room_description.setText(f'<i>{self.level.rooms[self.level.current_room].description}</i>')
 			else:
-				corridor = self.level.get_corridor(*self.level.current_room.split('-'))
+				corridor = self.level.corridors[self.level.current_room]
 				self.room_label.setText(
 					f'Corridor between <b><i>{corridor.room_from}</i></b> and <b><i>{corridor.room_to}</i></b>')
 				self.room_description.setText('')
@@ -235,7 +236,7 @@ class MainWindow(QMainWindow):
 		self.update()
 	
 	def on_corridor_press(self, room_from_name, room_to_name, event):
-		corridor = self.level.get_corridor(room_from_name, room_to_name)
+		corridor = self.level.corridors[make_corridor_name(room_from_name=room_from_name, room_to_name=room_to_name)]
 		self.level.current_room = corridor.name
 		self.update()
 	

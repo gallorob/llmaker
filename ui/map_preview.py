@@ -9,7 +9,7 @@ from configs import config
 from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
-from dungeon_despair.domain.utils import is_corridor, derive_rooms_from_corridor_name, Direction, opposite_direction
+from dungeon_despair.domain.utils import Direction, make_corridor_name, opposite_direction
 from utils import ThemeMode, basic_room_description, basic_corridor_description
 
 
@@ -71,13 +71,15 @@ class MapPreviewWidget(QWidget):
 			for direction in Direction:
 				other_room_name = self.level.connections[room.name][direction]
 				if other_room_name != '':
-					corridor = self.level.get_corridor(room_from_name=room.name, room_to_name=other_room_name)
-					if corridor is not None:
-						if f'{corridor.room_from}_{corridor.room_to}' not in self.drawn_rooms:
-							next_offset_x, next_offset_y = __update_offsets(offset_x, offset_y, direction,
-							                                                self.room_draw_size)
-							other_rects, _, _ = self.get_rects(corridor, next_offset_x, next_offset_y, direction)
-							rects.extend(other_rects)
+					corridor_names = [make_corridor_name(room_from_name=room.name, room_to_name=other_room_name), make_corridor_name(room_from_name=other_room_name, room_to_name=room.name)]
+					corridors = [self.level.corridors.get(x, None) for x in corridor_names]
+					for corridor in corridors:
+						if corridor is not None:
+							if f'{corridor.room_from}_{corridor.room_to}' not in self.drawn_rooms:
+								next_offset_x, next_offset_y = __update_offsets(offset_x, offset_y, direction,
+																				self.room_draw_size)
+								other_rects, _, _ = self.get_rects(corridor, next_offset_x, next_offset_y, direction)
+								rects.extend(other_rects)
 
 		else:
 			corridor_offset = (self.room_draw_size - self.corridor_draw_size) / 2
@@ -150,10 +152,10 @@ class MapPreviewWidget(QWidget):
 			QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == ThemeMode.DARK else '#ececec')))
 
 		if self.level.current_room != '':
-			if not is_corridor(self.level.current_room):
+			if self.level.current_room in self.level.rooms.keys():
 				room = self.level.rooms[self.level.current_room]
 			else:
-				room = self.level.get_corridor(*derive_rooms_from_corridor_name(self.level.current_room), ordered=True)
+				room = self.level.corridors[self.level.current_room]
 			
 			rects, _, _ = self.get_rects(room=room,
 			                             offset_x=x // 2, offset_y=y // 2,
