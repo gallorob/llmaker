@@ -14,12 +14,13 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
 from dungeon_despair.functions import DungeonCrawlerFunctions
 from freyr_llm import LLMsCache, freyr_model
+from tool_llm import tool_model
 from ui.chat import ConversationWidget
 from ui.dyn_dialog import DebugFunctionsDialog
 from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
-from utils import ToolMode, ThemeMode
+from utils import LLMMode, ToolMode, ThemeMode
 
 
 def get_splash_screen():
@@ -36,6 +37,7 @@ class MainWindow(QMainWindow):
 		self.level_idx = 0
 		
 		self.mode = ToolMode.LLM
+		self.llm_mode = LLMMode.FREYR
 		
 		self.setObjectName("LLMaker")
 		
@@ -142,21 +144,40 @@ class MainWindow(QMainWindow):
 
 		self.menuOptions.addSeparator()
 
-		self.freyr_menu = self.menuOptions.addMenu('FREYR')
+		self.llm_menu = self.menuOptions.addMenu('LLMs')
+
+		self.llm_mode_action = QAction(f'Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode', parent=self.llm_menu)
+		self.llm_mode_action.triggered.connect(self.toggle_llm_mode)
+		self.llm_menu.addAction(self.llm_mode_action)
+
+		self.llm_menu.addSeparator()
+
+		self.freyr_menu = self.llm_menu.addMenu('Freyr')
 		self.freyr_intent = self.freyr_menu.addMenu('Intent')
 		self.freyr_params = self.freyr_menu.addMenu('Parameters')
 		self.freyr_chat = self.freyr_menu.addMenu('Chat')
 		self.freyr_summary = self.freyr_menu.addMenu('Summary')
 
+		self.llm_menu.addSeparator()
+		self.tool_menu = self.llm_menu.addMenu('Tools')
+		self.tool_model = self.tool_menu.addMenu('Model')
+
 		for submenu, role in zip([self.freyr_intent, self.freyr_params, self.freyr_chat, self.freyr_summary],
 						   		 ['intent', 'params', 'chat', 'summary']):
 			for available_llm in LLMsCache.get_ollama_models():
 				llm_choice = QAction(available_llm, parent=submenu, checkable=True)
-				if freyr_model.cache.get_model_by_role(role) == available_llm:
+				if self.llm_mode == LLMMode.FREYR and freyr_model.cache.get_model_by_role(role) == available_llm:
 					llm_choice.setChecked(True)
 				llm_choice.triggered.connect(self.create_freyr_models_handler(role, submenu, llm_choice))
 				submenu.addAction(llm_choice)
 		
+		for available_llm in LLMsCache.get_ollama_models():
+			llm_choice = QAction(available_llm, parent=self.tool_model, checkable=True)
+			if self.llm_mode == LLMMode.TOOL and available_llm == tool_model.model_name:
+				llm_choice.setChecked(True)
+			llm_choice.triggered.connect(self.create_tool_models_handler(self.tool_model, llm_choice))
+			self.tool_model.addAction(llm_choice)
+
 		self.actionUndo = QAction('Undo', parent=self)
 		self.actionUndo.setToolTip('Undo latest change')
 		self.menuEdit.addAction(self.actionUndo)
@@ -213,6 +234,16 @@ class MainWindow(QMainWindow):
 		
 		return handler				
 	
+	def create_tool_models_handler(self, menu: QMenu, action: QAction):
+		def handler():
+			if tool_model.model_name != action.text():
+				for other_action in menu.actions():
+					other_action.setChecked(False)
+				action.setChecked(True)
+				tool_model.model_name = action.text()
+
+		return handler
+
 	@pyqtSlot(int)
 	def update_progress(self, progress):
 		logging.getLogger().debug(f'update_progress Task progress: {progress}')
@@ -251,7 +282,7 @@ class MainWindow(QMainWindow):
 		if self.level_idx < len(self.levels_hist) - 1:
 			self.levels_hist = self.levels_hist[:self.level_idx + 1]
 
-		self.worker = UIInputProcessor(self.level, user_input, conversation_history)
+		self.worker = UIInputProcessor(self.level, user_input, conversation_history, self.llm_mode)
 		self.thread = QThread()
 		
 		self.worker.moveToThread(self.thread)
@@ -444,3 +475,8 @@ class MainWindow(QMainWindow):
 				self.setStyleSheet(f.read())
 		except FileNotFoundError:
 			raise ValueError(f'Unknown theme: {self.theme.name}')
+		
+	@pyqtSlot()
+	def toggle_llm_mode(self):
+		self.llm_mode = LLMMode.FREYR if self.llm_mode == LLMMode.TOOL else LLMMode.TOOL
+		self.llm_mode_action.setText(f'Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode')

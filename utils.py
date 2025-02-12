@@ -19,6 +19,11 @@ class ToolMode(Enum):
 	LLM = 'llm'
 
 
+class LLMMode(Enum):
+	FREYR = 'freyr'
+	TOOL = 'tool'
+
+
 class ThemeMode(Enum):
 	LIGHT = 'light'
 	DARK = 'dark'

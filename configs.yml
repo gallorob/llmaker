@@ -32,10 +32,6 @@ ui:
   selected_color: '#ffbf00'
   unselected_color: '#b38600'
 llm:
-#  system_prompt: "./assets/system_prompt"
-#  model_name: "gpt-3.5-turbo-0125"
-#  temperature: 0.2
-#  top_p: 0.1
   temperature: 0.8
   top_p: 0.6
   top_k: 10
@@ -44,6 +40,7 @@ llm:
     summary: 'qwen2.5:0.5b'
     intent: 'qwen2.5:latest'
     params: 'qwen2.5:latest'
+    tools: 'llama3.1:latest'
   intent:
     prompt: './assets/prompts/intent_system_prompt'
   params:
@@ -53,6 +50,8 @@ llm:
     prompt: './assets/prompts/summary_system_prompt'
   chat:
     prompt: './assets/prompts/chat_system_prompt'
+  tools:
+    prompt: './assets/prompts/tools_system_prompt'
 room:
   mask: './assets/controlnet_masks/room_mask.png'
   prompt: "ddstyle, a (side view)+++ of a room set in {room_name}, {room_description}, best quality"

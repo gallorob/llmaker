@@ -10,10 +10,10 @@ from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
-# from llm_backend import chat_llm
-from freyr_llm import chat_llm
 from sd_backend import generate_room, generate_entity, generate_corridor
-from utils import compute_level_diffs, process_diff
+from utils import LLMMode, compute_level_diffs, process_diff
+from freyr_llm import freyr_model
+from tool_llm import tool_model
 
 
 class UIInputProcessor(QObject):
@@ -24,17 +24,27 @@ class UIInputProcessor(QObject):
 	def __init__(self,
 	             level: Level,
 	             user_input: str,
-	             conversation_history: List[str]):
+	             conversation_history: List[str],
+				 llm_mode: LLMMode):
 		super(UIInputProcessor, self).__init__()
 		self.level = level
 		self.user_input = user_input
 		self.conversation_history = conversation_history
+		self.mode = llm_mode
 	
 	def run(self) -> str:
 		self.progress_n = 0
-		ai_response = chat_llm(user_message=self.user_input,
-		                       conversation_history=self.conversation_history,
-		                       level=self.level)
+		if self.mode == LLMMode.FREYR:
+			ai_response = freyr_model(user_message=self.user_input,
+							 		  conversation_history=self.conversation_history,
+									  level=self.level)
+		elif self.mode == LLMMode.TOOL:
+			ai_response = tool_model(user_message=self.user_input,
+									 conversation_history=self.conversation_history,
+									 level=self.level)
+		else:
+			raise ValueError(f'Unknown LLM mode: {self.mode}')
+
 		self.result.emit(ai_response)
 		
 		to_process, additional_data = compute_level_diffs(level=self.level)
