@@ -5,6 +5,7 @@ from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
 	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget
+from dungeon_despair.domain.utils import ModifierType, get_enum_by_value
 from gptfunctionutil import LibCommand
 
 from configs import config
@@ -14,7 +15,7 @@ from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.room import Room
 from sd_backend import generate_room, generate_corridor, generate_entity
 from ui.input_process import DebugInputProcessor
-from utils import compute_level_diffs
+from utils import compute_level_diffs, get_modifier_icon
 
 
 class EnemyPreviewDialog(QDialog):
@@ -59,6 +60,7 @@ class EnemyPreviewDialog(QDialog):
 		attacks_grid_layout.addWidget(QLabel("<b>From</b>"), 0, 2)
 		attacks_grid_layout.addWidget(QLabel("<b>To</b>"), 0, 3)
 		attacks_grid_layout.addWidget(QLabel("<b>Base Damage</b>"), 0, 4)
+		attacks_grid_layout.addWidget(QLabel("<b>Modifier</b>"), 0, 5)
 		
 		# Populate the grid with attacks
 		for row, attack in enumerate(enemy.attacks, start=1):
@@ -67,6 +69,13 @@ class EnemyPreviewDialog(QDialog):
 			attacks_grid_layout.addWidget(QLabel(attack.starting_positions), row, 2)
 			attacks_grid_layout.addWidget(QLabel(attack.target_positions), row, 3)
 			attacks_grid_layout.addWidget(QLabel(str(attack.base_dmg)), row, 4)
+			if attack.modifier is not None:
+				icon = get_modifier_icon(get_enum_by_value(ModifierType, attack.modifier.type))
+				widg = QLabel(f'<img src="{icon}" width="16" height="16">')
+				widg.setToolTip(str(attack.modifier))
+				attacks_grid_layout.addWidget(widg, row, 5)
+			else:
+				attacks_grid_layout.addWidget(QLabel('N/A'), row, 5)
 		
 		# Set up the scroll area for the attacks list
 		attacks_scroll_area.setWidget(attacks_scroll_widget)

@@ -5,6 +5,7 @@ from typing import List
 from PyQt6.QtCore import Qt, QRectF
 from PyQt6.QtGui import QBrush, QColor, QPixmap, QPainter, QMouseEvent
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsPixmapItem
+from dungeon_despair.domain.utils import ModifierType, get_enum_by_value
 from numba import typeof
 
 from configs import config
@@ -14,7 +15,7 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
 # from dungeon_despair.domain.utils import derive_rooms_from_corridor_name, is_corridor
 from ui.dyn_dialog import EnemyPreviewDialog
-from utils import ThemeMode, rich_entity_description, basic_entity_description
+from utils import ThemeMode, get_modifier_icon, rich_entity_description, basic_entity_description
 
 
 def show_enemy_dialog(event: QMouseEvent, parent: QWidget, enemy: Enemy):
@@ -85,6 +86,17 @@ class EncounterPreviewWidget(QWidget):
 						if isinstance(entity, Enemy):
 							entity_rect.mousePressEvent = partial(show_enemy_dialog, enemy=entity, parent=self)
 						self.scene.addItem(entity_rect)
+
+						if hasattr(entity, 'modifier'):
+							modifier = entity.modifier
+							modifier_sprite = QPixmap(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type)))
+							modifier_rect = QGraphicsPixmapItem(modifier_sprite)
+							modifier_rect.setScale(config.ui.entity_scale / 6)
+							modifier_rect.setToolTip(str(modifier))
+							modifier_rect.setPos(x_offset + scaled_entity_width * i + (scaled_entity_width / 2),
+												 y_offset)
+							self.scene.addItem(modifier_rect)
+
 			
 			if isinstance(room, Room):
 				scaled_entity_width = config.entity.width * config.ui.entity_scale

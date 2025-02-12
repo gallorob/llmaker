@@ -2,20 +2,28 @@ rng_seed: 1234
 temp_dir: './test_results'
 levels_dir: './my_levels'
 scenarios_dir: './my_scenarios'
+icons:
+  bleed: './assets/icons/bleed_icon.png'
+  heal: './assets/icons/heal_icon.png'
+  stun: './assets/icons/stun_icon.png'
+  scare: './assets/icons/scare_icon.png'
 dungeon:
   max_enemies_per_encounter: 4
   max_traps_per_encounter: 1
   max_treasures_per_encounter: 1
+  max_num_attacks: 4
   corridor_min_length: 2
   corridor_max_length: 4
-  min_hp: 1
-  max_hp: 30
+  min_hp: 1.0
+  max_hp: 20.0
+  min_base_dmg: 0.0
+  max_base_dmg: 5.0
   min_dodge: 0.01
   max_dodge: 0.99
   min_prot: 0.01
   max_prot: 0.99
-  min_spd: 1
-  max_spd: 10
+  min_spd: 0.1
+  max_spd: 1.0
 ui:
   entity_scale: 0.35
   minimap_room_scale: 0.5

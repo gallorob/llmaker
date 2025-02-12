@@ -9,7 +9,9 @@ from dungeon_despair.domain.entities.trap import Trap
 from dungeon_despair.domain.entities.treasure import Treasure
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
+from dungeon_despair.domain.utils import ModifierType
 from sd_backend import generate_room, generate_corridor, generate_entity
+from configs import config
 
 
 class ToolMode(Enum):
@@ -21,6 +23,20 @@ class ThemeMode(Enum):
 	LIGHT = 'light'
 	DARK = 'dark'
 	
+
+def get_modifier_icon(modifier_type: ModifierType):
+	if modifier_type == ModifierType.BLEED:
+		return config.icons.bleed
+	elif modifier_type == ModifierType.HEAL:
+		return config.icons.heal
+	elif modifier_type == ModifierType.SCARE:
+		return config.icons.scare
+	elif modifier_type == ModifierType.STUN:
+		return config.icons.stun
+	else:
+		raise ValueError(f'Unknown modifier type: {modifier_type.value}')
+		
+
 	
 def basic_room_description(room: Room) -> str:
 	return f'<h2>{room.name}</h2><h3><i>{room.description}</i></h3>'
@@ -35,11 +51,11 @@ def basic_entity_description(entity: Entity) -> str:
 	description += f'<h4>{entity.description}</h4>'
 	
 	if isinstance(entity, Enemy):
-		description += f'<h6>HP: {entity.hp}; DODGE: {entity.dodge}; PROT: {entity.prot:.2f}; SPD: {entity.spd}</h6>'
+		description += f'<h6>HP: {entity.hp}; DODGE: {entity.dodge}; PROT: {entity.prot:.2f}; SPD: {entity.spd}</h6><h6>{len(entity.attacks)}/{config.dungeon.max_num_attacks} attacks.</h6>'
 	elif isinstance(entity, Treasure):
-		description += f'<h6>Loot: {entity.loot}</h6>'
+		description += f'<h6>Loot: {entity.loot}</h6><h6>Trapped Chance: {entity.trapped_chance:.0%} dealing {entity.dmg}DMG</h6>'
 	elif isinstance(entity, Trap):
-		description += f'<h6>Effect: {entity.effect}</h6>'
+		description += f'<h6>Effect: {entity.effect}</h6><h6>Chance: {entity.chance:.0%} dealing {entity.dmg}DMG</h6>'
 	
 	return description
 

@@ -13,7 +13,7 @@ from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
 from dungeon_despair.functions import DungeonCrawlerFunctions
-from freyr_llm import LLMsCache, llms_cache, freyr_model
+from freyr_llm import LLMsCache, freyr_model
 from ui.chat import ConversationWidget
 from ui.dyn_dialog import DebugFunctionsDialog
 from ui.encounter_preview import EncounterPreviewWidget
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
 						   		 ['intent', 'params', 'chat', 'summary']):
 			for available_llm in LLMsCache.get_ollama_models():
 				llm_choice = QAction(available_llm, parent=submenu, checkable=True)
-				if llms_cache.get_model_by_role(role) == available_llm:
+				if freyr_model.cache.get_model_by_role(role) == available_llm:
 					llm_choice.setChecked(True)
 				llm_choice.triggered.connect(self.create_freyr_models_handler(role, submenu, llm_choice))
 				submenu.addAction(llm_choice)
@@ -204,12 +204,12 @@ class MainWindow(QMainWindow):
 	def create_freyr_models_handler(self, role: str, menu: QMenu, action: QAction):
 		def handler():
 			# Action is checked before the handler is called, so we have to check LLMs cache to see if the user is switching models
-			if llms_cache.get_model_by_role(role) != action.text():
+			if freyr_model.cache.get_model_by_role(role) != action.text():
 				for other_action in menu.actions():
 					other_action.setChecked(False)
 				action.setChecked(True)
-				llms_cache.drop_model_by_role(role)
-				llms_cache.try_add_model(role=role, model_name=action.text())
+				freyr_model.cache.drop_model_by_role(role)
+				freyr_model.cache.try_add_model(role=role, model_name=action.text())
 		
 		return handler				
 	
