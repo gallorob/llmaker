@@ -85,6 +85,9 @@ class LLMsCache:
 				print(f'Failed to unload model {model_id} for role {role}: {e}')
 		del self.__cache[role]
 
+	def __del__(self):
+		for role in self.roles:
+			self.drop_model_by_role(role=role)
 
 class FreyrLLM:
 	def __init__(self,
