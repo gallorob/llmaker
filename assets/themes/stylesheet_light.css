@@ -28,7 +28,6 @@ QLabel[messageType="me"] {
     border-radius: 5px;
     padding: 5px;
     margin: 2px 5px 2px 50px;
-    align-self: flex-end;
 	font-size: 14pt;
 }
 
@@ -39,7 +38,6 @@ QLabel[messageType="them"] {
     border-radius: 5px;
     padding: 5px;
     margin: 2px 50px 2px 5px;
-    align-self: flex-start;
 	font-size: 14pt;
 }
 
