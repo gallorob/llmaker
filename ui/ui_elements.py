@@ -84,8 +84,6 @@ class MainWindow(QMainWindow):
 		self.actions_vertical_layout = QVBoxLayout(self.actions_groupbox)
 		
 		self.chat_area = ConversationWidget(parent=self.actions_groupbox)
-		# self.chat_area.setPlaceholderText('Your conversation history will be displayed here...')
-		# self.chat_area.setReadOnly(True)
 		self.actions_vertical_layout.addWidget(self.chat_area, 8)
 		
 		self.chat_box = QLineEdit(parent=self.actions_groupbox)

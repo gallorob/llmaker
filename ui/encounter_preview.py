@@ -89,13 +89,14 @@ class EncounterPreviewWidget(QWidget):
 
 						if hasattr(entity, 'modifier'):
 							modifier = entity.modifier
-							modifier_sprite = QPixmap(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type)))
-							modifier_rect = QGraphicsPixmapItem(modifier_sprite)
-							modifier_rect.setScale(config.ui.entity_scale / 6)
-							modifier_rect.setToolTip(str(modifier))
-							modifier_rect.setPos(x_offset + scaled_entity_width * i + (scaled_entity_width / 2),
-												 y_offset)
-							self.scene.addItem(modifier_rect)
+							if modifier is not None:
+								modifier_sprite = QPixmap(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type)))
+								modifier_rect = QGraphicsPixmapItem(modifier_sprite)
+								modifier_rect.setScale(config.ui.entity_scale / 6)
+								modifier_rect.setToolTip(str(modifier))
+								modifier_rect.setPos(x_offset + scaled_entity_width * i + (scaled_entity_width / 2),
+													y_offset)
+								self.scene.addItem(modifier_rect)
 
 			
 			if isinstance(room, Room):
