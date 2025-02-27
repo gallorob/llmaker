@@ -32,8 +32,8 @@ ui:
   selected_color: '#ffbf00'
   unselected_color: '#b38600'
 llm:
-  temperature: 0.8
-  top_p: 0.6
+  temperature: 0.4
+  top_p: 0.2
   top_k: 10
   roles:
     chat: 'gemma2:latest'
@@ -54,7 +54,7 @@ llm:
     prompt: './assets/prompts/tools_system_prompt'
 room:
   mask: './assets/controlnet_masks/room_mask.png'
-  prompt: "ddstyle, a (side view)+++ of a room set in {room_name}, {room_description}, best quality"
+  prompt: "zrpgstyle, ddstyle, a (side view)+++ of a room set in {room_name}, {room_description}, best quality"
   negative_prompt: "top-down, (logo)++, (creature)++, (people)++, (animal)++, (face)++, ugly, badly drawn, worst quality, frame, glare, solar flare, text, monochromatic, duplication, repetition"
   inference_steps: 10
   guidance_scale: 5.0
@@ -62,9 +62,9 @@ room:
   width: 512
   save_dir: './test_results/'
 entity:
-  enemy_prompt: "darkest dungeon, (full body)+++ {entity_name}: ({entity_description})++, set in {place_name}: {place_description}, masterpiece++, highly detailed+, (flat empty background)+++"
+  enemy_prompt: "zrpgstyle, darkest dungeon, (full body)+++ {entity_name}: ({entity_description})++, set in {place_name}: {place_description}, masterpiece++, highly detailed+, (flat empty background)+++"
   negative_enemy_prompt: "(close-up)+++, out of shot, (multiple characters)++, (many characters)++, not centered, floor, walls, pedestal, duplication, repetition, bad anatomy, monochromatic, disfigured, badly drawn, bad hands, naked, nude"
-  obj_prompt: "darkest dungeon, (empty flat background)+++, {entity_name}: {entity_description}, in {place_name}: {place_description}"
+  obj_prompt: "zrpgstyle, darkest dungeon, (empty flat background)+++, {entity_name}: {entity_description}, in {place_name}: {place_description}"
   negative_obj_prompt: "(close-up)+++, out of shot, (multiple objects)++, (many objects)++, not centered, duplication, repetition, monochromatic, badly drawn, (detailed background)+++"
   height: 384
   width: 256
@@ -77,17 +77,16 @@ corridor:
   wall_mask: './assets/controlnet_masks/column_inpaint_mask.png'
   height: 256
   width: 384
-  column_prompt: "ddstyle, a (side view)++ of a (column)++, ceiling, and floor, of {room_a_name} and {room_b_name}, best quality"
-  wall_prompt: "ddstyle, a (wall-painting)++ merging {room_a_name} and {room_b_name}, ceiling and floor, best quality"
-  door_prompt: "ddstyle, an (open door)++ to a '({room_name})++', best quality, (no people)+"
+  column_prompt: "zrpgstyle, ddstyle, a (side view)++ of a (column)++, ceiling, and floor, of {room_a_name} and {room_b_name}, best quality"
+  wall_prompt: "zrpgstyle, ddstyle, a (wall-painting)++ merging {room_a_name} and {room_b_name}, ceiling and floor, best quality"
+  door_prompt: "zrpgstyle, ddstyle, an (open door)++ to a '({room_name})++', best quality, (no people)+"
   negative_prompt: "top-down, (logo)++, (creature)++, (people)++, (animal)++, (face)++, ugly, badly drawn, worst quality, frame, glare, solar flare, text, monochromatic, duplication, repetition"
   inference_steps: 10
   guidance_scale: 5.0
   eta: 1.0
   save_dir: './test_results/'
 sd_model:
-  ambient_lora: 'DarkestDungeonV2.safetensors'
-  entity_lora: 'NecroSketcherAlpha.safetensors'
+  lora: 'DarkestDungeonV2.safetensors'
   vae: 'vaeFtMse840000EmaPruned_vae.safetensors'
   stable_diffusion: 'aZovyaRPGArtistTools_v4.safetensors'
   controlnet_mlsd: 'lllyasviel/control_v11p_sd15_mlsd'

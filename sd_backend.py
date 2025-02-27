@@ -63,8 +63,9 @@ def load_stablediff_models(splash: Any):
 		algorithm_type='sde-dpmsolver++')
 	# stablediff_controlnet_mlsd.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_mlsd.scheduler.config)
 	stablediff_controlnet_mlsd.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
-	# stablediff_controlnet_mlsd.enable_model_cpu_offload()
+	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.lora)
+	stablediff_controlnet_mlsd.enable_model_cpu_offload()
+	stablediff_controlnet_mlsd.enable_attention_slicing()
 	stablediff_controlnet_mlsd.enable_xformers_memory_efficient_attention()
 	compel_stablediff_controlnet_mlsd = Compel(tokenizer=stablediff_controlnet_mlsd.tokenizer,
 	                                           text_encoder=stablediff_controlnet_mlsd.text_encoder,
@@ -83,8 +84,9 @@ def load_stablediff_models(splash: Any):
 	                                                               algorithm_type='sde-dpmsolver++')
 	# stablediff.scheduler = EulerDiscreteScheduler.from_config(stablediff.scheduler.config)
 	stablediff.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.entity_lora)
-	# stablediff.enable_model_cpu_offload()
+	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.lora)
+	stablediff.enable_model_cpu_offload()
+	stablediff.enable_attention_slicing()
 	stablediff.enable_xformers_memory_efficient_attention()
 	compel_stablediff = Compel(tokenizer=stablediff.tokenizer, text_encoder=stablediff.text_encoder,
 	                           truncate_long_prompts=False)
@@ -115,8 +117,8 @@ def load_stablediff_models(splash: Any):
 	# stablediff_controlnet_inpaint.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_inpaint.scheduler.config)
 	stablediff_controlnet_inpaint.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
 	stablediff_controlnet_inpaint.load_lora_weights(config.sd_model.cache_dir,
-	                                                weight_name=config.sd_model.ambient_lora)
-	# stablediff_controlnet_inpaint.enable_model_cpu_offload()
+	                                                weight_name=config.sd_model.lora)
+	stablediff_controlnet_inpaint.enable_model_cpu_offload()
 	stablediff_controlnet_inpaint.enable_attention_slicing()
 	stablediff_controlnet_inpaint.enable_xformers_memory_efficient_attention()
 	compel_stablediff_controlnet_inpaint = Compel(tokenizer=stablediff_controlnet_inpaint.tokenizer,

@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
 					llm_choice.setChecked(True)
 				llm_choice.triggered.connect(self.create_freyr_models_handler(role, submenu, llm_choice))
 				submenu.addAction(llm_choice)
-		
+		# TODO: Would make more sense to have this ONLY when in TOOL mode
 		for available_llm in LLMsCache.get_ollama_models():
 			llm_choice = QAction(available_llm, parent=self.tool_model, checkable=True)
 			if self.llm_mode == LLMMode.TOOL and available_llm == get_tool_model().model_name:
