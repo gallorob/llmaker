@@ -86,6 +86,9 @@ class ToolLLM:
 tool_model: Optional[ToolLLM] = None
 
 def get_tool_model():
+	global tool_model
+	if tool_model is None:
+		tool_model = ToolLLM(model_name=config.llm.roles.tools)
 	return tool_model
 
 def load_local_llm(splash: Any):
