@@ -13,8 +13,8 @@ from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
 from dungeon_despair.functions import DungeonCrawlerFunctions
-from freyr_llm import LLMsCache, freyr_model
-from tool_llm import tool_model
+from freyr_llm import get_freyr_model, LLMsCache
+from tool_llm import get_tool_model
 from ui.chat import ConversationWidget
 from ui.dyn_dialog import DebugFunctionsDialog
 from ui.encounter_preview import EncounterPreviewWidget
@@ -166,14 +166,14 @@ class MainWindow(QMainWindow):
 						   		 ['intent', 'params', 'chat', 'summary']):
 			for available_llm in LLMsCache.get_ollama_models():
 				llm_choice = QAction(available_llm, parent=submenu, checkable=True)
-				if self.llm_mode == LLMMode.FREYR and freyr_model.cache.get_model_by_role(role) == available_llm:
+				if self.llm_mode == LLMMode.FREYR and get_freyr_model().cache.get_model_by_role(role) == available_llm:
 					llm_choice.setChecked(True)
 				llm_choice.triggered.connect(self.create_freyr_models_handler(role, submenu, llm_choice))
 				submenu.addAction(llm_choice)
 		
 		for available_llm in LLMsCache.get_ollama_models():
 			llm_choice = QAction(available_llm, parent=self.tool_model, checkable=True)
-			if self.llm_mode == LLMMode.TOOL and available_llm == tool_model.model_name:
+			if self.llm_mode == LLMMode.TOOL and available_llm == get_tool_model().model_name:
 				llm_choice.setChecked(True)
 			llm_choice.triggered.connect(self.create_tool_models_handler(self.tool_model, llm_choice))
 			self.tool_model.addAction(llm_choice)
@@ -224,23 +224,24 @@ class MainWindow(QMainWindow):
 
 	def create_freyr_models_handler(self, role: str, menu: QMenu, action: QAction):
 		def handler():
-			# Action is checked before the handler is called, so we have to check LLMs cache to see if the user is switching models
-			if freyr_model.cache.get_model_by_role(role) != action.text():
+			freyr_instance = get_freyr_model()
+			if freyr_instance.cache.get_model_by_role(role) != action.text():
 				for other_action in menu.actions():
 					other_action.setChecked(False)
 				action.setChecked(True)
-				freyr_model.cache.drop_model_by_role(role)
-				freyr_model.cache.try_add_model(role=role, model_name=action.text())
+				freyr_instance.cache.drop_model_by_role(role)
+				freyr_instance.cache.try_add_model(role=role, model_name=action.text())
 		
 		return handler				
 	
 	def create_tool_models_handler(self, menu: QMenu, action: QAction):
 		def handler():
-			if tool_model.model_name != action.text():
+			tool_instance = get_tool_model()
+			if tool_instance.model_name != action.text():
 				for other_action in menu.actions():
 					other_action.setChecked(False)
 				action.setChecked(True)
-				tool_model.model_name = action.text()
+				tool_instance.model_name = action.text()
 
 		return handler
 

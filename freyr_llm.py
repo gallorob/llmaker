@@ -1,7 +1,7 @@
 import json
 import subprocess
 from time import sleep
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 import ollama
 from timeit import default_timer
@@ -55,6 +55,7 @@ class LLMsCache:
 			'prompt': LLMsCache.load_prompt(role),
 			'model': model_name
 		}
+		logging.getLogger('llmaker').log(logging.INFO, msg=f'LLMsCache.try_add_model Added {model_name} to {role}')
 	
 	def get_model_by_role(self,
 	                      role: str) -> str:
@@ -84,6 +85,7 @@ class LLMsCache:
 			except subprocess.CalledProcessError as e:
 				print(f'Failed to unload model {model_id} for role {role}: {e}')
 		del self.__cache[role]
+		logging.getLogger('llmaker').log(logging.INFO, msg=f'LLMsCache.drop_model_by_role {role=}')
 
 	def __del__(self):
 		for role in self.roles:
@@ -118,7 +120,8 @@ class FreyrLLM:
 		}
 		res = ollama.chat(model=model_name,
 		                  messages=messages,
-		                  options=options)
+		                  options=options,
+						  keep_alive=-1)
 		return res
 	
 	def tools_as_dict(self) -> Dict[str, str]:
@@ -410,13 +413,27 @@ class FreyrLLM:
 		return response
 	
 
-llms_cache = LLMsCache()
-llms_cache.try_add_model(role='chat', model_name=config.llm.roles.chat)
-llms_cache.try_add_model(role='summary', model_name=config.llm.roles.summary)
-llms_cache.try_add_model(role='intent', model_name=config.llm.roles.intent)
-llms_cache.try_add_model(role='params', model_name=config.llm.roles.params)
+freyr_model: Optional[FreyrLLM] = None
 
-freyr_model = FreyrLLM(cache=llms_cache)
+def load_local_llm(splash: Any):
+	global freyr_model
+
+	llms_cache = LLMsCache()
+	llms_cache.try_add_model(role='chat', model_name=config.llm.roles.chat)
+	splash.showMessage(f'Loaded {config.llm.roles.chat}')
+	llms_cache.try_add_model(role='summary', model_name=config.llm.roles.summary)
+	splash.showMessage(f'Loaded {config.llm.roles.summary}')
+	llms_cache.try_add_model(role='intent', model_name=config.llm.roles.intent)
+	splash.showMessage(f'Loaded {config.llm.roles.intent}')
+	llms_cache.try_add_model(role='params', model_name=config.llm.roles.params)
+	splash.showMessage(f'Loaded {config.llm.roles.params}')
+
+	freyr_model = FreyrLLM(cache=llms_cache)
+
+
+def get_freyr_model():
+	return freyr_model
+
 
 def chat_llm(user_message: str,
              conversation_history: List[str],

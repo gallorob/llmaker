@@ -12,8 +12,8 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
 from sd_backend import generate_room, generate_entity, generate_corridor
 from utils import LLMMode, compute_level_diffs, process_diff
-from freyr_llm import freyr_model
-from tool_llm import tool_model
+from freyr_llm import get_freyr_model
+from tool_llm import get_tool_model
 
 
 class UIInputProcessor(QObject):
@@ -35,11 +35,11 @@ class UIInputProcessor(QObject):
 	def run(self) -> str:
 		self.progress_n = 0
 		if self.mode == LLMMode.FREYR:
-			ai_response = freyr_model(user_message=self.user_input,
+			ai_response = get_freyr_model()(user_message=self.user_input,
 							 		  conversation_history=self.conversation_history,
 									  level=self.level)
 		elif self.mode == LLMMode.TOOL:
-			ai_response = tool_model(user_message=self.user_input,
+			ai_response = get_tool_model()(user_message=self.user_input,
 									 conversation_history=self.conversation_history,
 									 level=self.level)
 		else:

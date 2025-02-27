@@ -1,7 +1,7 @@
 import subprocess
 from time import sleep
 from timeit import default_timer
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import ollama
 import logging
@@ -11,7 +11,7 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
 
 
-class ToolCallingLLM:
+class ToolLLM:
 	def __init__(self,
 	             model_name: str):
 		self.timeout = 0.5
@@ -83,4 +83,13 @@ class ToolCallingLLM:
 		
 		return response['message']['content']
 
-tool_model = ToolCallingLLM(model_name=config.llm.roles.tools)
+tool_model: Optional[ToolLLM] = None
+
+def get_tool_model():
+	return tool_model
+
+def load_local_llm(splash: Any):
+	global tool_model
+	
+	tool_model = ToolLLM(model_name=config.llm.roles.tools)
+	splash.showMessage(f'Loaded {config.llm.roles.tools}')

@@ -10,7 +10,7 @@ from dungeon_despair.domain.configs import config as domain_config
 
 from configs import config
 from dungeon_despair.domain.level import Level
-# from llm_backend import load_local_llm
+from freyr_llm import load_local_llm
 
 from sd_backend import load_stablediff_models
 from ui.ui_elements import MainWindow, get_splash_screen
@@ -43,10 +43,13 @@ if __name__ == '__main__':
 	if not os.path.exists(config.temp_dir):
 		os.makedirs(config.temp_dir)
 	
+	logging.getLogger('llmaker').info('Started loading large language models...')
+	splash_screen.showMessage('Loading Large Language Models...')
+	load_local_llm(splash_screen)
+	splash_screen.showMessage('Loaded Large Language Models')
 	logging.getLogger('llmaker').info('Started loading diffusion models...')
 	splash_screen.showMessage('Loading Stable Diffusion Models...')
-	# load_local_llm(splash_screen)
-	# load_stablediff_models(splash_screen)
+	load_stablediff_models(splash_screen)
 	splash_screen.showMessage('Loaded Stable Diffusion Models')
 	logging.getLogger('llmaker').info('Diffusion models loaded')
 	
