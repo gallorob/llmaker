@@ -1,5 +1,6 @@
 from typing import List
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QLabel, QSizePolicy
 
 
@@ -27,6 +28,10 @@ class ConversationWidget(QWidget):
 		self.setLayout(main_layout)
 		
 		self.messages: List[QLabel] = []
+
+		self.placeholder = QLabel(parent=self.central_widget, text="Start designing by sending a message!")
+		self.placeholder.setProperty('messageType', 'placeholder')
+		self.central_layout.addWidget(self.placeholder, stretch=1, alignment=Qt.AlignmentFlag.AlignCenter)
 	
 	def reset(self):
 		for message in self.messages:
@@ -51,6 +56,9 @@ class ConversationWidget(QWidget):
 		new_message.setMaximumWidth(int(self.width()))
 		
 		self.messages.append(new_message)
+
+		if self.placeholder.isVisible():
+			self.placeholder.hide()
 		self.central_layout.addWidget(new_message)
 		
 		self.update()

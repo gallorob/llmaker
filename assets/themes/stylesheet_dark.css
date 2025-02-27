@@ -50,6 +50,12 @@ QLabel[messageType="them"] {
     margin: 2px 50px 2px 5px;
 }
 
+QLabel[messageType="placeholder"] {
+    color: #5c5c5c;
+    font-style: italic;
+    margin: 2px 5px 2px 5px;
+}
+
 QColorDialog {
     background-color: #1e1d23;
 }
