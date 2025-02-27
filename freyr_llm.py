@@ -333,7 +333,7 @@ class FreyrLLM:
 		                     messages=messages)
 		end = default_timer()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.summarize_tool_results Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
-		response = output['message']['content']
+		response = output['message']['content'].strip()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.summarize_tool_results {response=}')
 		return response
 	
@@ -358,7 +358,7 @@ class FreyrLLM:
 		                     messages=messages)
 		end = default_timer()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.chat Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
-		response = output['message']['content']
+		response = output['message']['content'].strip()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.chat {response=}')
 		return response
 	
