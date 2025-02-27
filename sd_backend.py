@@ -44,7 +44,7 @@ def load_stablediff_models(splash: Any):
 	                                                  torch_dtype=th.float16,
 	                                                  cache_dir=config.sd_model.cache_dir,
 	                                                  use_safetensors=True,
-	                                                  safety_checker=None)#.to(device)
+	                                                  safety_checker=None).to(device)
 
 	splash.showMessage('Loaded ControlNet MLSD')
 	logging.getLogger('llmaker').info('Loaded ControlNet MLSD')
@@ -55,7 +55,7 @@ def load_stablediff_models(splash: Any):
 		cache_dir=config.sd_model.cache_dir,
 		controlnet=controlnet_mlsd,
 		use_safetensors=True,
-		torch_dtype=th.float16)#.to(device)
+		torch_dtype=th.float16).to(device)
 	stablediff_controlnet_mlsd.safety_checker = None
 	stablediff_controlnet_mlsd.scheduler = UniPCMultistepScheduler.from_config(
 		stablediff_controlnet_mlsd.scheduler.config,
@@ -63,9 +63,8 @@ def load_stablediff_models(splash: Any):
 		algorithm_type='sde-dpmsolver++')
 	# stablediff_controlnet_mlsd.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_mlsd.scheduler.config)
 	stablediff_controlnet_mlsd.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	# stablediff_controlnet_mlsd.vae = vae
 	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
-	stablediff_controlnet_mlsd.enable_model_cpu_offload()
+	# stablediff_controlnet_mlsd.enable_model_cpu_offload()
 	stablediff_controlnet_mlsd.enable_xformers_memory_efficient_attention()
 	compel_stablediff_controlnet_mlsd = Compel(tokenizer=stablediff_controlnet_mlsd.tokenizer,
 	                                           text_encoder=stablediff_controlnet_mlsd.text_encoder,
@@ -77,7 +76,7 @@ def load_stablediff_models(splash: Any):
 		os.path.join(config.sd_model.cache_dir, config.sd_model.stable_diffusion),
 		torch_dtype=th.float16,
 		cache_dir=config.sd_model.cache_dir,
-		safety_checker=None)#.to(device)
+		safety_checker=None).to(device)
 	stablediff.safety_checker = None
 	stablediff.scheduler = UniPCMultistepScheduler.from_config(stablediff.scheduler.config,
 	                                                               use_karras=True,
@@ -85,26 +84,18 @@ def load_stablediff_models(splash: Any):
 	# stablediff.scheduler = EulerDiscreteScheduler.from_config(stablediff.scheduler.config)
 	stablediff.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
 	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.entity_lora)
-	stablediff.enable_model_cpu_offload()
+	# stablediff.enable_model_cpu_offload()
 	stablediff.enable_xformers_memory_efficient_attention()
 	compel_stablediff = Compel(tokenizer=stablediff.tokenizer, text_encoder=stablediff.text_encoder,
 	                           truncate_long_prompts=False)
 	splash.showMessage('Loaded Stable Diffusion')
 	logging.getLogger('llmaker').info('Loaded Stable Diffusion')
 
-	controlnet_softedge = ControlNetModel.from_pretrained(config.sd_model.controlnet_softedge,
-	                                                      torch_dtype=th.float16,
-	                                                      use_safetensors=True,
-	                                                      cache_dir=config.sd_model.cache_dir,
-	                                                      safety_checker=None)#.to(device)
-	splash.showMessage('Loaded ControlNet SoftEdge')
-	logging.getLogger('llmaker').info('Loaded ControlNet SoftEdge')
-
 	controlnet_inpaint = ControlNetModel.from_pretrained(config.sd_model.controlnet_inpaint,
 	                                                     torch_dtype=th.float16,
 	                                                     use_safetensors=True,
 	                                                     cache_dir=config.sd_model.cache_dir,
-	                                                     safety_checker=None)#.to(device)
+	                                                     safety_checker=None).to(device)
 	splash.showMessage('Loaded ControlNet InPaint')
 	logging.getLogger('llmaker').info('Loaded ControlNet InPaint')
 
@@ -115,7 +106,7 @@ def load_stablediff_models(splash: Any):
 		cache_dir=config.sd_model.cache_dir,
 		use_safetensors=True,
 		num_in_channels=4,
-		safety_checker=None)#.to(device)
+		safety_checker=None).to(device)
 	stablediff_controlnet_inpaint.safety_checker = None
 	stablediff_controlnet_inpaint.scheduler = UniPCMultistepScheduler.from_config(
 		stablediff_controlnet_inpaint.scheduler.config,
@@ -125,7 +116,7 @@ def load_stablediff_models(splash: Any):
 	stablediff_controlnet_inpaint.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
 	stablediff_controlnet_inpaint.load_lora_weights(config.sd_model.cache_dir,
 	                                                weight_name=config.sd_model.ambient_lora)
-	stablediff_controlnet_inpaint.enable_model_cpu_offload()
+	# stablediff_controlnet_inpaint.enable_model_cpu_offload()
 	stablediff_controlnet_inpaint.enable_attention_slicing()
 	stablediff_controlnet_inpaint.enable_xformers_memory_efficient_attention()
 	compel_stablediff_controlnet_inpaint = Compel(tokenizer=stablediff_controlnet_inpaint.tokenizer,
@@ -324,8 +315,7 @@ def generate_entity(entity_name: str,
                     entity_description: str,
                     entity_type: str,
                     room_name: str,
-                    room_description: str,
-                    room_image: Optional[Image.Image] = None) -> str:
+                    room_description: str) -> str:
 	try:
 		# generate initial semantic-context image
 		entity_name, entity_description, place_name, place_description = clear_strings_for_prompt(
@@ -352,38 +342,6 @@ def generate_entity(entity_name: str,
 		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
 		entity_image.save(filename)
 		entity_image = rembg.remove(entity_image, alpha_matting=True)
-		# if room_image:
-		# 	# prepare background image
-		# 	room_image = load_image(room_image)
-		# 	bw, bh = room_image.width, room_image.height
-		# 	ew, eh = entity_image.width, entity_image.height
-		# 	if bw < ew:
-		# 		r = ew / bw
-		# 		room_image = room_image.resize((int(r * bw), int(r * bh)))
-		# 	elif bh < eh:
-		# 		r = eh / bh
-		# 		room_image = room_image.resize((int(r * bw), int(r * bh)))
-		# 	room_image = room_image.crop((bw // 2 - ew // 2, 0, bw // 2 + ew // 2, eh))
-		# 	# get control and mask images from semantic-context image
-		# 	control_image = entity_image.convert('L').filter(ImageFilter.FIND_EDGES)
-		# 	_, _, _, mask_image = entity_image.split()
-		# 	# generate image-context image
-		# 	entity_full_img_context = stablediff_controlnet_softedge(
-		# 		prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
-		# 		num_inference_steps=config.entity.inference_steps,
-		# 		eta=config.entity.eta,
-		# 		guidance_scale=config.entity.guidance_scale,
-		# 		image=room_image,
-		# 		mask_image=mask_image,
-		# 		control_image=control_image,
-		# 		generator=th.Generator(device=device).manual_seed(config.rng_seed)).images[0]
-		# 	# remove existing background using the mask image again
-		# 	entity_img_context_arr = np.array(entity_full_img_context)
-		# 	mask_arr = np.array(mask_image)
-		# 	entity_img_context_arr[mask_arr == 0, :] = 0
-		# 	entity_img_context_arr = np.concatenate([entity_img_context_arr, np.expand_dims(mask_arr, -1)], axis=-1)
-		# 	entity_image = Image.fromarray(entity_img_context_arr.astype(np.uint8))
-		
 		# save and return filename
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}.png')
 		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
