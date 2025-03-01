@@ -22,15 +22,32 @@ Install the rest of dependencies:
 pip install -r requirements.txt
 ```
 
-On non-Windows systems, try installing `triton` for better performance:
+### Non-Windows OS
+We tested LLMaker on Ubuntu systems. You will need to install ONNX runtime (to remove sprites background) and PEFT (to load LoRAs):
+```shell
+pip install onnxruntime peft
+```
+
+You may have to install `libxcb-cursor0` for pyQt:
+```shell
+sudo apt-get install libxcb-cursor0
+```
+
+You can also install `triton` for better performance:
 ```shell
 pip install triton
 ```
 
 ## Usage
-Make sure you have a `secret` file with your OpenAI API key. You can launch the application by running
+On the latest version of LLMaker, we use the FREYR framework to chat with local LLMs. You will need to install [ollama](https://ollama.com/) on your device first.
+
+Launch Ollama first by running
 ```shell
-python main.py
+start_ollama.bat
+```
+And then launch LLMaker:
+```shell
+llmaker.bat
 ```
 
 Log files are saved under `logs`, `test_results` is used to temporarily store all graphical assets. Models for Stable Diffusion are located in `models`.
