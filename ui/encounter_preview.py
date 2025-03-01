@@ -64,12 +64,21 @@ class EncounterPreviewWidget(QWidget):
 				
 			
 			self.scene.setSceneRect(0, 0, background_image.width(), background_image.height())
-			item = self.scene.addPixmap(background_image)
-			item.setPos(0, 0)
-			self.view.fitInView(item, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
-			
-			if self.level.current_room in self.level.corridors.keys():
-				self.view.horizontalScrollBar().setValue(0)
+			self.scene.addPixmap(background_image)
+
+			view_rect = self.view.viewport().rect()
+			image_rect = background_image.rect()
+
+			# Compute horizontal and vertical scaling factors
+			if self.level.current_room in self.level.rooms.keys():
+				scale_x = view_rect.width() / image_rect.width()
+			else:
+				c = self.level.corridors[self.level.current_room]
+				scale_x = view_rect.width() / (image_rect.width() / c.length)
+			scale_y = view_rect.height() / image_rect.height()
+
+			self.view.resetTransform()
+			self.view.scale(scale_x, scale_y)
 			
 			w, h = self.scene.width(), self.scene.height()
 			
