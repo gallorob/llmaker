@@ -69,7 +69,6 @@ class EncounterPreviewWidget(QWidget):
 			view_rect = self.view.viewport().rect()
 			image_rect = background_image.rect()
 
-			# Compute horizontal and vertical scaling factors
 			if self.level.current_room in self.level.rooms.keys():
 				scale_x = view_rect.width() / image_rect.width()
 			else:
@@ -80,8 +79,8 @@ class EncounterPreviewWidget(QWidget):
 			self.view.resetTransform()
 			self.view.scale(scale_x, scale_y)
 			
-			w, h = self.scene.width(), self.scene.height()
-			
+			w, h = background_image.width(), background_image.height()
+
 			def __draw_entities(entities: List[Entity], x_offset, y_offset, scaled_entity_width) -> None:
 				for i in range(config.dungeon.max_enemies_per_encounter):
 					if i < len(entities):
@@ -101,34 +100,23 @@ class EncounterPreviewWidget(QWidget):
 							if modifier is not None:
 								modifier_sprite = QPixmap(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type)))
 								modifier_rect = QGraphicsPixmapItem(modifier_sprite)
-								modifier_rect.setScale(config.ui.entity_scale / 6)
+								modifier_rect.setScale(config.ui.entity_scale / 4)
 								modifier_rect.setToolTip(str(modifier))
-								modifier_rect.setPos(x_offset + scaled_entity_width * i + (scaled_entity_width / 2),
+								modifier_rect.setPos(x_offset + scaled_entity_width * i + scaled_entity_width / 4,
 													y_offset)
 								self.scene.addItem(modifier_rect)
 
 			
+			scaled_entity_width = config.entity.width * config.ui.entity_scale
+			y_offset = 5 * h / 6
 			if isinstance(room, Room):
-				scaled_entity_width = config.entity.width * config.ui.entity_scale
-				y_offset = 5 * h / 6
-				x_offset = w / 2 - scaled_entity_width / 2
-				
-				__draw_entities(room.encounter.entities['treasure'], x_offset, y_offset, scaled_entity_width)
-				
-				enemies = room.encounter.entities['enemy']
-				if len(enemies) > 1:
-					x_offset -= (scaled_entity_width * (len(enemies) - 1)) / 2
-				__draw_entities(enemies, x_offset, y_offset, scaled_entity_width)
+				for entities in [room.encounter.treasures, room.encounter.enemies]:
+					total_width = scaled_entity_width * len(entities)
+					x_offset = (w - total_width) / 2
+					__draw_entities(entities, x_offset, y_offset, scaled_entity_width)
 			else:
-				scaled_entity_width = config.entity.width * config.ui.entity_scale
-				y_offset = 0.9 * h
 				for i, encounter in enumerate(room.encounters):
-					x_offset = ((i + 1) * w / (room.length + 2)) + w / (room.length + 2) / 2 - (scaled_entity_width / 2)
-					
-					__draw_entities(encounter.entities['treasure'], x_offset, y_offset, scaled_entity_width)
-					__draw_entities(encounter.entities['trap'], x_offset, y_offset, scaled_entity_width)
-					
-					enemies = encounter.entities['enemy']
-					if len(enemies) > 1:
-						x_offset -= (scaled_entity_width * (len(enemies) - 1)) / 2
-					__draw_entities(enemies, x_offset, y_offset, scaled_entity_width)
+					for entities in [encounter.treasures, encounter.traps, encounter.enemies]:
+						total_width = scaled_entity_width * len(entities)
+						x_offset = (w - total_width) / 2
+						__draw_entities(entities, x_offset, y_offset, scaled_entity_width)
