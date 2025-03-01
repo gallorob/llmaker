@@ -148,7 +148,7 @@ def generate_room(room_name: str,
 		                                        num_inference_steps=config.room.inference_steps,
 		                                        guidance_scale=config.room.guidance_scale,
 		                                        generator=th.Generator(device=device).manual_seed(
-			                                        config.rng_seed)).images[0]
+			                                        config.rng_seed) if config.rng_seed != -1 else None).images[0]
 		filename = os.path.join(config.room.save_dir, f'{room_name}.png')
 		logging.getLogger('llmaker').debug(f'generate_room {filename=}')
 		room_image.save(filename)
@@ -195,7 +195,7 @@ def generate_corridor(room_names: List[str],
 		                                          num_inference_steps=config.corridor.inference_steps,
 		                                          guidance_scale=config.corridor.guidance_scale,
 		                                          generator=th.Generator(device=device).manual_seed(
-			                                          config.rng_seed)).images[0]
+			                                          config.rng_seed) if config.rng_seed != -1 else None).images[0]
 		debugging_image = os.path.join(config.corridor.save_dir,
 		                               base_fname)
 		logging.getLogger('llmaker').debug(f'generate_corridor {debugging_image=}')
@@ -233,7 +233,7 @@ def generate_corridor(room_names: List[str],
 		door_image = stablediff_controlnet_inpaint(
 			prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
 			num_inference_steps=config.corridor.inference_steps,
-			generator=th.Generator(device=device).manual_seed(config.rng_seed),
+			generator=th.Generator(device=device).manual_seed(config.rng_seed) if config.rng_seed != -1 else None,
 			eta=config.corridor.eta,
 			guidance_scale=config.corridor.guidance_scale / 2,
 			image=tile_image,
@@ -263,7 +263,7 @@ def generate_corridor(room_names: List[str],
 			tmp_image = stablediff_controlnet_inpaint(
 				prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
 				num_inference_steps=config.corridor.inference_steps,
-				generator=th.Generator(device=device).manual_seed(config.rng_seed + i),
+				generator=th.Generator(device=device).manual_seed(config.rng_seed + i) if config.rng_seed != -1 else None,
 				eta=config.corridor.eta,
 				guidance_scale=config.corridor.guidance_scale / 2,
 				image=tile_image,
@@ -343,7 +343,7 @@ def generate_entity(entity_name: str,
 		entity_image = stablediff(prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
 		                          height=config.entity.height, width=config.entity.width,
 		                          num_inference_steps=config.entity.inference_steps,
-		                          generator=th.Generator(device=device).manual_seed(config.rng_seed)).images[0]
+		                          generator=th.Generator(device=device).manual_seed(config.rng_seed) if config.rng_seed != -1 else None).images[0]
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}_wb.png')
 		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
 		entity_image.save(filename)
