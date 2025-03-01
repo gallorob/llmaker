@@ -86,7 +86,8 @@ corridor:
   eta: 1.0
   save_dir: './test_results/'
 sd_model:
-  lora: 'DarkestDungeonV2.safetensors'
+  ambient_lora: 'DarkestDungeonV2.safetensors'
+  enemy_lora: 'NecroSketcherAlpha.safetensors'
   vae: 'vaeFtMse840000EmaPruned_vae.safetensors'
   stable_diffusion: 'aZovyaRPGArtistTools_v4.safetensors'
   controlnet_mlsd: 'lllyasviel/control_v11p_sd15_mlsd'

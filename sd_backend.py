@@ -63,7 +63,7 @@ def load_stablediff_models(splash: Any):
 		algorithm_type='sde-dpmsolver++')
 	# stablediff_controlnet_mlsd.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_mlsd.scheduler.config)
 	stablediff_controlnet_mlsd.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.lora)
+	stablediff_controlnet_mlsd.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
 	stablediff_controlnet_mlsd.enable_model_cpu_offload()
 	stablediff_controlnet_mlsd.enable_attention_slicing()
 	stablediff_controlnet_mlsd.enable_xformers_memory_efficient_attention()
@@ -84,7 +84,7 @@ def load_stablediff_models(splash: Any):
 	                                                               algorithm_type='sde-dpmsolver++')
 	# stablediff.scheduler = EulerDiscreteScheduler.from_config(stablediff.scheduler.config)
 	stablediff.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
-	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.lora)
+	stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
 	stablediff.enable_model_cpu_offload()
 	stablediff.enable_attention_slicing()
 	stablediff.enable_xformers_memory_efficient_attention()
@@ -117,7 +117,7 @@ def load_stablediff_models(splash: Any):
 	# stablediff_controlnet_inpaint.scheduler = EulerDiscreteScheduler.from_config(stablediff_controlnet_inpaint.scheduler.config)
 	stablediff_controlnet_inpaint.set_progress_bar_config(disable=config.sd_model.disable_progress_bar)
 	stablediff_controlnet_inpaint.load_lora_weights(config.sd_model.cache_dir,
-	                                                weight_name=config.sd_model.lora)
+	                                                weight_name=config.sd_model.ambient_lora)
 	stablediff_controlnet_inpaint.enable_model_cpu_offload()
 	stablediff_controlnet_inpaint.enable_attention_slicing()
 	stablediff_controlnet_inpaint.enable_xformers_memory_efficient_attention()
@@ -325,9 +325,13 @@ def generate_entity(entity_name: str,
 		if entity_type == 'enemy':
 			entity_prompt = config.entity.enemy_prompt
 			negative_prompt = config.entity.negative_enemy_prompt
+			stablediff.unload_lora_weights()
+			stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.enemy_lora)
 		else:
 			entity_prompt = config.entity.obj_prompt
 			negative_prompt = config.entity.negative_obj_prompt
+			stablediff.unload_lora_weights()
+			stablediff.load_lora_weights(config.sd_model.cache_dir, weight_name=config.sd_model.ambient_lora)
 		formatted_prompt = entity_prompt.format(entity_name=entity_name,
 		                                               entity_description=entity_description,
 		                                               place_description=place_description, place_name=place_name)
