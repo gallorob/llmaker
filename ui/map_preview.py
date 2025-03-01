@@ -2,7 +2,7 @@ from functools import partial
 from typing import Union, Tuple, List, Optional
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QBrush, QColor, QWheelEvent
+from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsRectItem
 
 from configs import config
@@ -22,6 +22,8 @@ class MapPreviewWidget(QWidget):
 		self.scene = QGraphicsScene(self)
 		self.view = QGraphicsView(self.scene)
 		
+		self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+		self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 		self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 		
 		self.view_layout = QVBoxLayout(self)
@@ -36,11 +38,11 @@ class MapPreviewWidget(QWidget):
 		self.show_map_preview()
 	
 	def get_rects(self,
-	              room: Union[Room, Corridor],
-	              offset_x: float,
-	              offset_y: float,
-	              direction: Optional[Direction],
-	              selected=False) -> Tuple[List[QGraphicsRectItem], int, int]:
+				  room: Union[Room, Corridor],
+				  offset_x: float,
+				  offset_y: float,
+				  direction: Optional[Direction],
+				  selected=False) -> Tuple[List[QGraphicsRectItem], int, int]:
 		def __update_offsets(offset_x, offset_y, direction, draw_size) -> Tuple[int, int]:
 			if direction == Direction.NORTH:
 				offset_y -= draw_size
@@ -86,7 +88,7 @@ class MapPreviewWidget(QWidget):
 			if direction is not None:
 				draw_direction = direction
 				draw_offset_x, draw_offset_y = __update_offsets(offset_x, offset_y, opposite_direction[direction],
-				                                                corridor_offset)
+																corridor_offset)
 			else:
 				draw_offset_x, draw_offset_y = offset_x, offset_y
 				corridor_draw_length_offset = self.corridor_draw_size * room.length / 2
@@ -106,15 +108,15 @@ class MapPreviewWidget(QWidget):
 				rect.setToolTip(basic_corridor_description(room))
 				rect.setPos(draw_offset_x, draw_offset_y)
 				draw_offset_x, draw_offset_y = __update_offsets(draw_offset_x, draw_offset_y, draw_direction,
-				                                                self.corridor_draw_size)
+																self.corridor_draw_size)
 				rect.mousePressEvent = partial(self.parent().parent().parent().on_corridor_press, room.room_from,
-				                               room.room_to)
+											   room.room_to)
 				rects.append(rect)
 			self.drawn_rooms.append(f'{room.room_from}_{room.room_to}')
 
 			if direction is not None:
 				offset_x, offset_y = __update_offsets(offset_x, offset_y, draw_direction,
-				                                      room.length * self.corridor_draw_size)
+													  room.length * self.corridor_draw_size)
 				for other_room in [room.room_from, room.room_to]:
 					if other_room not in self.drawn_rooms:
 						other_rects, _, _ = self.get_rects(self.level.rooms[other_room], offset_x, offset_y, direction)
@@ -127,14 +129,14 @@ class MapPreviewWidget(QWidget):
 							if self.level.connections[room_a][new_direction] == room_b:
 								if new_direction == draw_direction:
 									new_offset_x, new_offset_y = __update_offsets(offset_x, offset_y,
-									                                              opposite_direction[new_direction],
-									                                              room.length * self.corridor_draw_size / 2 + self.room_draw_size)
+																				  opposite_direction[new_direction],
+																				  room.length * self.corridor_draw_size / 2 + self.room_draw_size)
 								else:
 									new_offset_x, new_offset_y = __update_offsets(offset_x, offset_y,
-									                                              opposite_direction[new_direction],
-									                                              room.length * self.corridor_draw_size / 2)
+																				  opposite_direction[new_direction],
+																				  room.length * self.corridor_draw_size / 2)
 								other_rects, _, _ = self.get_rects(self.level.rooms[room_a], new_offset_x, new_offset_y,
-								                                   new_direction)
+																   new_direction)
 								rects.extend(other_rects)
 
 		return rects, offset_x, offset_y
@@ -148,8 +150,7 @@ class MapPreviewWidget(QWidget):
 			self.room_draw_size = self.rect().height() * config.ui.minimap_room_scale
 
 		self.scene.clear()
-		self.scene.setBackgroundBrush(
-			QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == ThemeMode.DARK else '#ececec')))
+		self.scene.setBackgroundBrush(QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == ThemeMode.DARK else '#ececec')))
 
 		if self.level.current_room != '':
 			if self.level.current_room in self.level.rooms.keys():
@@ -158,16 +159,9 @@ class MapPreviewWidget(QWidget):
 				room = self.level.corridors[self.level.current_room]
 			
 			rects, _, _ = self.get_rects(room=room,
-			                             offset_x=x // 2, offset_y=y // 2,
-			                             direction=None, selected=True)
+										 offset_x=x // 2, offset_y=y // 2,
+										 direction=None, selected=True)
 			
 			for rect in rects:
 				self.scene.addItem(rect)
-	
-	def wheelEvent(self, a0: QWheelEvent):
-		num_degrees = a0.angleDelta().y() / 8
-		num_steps = num_degrees / 15
-		self.room_draw_size += (config.ui.minimap_zoom_step * config.ui.minimap_room_scale) * num_steps
-		self.corridor_draw_size += (config.ui.minimap_zoom_step * config.ui.minimap_corridor_scale) * num_steps
-		
-		self.update()
+
