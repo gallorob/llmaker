@@ -222,28 +222,43 @@ class FreyrLLM:
 	                    conversation_history: List[Dict[str, str]],
 	                    user_message: str,
 	                    level: Level) -> List[str]:
-		model_name = self.cache.get_model_by_role('intent')
-		prompt = self.cache.get_prompt_by_role('intent')
-		level_str = str(level)
-		intents_str = str(self.intents_dict)
-		prompt = prompt.format(level_str=level_str,
-		                       intents_str=intents_str)
-		messages = [
-			{'role': 'system', 'content': prompt},
-			*conversation_history,
-			{'role': 'user', 'content': f'Designer: {user_message}'}
-		]
-		log_msg = str(messages).replace('\n', '')
-		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents messages={log_msg}')
-		start = default_timer()
-		output = self.__chat(model_name=model_name,
-		                     messages=messages)
-		end = default_timer()
-		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
-		response = output['message']['content']
-		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents {response=}')
-		intents = FreyrLLM.polish_intents_output(response=response)
-		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents {intents=}')
+		valid_intents_generated = False
+		add_messages = []
+		while not valid_intents_generated:
+			model_name = self.cache.get_model_by_role('intent')
+			prompt = self.cache.get_prompt_by_role('intent')
+			level_str = str(level)
+			intents_str = str(self.intents_dict)
+			prompt = prompt.format(level_str=level_str,
+								intents_str=intents_str)
+			messages = [
+				{'role': 'system', 'content': prompt},
+				*conversation_history,
+				{'role': 'user', 'content': f'Designer: {user_message}'},
+				*add_messages
+			]
+			log_msg = str(messages).replace('\n', '')
+			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents messages={log_msg}')
+			start = default_timer()
+			output = self.__chat(model_name=model_name,
+								messages=messages)
+			end = default_timer()
+			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
+			response = output['message']['content']
+			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents {response=}')
+			intents = FreyrLLM.polish_intents_output(response=response)
+			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents {intents=}')
+
+			valid_intents_generated = True
+			
+			for intent in intents:
+				if intent not in self.intents_dict.keys():
+					logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents {intent} is not a valid intent; retrying.')
+					valid_intents = ','.join(list(self.intents_dict.keys()))
+					valid_intents_generated = False
+					add_messages.append({'role': 'system', 'content': f'{intent} is not a valid intent. Choose only among {valid_intents}'})
+					break
+
 		return intents
 	
 	def generate_params_and_execute_tool(self,
