@@ -6,16 +6,14 @@ from PyQt6.QtCore import Qt, QRectF
 from PyQt6.QtGui import QBrush, QColor, QPixmap, QPainter, QMouseEvent
 from PyQt6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout, QGraphicsPixmapItem
 from dungeon_despair.domain.utils import ModifierType, get_enum_by_value
-from numba import typeof
 
 from configs import config
 from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
-# from dungeon_despair.domain.utils import derive_rooms_from_corridor_name, is_corridor
 from ui.dyn_dialog import EnemyPreviewDialog
-from utils import ThemeMode, get_modifier_icon, rich_entity_description, basic_entity_description
+from utils import ThemeMode, get_modifier_icon, basic_entity_description
 
 
 def show_enemy_dialog(event: QMouseEvent, parent: QWidget, enemy: Enemy):
@@ -37,15 +35,14 @@ class EncounterPreviewWidget(QWidget):
 		
 		self.view_layout = QVBoxLayout(self)
 		self.view_layout.addWidget(self.view)
-	
+
 	def paintEvent(self, a0):
 		self.scene.clear()
 		self.show_room_preview()
-	
+
 	def show_room_preview(self):
 		self.scene.setBackgroundBrush(
 			QBrush(QColor('#1e1d23' if self.parent().parent().parent().theme == ThemeMode.DARK else '#ececec')))
-		
 		if self.level.current_room != '':
 			if self.level.current_room in self.level.rooms.keys():
 				room = self.level.rooms[self.level.current_room]
@@ -118,5 +115,5 @@ class EncounterPreviewWidget(QWidget):
 				for i, encounter in enumerate(room.encounters):
 					for entities in [encounter.treasures, encounter.traps, encounter.enemies]:
 						total_width = scaled_entity_width * len(entities)
-						x_offset = (w - total_width) / 2
+						x_offset = ((i + 1) * (w / (room.length + 2)) + (w / (room.length + 2) / 2)) - (total_width / 2)
 						__draw_entities(entities, x_offset, y_offset, scaled_entity_width)
