@@ -143,7 +143,6 @@ class MapPreviewWidget(QWidget):
 	
 	def show_map_preview(self):
 		self.drawn_rooms = []
-		x, y = self.rect().x(), self.rect().y()
 		if self.corridor_draw_size is None:
 			self.corridor_draw_size = self.rect().height() * config.ui.minimap_corridor_scale
 		if self.room_draw_size is None:
@@ -159,9 +158,11 @@ class MapPreviewWidget(QWidget):
 				room = self.level.corridors[self.level.current_room]
 			
 			rects, _, _ = self.get_rects(room=room,
-										 offset_x=x // 2, offset_y=y // 2,
+										 offset_x=0, offset_y=0,
 										 direction=None, selected=True)
 			
 			for rect in rects:
 				self.scene.addItem(rect)
-
+			
+			self.view.centerOn(rects[0].sceneBoundingRect().center())
+			self.view.setSceneRect(self.scene.itemsBoundingRect())
