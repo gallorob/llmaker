@@ -97,9 +97,11 @@ class EncounterPreviewWidget(QWidget):
 							if modifier is not None:
 								modifier_sprite = QPixmap(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type)))
 								modifier_rect = QGraphicsPixmapItem(modifier_sprite)
-								modifier_rect.setScale(config.ui.entity_scale / 4)
+								modifier_rect.setScale(config.ui.modifier_scale)
 								modifier_rect.setToolTip(str(modifier))
-								modifier_rect.setPos(x_offset + scaled_entity_width * i + scaled_entity_width / 4,
+								scaled_modifier_width = config.ui.modifier_scale * modifier_sprite.width()
+								offset_mod = (scaled_entity_width - scaled_modifier_width) / 2
+								modifier_rect.setPos(x_offset + (scaled_entity_width * i) + offset_mod,
 													y_offset)
 								self.scene.addItem(modifier_rect)
 
