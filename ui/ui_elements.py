@@ -390,7 +390,7 @@ class MainWindow(QMainWindow):
 	def export_level(self):
 		try:
 			tmp_filename, _ = QFileDialog.getSaveFileName(self,
-			                                              caption="Save Level",
+			                                              caption="Export Level as Scenario",
 			                                              directory=config.scenarios_dir,
 			                                              filter="All Files(*);;Binary Files(*.bin)")
 			if tmp_filename:
