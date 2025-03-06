@@ -71,3 +71,8 @@ class ConversationWidget(QWidget):
 	
 	def get_conversation(self) -> List[str]:
 		return [message.text() for message in self.messages]
+
+	def update(self):
+		# Scroll to the bottom of the scroll area
+		self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
+		super().update()
