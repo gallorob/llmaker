@@ -3,6 +3,7 @@ from typing import List
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QLabel, QSizePolicy
 
+from chat_message import ChatMessage, Conversation
 
 class ConversationWidget(QWidget):
 	def __init__(self, parent):
@@ -28,6 +29,7 @@ class ConversationWidget(QWidget):
 		self.setLayout(main_layout)
 		
 		self.messages: List[QLabel] = []
+		self.conversation: Conversation = Conversation()
 
 		self.placeholder = QLabel(parent=self.central_widget, text="Start designing by sending a message!")
 		self.placeholder.setProperty('messageType', 'placeholder')
@@ -38,23 +40,20 @@ class ConversationWidget(QWidget):
 			self.central_layout.removeWidget(message)
 			message.deleteLater()
 		self.messages.clear()
+		self.conversation = Conversation()
 		self.update()
-	
-	def load_conversation(self, conversation):
-		for i, line in enumerate(conversation.split('\n')):
-			line = line.replace('You: ', '').replace('AI: ', '')
-			self.add_message(line)
-	
-	def add_message(self, message):
-		new_message = QLabel(parent=self.central_widget, text=message)
-		new_message.setProperty('messageType', 'me' if len(self.messages) % 2 == 0 else 'them')
 		
+	def add_message(self, message: str):
+		new_chat_message = ChatMessage(role='me' if len(self.conversation) % 2 == 0 else 'them',
+								       msg=message)
+		self.conversation.append(new_chat_message)
+
+		new_message = QLabel(parent=self.central_widget, text=new_chat_message.content)
+		new_message.setProperty('messageType', new_chat_message.role)
 		new_message.setWordWrap(True)
 		new_message.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
-		
 		# Set maximum width to prevent horizontal stretching
 		new_message.setMaximumWidth(int(self.width()))
-		
 		self.messages.append(new_message)
 
 		if self.placeholder.isVisible():
@@ -70,7 +69,7 @@ class ConversationWidget(QWidget):
 		super().resizeEvent(event)
 	
 	def get_conversation(self) -> List[str]:
-		return [message.text() for message in self.messages]
+		return [message.content for message in self.conversation.messages]
 
 	def update(self):
 		# Scroll to the bottom of the scroll area

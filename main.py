@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication
 
 from dungeon_despair.domain.configs import config as domain_config
 
+from chat_message import Conversation
 from configs import config
 from dungeon_despair.domain.level import Level
 from freyr_llm import load_local_llm
@@ -61,8 +62,10 @@ if __name__ == '__main__':
 		level, _ = Level.load_from_file(FILE_NAME)
 		win.set_level(level)
 		with open('tmp_conversation.txt', 'r') as f:
-			conversation = f.read()
-		win.chat_area.load_conversation(conversation)
+			conversation_json = f.read()
+		conversation = Conversation.from_json(conversation_json)
+		for message in conversation.messages:
+			win.chat_area.add_message(message.content)
 		logging.getLogger('llmaker').info('Updating GUI...')
 		win.map_preview.show_map_preview()
 		win.room_preview.show_room_preview()

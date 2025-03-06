@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGroupBox, QHBoxLayout, 
 	QVBoxLayout, QWidget, QMenu
 from dungeon_despair.domain.utils import make_corridor_name
 
+from chat_message import Conversation
 from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
@@ -21,6 +22,7 @@ from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
 from utils import LLMMode, ToolMode, ThemeMode
+from versioning import VersionHandler
 
 
 def get_splash_screen():
@@ -33,9 +35,7 @@ class MainWindow(QMainWindow):
 	def __init__(self, level: Level):
 		super().__init__()
 		self.level = level
-		self.levels_hist = [copy.deepcopy(self.level)]
-		self.level_idx = 0
-		
+
 		self.mode = ToolMode.LLM
 		self.llm_mode = LLMMode.FREYR
 		
@@ -204,19 +204,16 @@ class MainWindow(QMainWindow):
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
 		# self.switch_mode()
+		self.versioning = VersionHandler(level=self.level,
+										 chat=self.chat_area.conversation.messages)
 		
 		self.chat_box.setFocus()
 	
 	def create_button_handler(self, func, button):
 		def handler():
-			if self.level_idx < len(self.levels_hist) - 1:
-				self.levels_hist = self.levels_hist[:self.level_idx + 1]
-
 			dialog = DebugFunctionsDialog(self.level, func, button)
 			dialog.exec()
-
-			self.level_idx += 1
-			self.levels_hist.append(copy.deepcopy(self.level))
+			self.versioning.commit(self.level, self.chat_area.conversation)
 		
 		return handler
 
@@ -260,8 +257,9 @@ class MainWindow(QMainWindow):
 		self.chat_box.setFocus()
 		self.pbar.reset()
 		self.pbar.setHidden(True)
-		self.level_idx += 1
-		self.levels_hist.append(copy.deepcopy(self.level))
+		# Note: This commits every time a message is sent, regardless of the operation carried out
+		self.versioning.commit(self.level,
+						 	   self.chat_area.conversation.messages)
 		self.update()
 		self.chat_area.update()
 	
@@ -280,9 +278,6 @@ class MainWindow(QMainWindow):
 		
 		logging.getLogger().debug(f'process_user_input Starting separate thread')
 		
-		if self.level_idx < len(self.levels_hist) - 1:
-			self.levels_hist = self.levels_hist[:self.level_idx + 1]
-
 		self.worker = UIInputProcessor(self.level, user_input, conversation_history, self.llm_mode)
 		self.thread = QThread()
 		
@@ -338,7 +333,7 @@ class MainWindow(QMainWindow):
 			if tmp_filename:
 				assert len(self.level.rooms) > 0, 'Can\'t save an empty level!'
 				self.level.save_to_file(filename=tmp_filename,
-				                        conversation=self.chat_area.get_conversation())
+				                        conversation=self.chat_area.conversation.to_json())
 				
 				dlg = QMessageBox(self)
 				dlg.setWindowTitle("LLMaker Message")
@@ -359,17 +354,15 @@ class MainWindow(QMainWindow):
 		
 		if tmp_filename:
 			try:
-				level, conversation = Level.load_from_file(tmp_filename)
-				
-				self.levels_hist = [copy.deepcopy(level)]
-				self.level_idx = 0
+				level, conversation_json = Level.load_from_file(tmp_filename)
+							
+				conversation = Conversation.from_json(conversation_json)
+				for msg in conversation.messages:
+					self.chat_area.add_message(msg.content)
 				
 				self.set_level(level)
-				
-				for i, line in enumerate(conversation.split('\n\n\n')):
-					line = line.replace('You: ', '').replace('AI: ', '')
-					self.chat_area.add_message(line)
-				
+				self.versioning = VersionHandler(self.level, conversation)
+
 				dlg = QMessageBox(self)
 				dlg.setWindowTitle("LLMaker Message")
 				dlg.setText(f"The level has been successfully loaded!")
@@ -386,6 +379,7 @@ class MainWindow(QMainWindow):
 	@pyqtSlot()
 	def clear_level(self):
 		self.set_level(Level())
+		self.versioning = VersionHandler(level=self.level, chat=[])
 		self.chat_box.clear()
 		self.chat_area.reset()
 		self.update()
@@ -414,23 +408,29 @@ class MainWindow(QMainWindow):
 	
 	@pyqtSlot()
 	def undo_edit(self):
-		if self.level_idx > 0:
-			self.level_idx -= 1
-			self.set_level(copy.deepcopy(self.levels_hist[self.level_idx]))
-			# TODO: Should also handle chat messages
+		if self.versioning.can_undo:
+			prev_level, prev_chat = self.versioning.undo()
+			self.set_level(prev_level)
+			self.chat_area.reset()
+			for msg in prev_chat:
+				self.chat_area.add_message(msg.content)
 			self.update()
+			self.chat_area.update()
 		else:
-			QMessageBox.warning(None, "LLMaker Warning", "No undos available!")
+			QMessageBox.warning(self, "LLMaker Warning", "No undos available!")
 	
 	@pyqtSlot()
 	def redo_edit(self):
-		if self.level_idx < len(self.levels_hist) - 1:
-			self.level_idx += 1
-			self.set_level(copy.deepcopy(self.levels_hist[self.level_idx]))
-			# TODO: Should also handle chat messages
+		if self.versioning.can_redo:
+			next_level, next_chat =	self.versioning.redo()
+			self.set_level(next_level)
+			self.chat_area.reset()
+			for msg in next_chat:
+				self.chat_area.add_message(msg.content)
 			self.update()
+			self.chat_area.update()
 		else:
-			QMessageBox.warning(None, "LLMaker Warning", "No redos available!")
+			QMessageBox.warning(self, "LLMaker Warning", "No redos available!")
 
 	@pyqtSlot()
 	def switch_mode(self):
