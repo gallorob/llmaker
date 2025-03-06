@@ -1,7 +1,9 @@
+from argparse import Namespace
+import copy
 import json
 import subprocess
 from time import sleep
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 
 import ollama
 from timeit import default_timer
@@ -15,13 +17,17 @@ import logging
 class LLMsCache:
 	def __init__(self):
 		self.timeout = 0.8
-		self.__cache: Dict[str, Dict[str, str]] = {}
+		self.__cache: Dict[str, Dict[str, Union[str, float]]] = {}
 		self.ollama_models = LLMsCache.get_ollama_models()
 	
 	@property
 	def roles(self) -> List[str]:
 		return list(self.__cache.keys())
 	
+	@property
+	def get_cache(self) -> Dict[str, Dict[str, str]]:
+		return self.__cache
+
 	@staticmethod
 	def get_ollama_models() -> List[str]:
 		return [x['model'] for x in ollama.list()['models']]
@@ -45,15 +51,19 @@ class LLMsCache:
 	
 	def try_add_model(self,
 	                  role: str,
-	                  model_name: str) -> None:
+	                  role_configs: Namespace) -> None:
 		assert role not in self.roles, f'{role} already has a model: {self.__cache[role]}'
+		model_name = role_configs.model
 		if model_name not in self.ollama_models:
 			ollama.pull(model_name)
 			self.ollama_models = LLMsCache.get_ollama_models()
 		ollama.generate(model=model_name, keep_alive=-1)
 		self.__cache[role] = {
 			'prompt': LLMsCache.load_prompt(role),
-			'model': model_name
+			'model': model_name,
+			'temperature': role_configs.temperature,
+			'top_p': role_configs.top_p,
+			'top_k': role_configs.top_k
 		}
 		logging.getLogger('llmaker').log(logging.INFO, msg=f'LLMsCache.try_add_model Added {model_name} to {role}')
 	
@@ -67,6 +77,11 @@ class LLMsCache:
 		assert role in self.__cache, f'{role} has no associated prompt'
 		return self.__cache[role]['prompt']
 	
+	def get_params_by_role(self,
+						   role: str) -> Dict[str, float]:
+		assert role in self.__cache, f'{role} has no associated parameters'
+		return {k: self.__cache[role][k] for k in list(set(self.__cache[role].keys()).difference(['prompt', 'model']))}
+
 	def role_has_model(self,
 	                   role: str) -> bool:
 		return role in self.roles and self.__cache[role]['model'] != ''
@@ -99,7 +114,7 @@ class FreyrLLM:
 		self.cache = cache
 		
 		self.intents_dict = {
-			"conversation (msg)": "Ask for details, clarifications, or suggestions.",
+			"conversation": "Ask for details, clarifications, or suggestions.",
 			**self.tools_as_dict(),
 		}
 		
@@ -112,10 +127,11 @@ class FreyrLLM:
 	
 	def __chat(self,
 	           model_name: str,
+			   params: Dict[str, float],
 	           messages: List[Dict[str, str]]) -> Dict[str, Any]:
 		options = {
-			'temperature': config.llm.temperature,
-			'top_p': config.llm.top_p,
+			'temperature': params['temperature'],
+			'top_p': params['top_p'],
 			'seed': config.rng_seed
 		}
 		res = ollama.chat(model=model_name,
@@ -241,7 +257,8 @@ class FreyrLLM:
 			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents messages={log_msg}')
 			start = default_timer()
 			output = self.__chat(model_name=model_name,
-								messages=messages)
+					   		 	 params=self.cache.get_params_by_role('intent'),
+								 messages=messages)
 			end = default_timer()
 			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.extract_intents Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
 			response = output['message']['content']
@@ -288,6 +305,7 @@ class FreyrLLM:
 			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool {intent=}; messages={log_msg}; {n_retries=}')
 			start = default_timer()
 			output = self.__chat(model_name=model_name,
+					   		 	 params=self.cache.get_params_by_role('params'),
 			                     messages=messages)
 			end = default_timer()
 			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
@@ -331,20 +349,24 @@ class FreyrLLM:
 	
 	def summarize_tool_results(self,
 	                           tool_results: List[str],
-	                           level: Level) -> str:
+	                           level: Level,
+							   prev_level: Level) -> str:
 		model_name = self.cache.get_model_by_role('summary')
 		prompt = self.cache.get_prompt_by_role('summary')
 		level_str = str(level)
+		prev_level_str = str(prev_level)
 		tool_results_str = '; '.join(tool_results)
-		prompt = prompt.format(level_str=level_str)
+		user_msg = f'Edits:\n{tool_results_str}Current Level:\n{level_str}'
+		prompt = prompt.format(prev_level_str=prev_level_str)
 		messages = [
 			{'role': 'system', 'content': prompt},
-			{'role': 'user', 'content': tool_results_str},
+			{'role': 'user', 'content': user_msg},
 		]
 		log_msg = str(messages).replace('\n', '')
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.summarize_tool_results messages={log_msg}')
 		start = default_timer()
 		output = self.__chat(model_name=model_name,
+					   		 params=self.cache.get_params_by_role('summary'),
 		                     messages=messages)
 		end = default_timer()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.summarize_tool_results Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
@@ -370,6 +392,7 @@ class FreyrLLM:
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.chat messages={log_msg}')
 		start = default_timer()
 		output = self.__chat(model_name=model_name,
+					   		 params=self.cache.get_params_by_role('chat'),
 		                     messages=messages)
 		end = default_timer()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.chat Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}')
@@ -385,6 +408,8 @@ class FreyrLLM:
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM History cutoff: {self.history_cutoff_idx}; Conversation length: {len(conversation_history)}')
 		valid_conversation_history = self.trim_and_convert_conversation(conversation_history)
 		
+		prev_level = copy.deepcopy(level)
+
 		intents = self.extract_intents(conversation_history=valid_conversation_history,
 		                               user_message=user_message,
 		                               level=level)
@@ -422,7 +447,8 @@ class FreyrLLM:
 			self.history_cutoff_idx = len(conversation_history) + 2  # user query + response
 			# summarize results
 			response = self.summarize_tool_results(tool_results=tool_results,
-			                                       level=level)
+			                                       level=level,
+												   prev_level=prev_level)
 		end = default_timer()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM Time: {(end - start):.4f}')
 		return response
@@ -434,14 +460,14 @@ def load_local_llm(splash: Any):
 	global freyr_model
 
 	llms_cache = LLMsCache()
-	llms_cache.try_add_model(role='chat', model_name=config.llm.roles.chat)
-	splash.showMessage(f'Loaded {config.llm.roles.chat}')
-	llms_cache.try_add_model(role='summary', model_name=config.llm.roles.summary)
-	splash.showMessage(f'Loaded {config.llm.roles.summary}')
-	llms_cache.try_add_model(role='intent', model_name=config.llm.roles.intent)
-	splash.showMessage(f'Loaded {config.llm.roles.intent}')
-	llms_cache.try_add_model(role='params', model_name=config.llm.roles.params)
-	splash.showMessage(f'Loaded {config.llm.roles.params}')
+	llms_cache.try_add_model(role='chat', role_configs=config.llm.chat)
+	splash.showMessage(f'Loaded {config.llm.chat.model}')
+	llms_cache.try_add_model(role='summary', role_configs=config.llm.summary)
+	splash.showMessage(f'Loaded {config.llm.summary.model}')
+	llms_cache.try_add_model(role='intent', role_configs=config.llm.intent)
+	splash.showMessage(f'Loaded {config.llm.intent.model}')
+	llms_cache.try_add_model(role='params', role_configs=config.llm.params)
+	splash.showMessage(f'Loaded {config.llm.params.model}')
 
 	freyr_model = FreyrLLM(cache=llms_cache)
 

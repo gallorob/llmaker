@@ -1,7 +1,8 @@
 [Task]
-You will be given a list of edits made to the level.
+You will be given a list of edits made to a level, along with its version before and after the edits are made.
 Your task is to summarize the results to the user in ONE message.
+Your response will be given as if YOU made those edits.
 
 [Level]
-The level is as follows:
-{level_str}
+Before the edits, the level was as follows:
+{prev_level_str}

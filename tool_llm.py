@@ -1,7 +1,7 @@
 import subprocess
 from time import sleep
 from timeit import default_timer
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 import ollama
 import logging
@@ -13,9 +13,11 @@ from dungeon_despair.functions import DungeonCrawlerFunctions
 
 class ToolLLM:
 	def __init__(self,
-	             model_name: str):
+	             role_configs: Dict[str, Union[str, float]]):
 		self.timeout = 0.5
-		self.model_name = model_name
+		self.model_name = role_configs.model
+		self.temperature = role_configs.temperature
+		self.top_p = role_configs.top_p
 		self.tools = DungeonCrawlerFunctions()
 		with open(config.llm.tools.prompt, 'r') as f:
 			self.prompt = f.read()
@@ -32,8 +34,8 @@ class ToolLLM:
 	def __chat(self,
 	           messages: List[Dict[str, str]]) -> Dict[str, Any]:
 		options = {
-			'temperature': config.llm.temperature,
-			'top_p': config.llm.top_p,
+			'temperature': self.temperature,
+			'top_p': self.top_p,
 			'seed': config.rng_seed,
 			'num_ctx': 32768 * 3
 		}
@@ -88,11 +90,11 @@ tool_model: Optional[ToolLLM] = None
 def get_tool_model():
 	global tool_model
 	if tool_model is None:
-		tool_model = ToolLLM(model_name=config.llm.roles.tools)
+		tool_model = ToolLLM(role_configs=config.llm.tools)
 	return tool_model
 
 def load_local_llm(splash: Any):
 	global tool_model
 	
-	tool_model = ToolLLM(model_name=config.llm.roles.tools)
-	splash.showMessage(f'Loaded {config.llm.roles.tools}')
+	tool_model = ToolLLM(role_configs=config.llm.tools)
+	splash.showMessage(f'Loaded {config.llm.tools.model}')

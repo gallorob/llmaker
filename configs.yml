@@ -32,26 +32,37 @@ ui:
   selected_color: '#ffbf00'
   unselected_color: '#b38600'
 llm:
-  temperature: 0.4
-  top_p: 0.2
-  top_k: 10
-  roles:
-    chat: 'gemma2:latest'
-    summary: 'gemma2:latest'
-    intent: 'gemma2:latest'
-    params: 'gemma2:latest'
-    tools: 'llama3.1:latest'
-  intent:
+  chat:
+    model: 'gemma2:latest'
+    prompt: './assets/prompts/chat_system_prompt'
+    temperature: 0.6
+    top_p: 0.2
+    top_k: 10
+  summary: 
+    model: 'gemma2:latest'
+    prompt: './assets/prompts/summary_system_prompt'
+    temperature: 0.6
+    top_p: 0.2
+    top_k: 10
+  intent: 
+    model: 'gemma2:latest'
     prompt: './assets/prompts/intent_system_prompt'
-  params:
+    temperature: 0.01
+    top_p: 0.2
+    top_k: 10
+  params: 
+    model: 'gemma2:latest'
     prompt: './assets/prompts/params_system_prompt'
     err_msg: './assets/prompts/params_err_feedback'
-  summary:
-    prompt: './assets/prompts/summary_system_prompt'
-  chat:
-    prompt: './assets/prompts/chat_system_prompt'
-  tools:
+    temperature: 0.2
+    top_p: 0.2
+    top_k: 10
+  tools: 
+    model: 'llama3.1:latest'
     prompt: './assets/prompts/tools_system_prompt'
+    temperature: 0.4
+    top_p: 0.2
+    top_k: 10
 room:
   mask: './assets/controlnet_masks/room_mask.png'
   prompt: "zrpgstyle, ddstyle, a (side view)+++ of a room set in {room_name}, {room_description}, best quality"
