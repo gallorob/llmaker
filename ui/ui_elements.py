@@ -263,6 +263,7 @@ class MainWindow(QMainWindow):
 		self.level_idx += 1
 		self.levels_hist.append(copy.deepcopy(self.level))
 		self.update()
+		self.chat_area.update()
 	
 	@pyqtSlot()
 	def process_user_input(self):
@@ -273,6 +274,7 @@ class MainWindow(QMainWindow):
 		
 		self.chat_box.clear()
 		self.chat_area.add_message(user_input)
+		self.chat_area.update()
 		
 		self.chat_box.setDisabled(True)
 		
@@ -298,6 +300,7 @@ class MainWindow(QMainWindow):
 		self.pbar.setHidden(False)
 		self.pbar.reset()
 		self.actions_groupbox.update()
+		self.chat_area.update()
 		
 		# Start the thread
 		self.thread.start()
@@ -373,6 +376,7 @@ class MainWindow(QMainWindow):
 				_ = dlg.exec()
 				
 				self.update()
+				self.chat_area.update()
 			except Exception as e:
 				dlg = QErrorMessage(self)
 				dlg.setWindowTitle("LLMaker Error")
