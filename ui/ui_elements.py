@@ -260,6 +260,8 @@ class MainWindow(QMainWindow):
 		# Note: This commits every time a message is sent, regardless of the operation carried out
 		self.versioning.commit(self.level,
 						 	   self.chat_area.conversation.messages)
+		self.level.save_to_file(filename=os.path.join(config.levels_dir, config.tmp_level),
+				                        conversation=self.chat_area.conversation.to_json())
 		self.update()
 		self.chat_area.update()
 	

@@ -2,6 +2,7 @@ rng_seed: -1
 temp_dir: './test_results'
 levels_dir: './my_levels'
 scenarios_dir: './my_scenarios'
+tmp_level: 'temp.bin'
 icons:
   bleed: './assets/icons/bleed_icon.png'
   heal: './assets/icons/heal_icon.png'
