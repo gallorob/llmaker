@@ -147,6 +147,7 @@ def generate_room(room_name: str,
 		                                        negative_prompt_embeds=negative_conditioning,
 		                                        num_inference_steps=config.room.inference_steps,
 		                                        guidance_scale=config.room.guidance_scale,
+					 							cross_attention_kwargs={"scale": config.room.lora_scale},
 		                                        generator=th.Generator(device=device).manual_seed(
 			                                        config.rng_seed) if config.rng_seed != -1 else None).images[0]
 		filename = os.path.join(config.room.save_dir, f'{room_name}.png')
@@ -194,6 +195,7 @@ def generate_corridor(room_names: List[str],
 		                                          negative_prompt_embeds=negative_conditioning,
 		                                          num_inference_steps=config.corridor.inference_steps,
 		                                          guidance_scale=config.corridor.guidance_scale,
+					 							  cross_attention_kwargs={"scale": config.corridor.lora_scale},
 		                                          generator=th.Generator(device=device).manual_seed(
 			                                          config.rng_seed) if config.rng_seed != -1 else None).images[0]
 		debugging_image = os.path.join(config.corridor.save_dir,
@@ -236,6 +238,7 @@ def generate_corridor(room_names: List[str],
 			generator=th.Generator(device=device).manual_seed(config.rng_seed) if config.rng_seed != -1 else None,
 			eta=config.corridor.eta,
 			guidance_scale=config.corridor.guidance_scale / 2,
+			cross_attention_kwargs={"scale": config.corridor.lora_scale},
 			image=tile_image,
 			mask_image=wall_control_image,
 			control_image=control_image,
@@ -266,6 +269,7 @@ def generate_corridor(room_names: List[str],
 				generator=th.Generator(device=device).manual_seed(config.rng_seed + i) if config.rng_seed != -1 else None,
 				eta=config.corridor.eta,
 				guidance_scale=config.corridor.guidance_scale / 2,
+				cross_attention_kwargs={"scale": config.corridor.lora_scale},
 				image=tile_image,
 				mask_image=wall_control_image,
 				control_image=control_image).images[0]
@@ -343,6 +347,8 @@ def generate_entity(entity_name: str,
 		entity_image = stablediff(prompt_embeds=conditioning, negative_prompt_embeds=negative_conditioning,
 		                          height=config.entity.height, width=config.entity.width,
 		                          num_inference_steps=config.entity.inference_steps,
+								  guidance_scale=config.entity.guidance_scale / 2,
+					 			  cross_attention_kwargs={"scale": config.entity.lora_scale},
 		                          generator=th.Generator(device=device).manual_seed(config.rng_seed) if config.rng_seed != -1 else None).images[0]
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}_wb.png')
 		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
