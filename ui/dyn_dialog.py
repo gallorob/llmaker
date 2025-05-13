@@ -1,11 +1,13 @@
 import logging
 import os
+from typing import Any, Dict
 
 from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
-	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget
-from dungeon_despair.domain.utils import ModifierType, get_enum_by_value
+	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget, QComboBox
+from dungeon_despair.domain.level import Level
+from dungeon_despair.domain.utils import Direction, ModifierType, get_enum_by_value
 from gptfunctionutil import LibCommand
 
 from configs import config
@@ -93,6 +95,117 @@ class EnemyPreviewDialog(QDialog):
 		layout.addLayout(details_layout, 0, 1)
 		layout.addLayout(attacks_layout, 1, 0, 1, 2)
 		layout.addWidget(button_box, 2, 0, 1, 2)
+
+
+class UserModeDialog(QDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(parent)
+		self.level: Level = level
+		self.func: LibCommand = func
+
+		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
+
+		self.layout = QVBoxLayout()
+				
+		# Add submit button
+		self.submit_btn = QPushButton("Submit")
+		self.submit_btn.clicked.connect(self.submit)
+		self.layout.addWidget(self.submit_btn)
+		
+		self.pbar = QProgressBar(self)
+		self.pbar.setRange(0, 100)
+		self.pbar.setHidden(True)
+		
+		self.layout.addWidget(self.pbar)
+		
+		self.setLayout(self.layout)
+
+	@pyqtSlot(int)
+	def update_progress(self, progress):
+		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} update_progress - Task progress: {progress}')
+		self.pbar.setValue(progress)
+
+	@pyqtSlot(str)
+	def task_finished(self, result):
+		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} task_finished - Edit finished')
+		self.pbar.reset()
+		self.pbar.setHidden(True)
+		button_pressed = QMessageBox.information(self, "Output", f"{result}")
+		if button_pressed == QMessageBox.StandardButton.Ok:
+			self.close()
+	
+	def get_kwargs(self) -> Dict[str, Any]:
+		raise NotImplementedError()
+
+	def submit(self):	
+		self.worker = DebugInputProcessor(self.get_kwargs(),
+		                                  self.func,
+		                                  self)
+		self.thread = QThread()
+		
+		self.worker.moveToThread(self.thread)
+		
+		self.thread.started.connect(self.worker.run)
+		self.worker.finished.connect(self.task_finished)
+		self.worker.progress.connect(self.update_progress)
+		self.worker.finished.connect(self.thread.quit)
+		self.worker.finished.connect(self.worker.deleteLater)
+		self.thread.finished.connect(self.thread.deleteLater)
+		
+		self.pbar.setHidden(False)
+		self.pbar.reset()
+		
+		self.thread.start()
+
+
+class CreateRoomDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Create Room')
+
+		self.layout.addWidget(QLabel('Room name:'))
+		self.roomname_widget = QLineEdit()
+		self.layout.addWidget(self.roomname_widget)
+
+		self.layout.addWidget(QLabel('Description'))
+		self.roomdescription_widget = QLineEdit()
+		self.layout.addWidget(self.roomdescription_widget)
+
+		if len(self.level.rooms) != 0:
+			self.rooms_combobox = QComboBox()
+			self.rooms_combobox.addItems(list(self.level.rooms.keys()))
+			self.rooms_combobox.setCurrentText(self.level.current_room)
+			self.layout.addWidget(QLabel('Connecting room:'))
+			self.layout.addWidget(self.rooms_combobox)
+
+			self.directions_combobox = QComboBox()
+			self.directions_combobox.addItems([direction.value for direction in Direction])
+			self.directions_combobox.setCurrentText(Direction.NORTH.value)
+			self.layout.addWidget(QLabel('Direction to:'))
+			self.layout.addWidget(self.directions_combobox)
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		room_name = self.roomname_widget.text()
+		room_description = self.roomdescription_widget.text()
+		if len(self.level.rooms) != 0:
+			other_room = self.rooms_combobox.currentText()
+			direction = self.directions_combobox.currentText()
+		else:
+			other_room = ''
+			direction = Direction.NORTH.value
+		return {
+			'self': None,
+			'level': self.level,
+			'name': room_name,
+			'description': room_description,
+			'room_from': other_room,
+			'direction': direction
+		}
+
+
+function_to_dialog = {
+	'create_room': CreateRoomDialog
+}
 
 
 class DebugFunctionsDialog(QDialog):

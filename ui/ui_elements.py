@@ -17,7 +17,7 @@ from dungeon_despair.functions import DungeonCrawlerFunctions
 from freyr_llm import get_freyr_model, LLMsCache
 from tool_llm import get_tool_model
 from ui.chat import ConversationWidget
-from ui.dyn_dialog import DebugFunctionsDialog
+from ui.dyn_dialog import DebugFunctionsDialog, function_to_dialog
 from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
@@ -96,12 +96,18 @@ class MainWindow(QMainWindow):
 		self.actions_vertical_layout.addWidget(self.pbar)
 		
 		self.actions_buttons = []
-		for k, func in DungeonCrawlerFunctions().FunctionDict.items():
-			button = QPushButton(k)
-			button.clicked.connect(self.create_button_handler(func, button))
-			button.hide()
-			self.actions_buttons.append(button)
-			self.actions_vertical_layout.addWidget(button)
+		# for k, func in DungeonCrawlerFunctions().FunctionDict.items():
+		# 	button = QPushButton(k)
+		# 	button.clicked.connect(self.create_button_handler(func, button))
+		# 	button.hide()
+		# 	self.actions_buttons.append(button)
+		# 	self.actions_vertical_layout.addWidget(button)
+		button = QPushButton('Create Room')
+		button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict['create_room'], button))
+		button.hide()
+		self.actions_buttons.append(button)
+		self.actions_vertical_layout.addWidget(button)
+
 		
 		self.setCentralWidget(self.main_ui_widget)
 		
@@ -211,7 +217,7 @@ class MainWindow(QMainWindow):
 	
 	def create_button_handler(self, func, button):
 		def handler():
-			dialog = DebugFunctionsDialog(self.level, func, button)
+			dialog = function_to_dialog[func.internal_name](self.level, func, button)
 			dialog.exec()
 			self.versioning.commit(self.level, self.chat_area.conversation.messages)
 		
