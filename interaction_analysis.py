@@ -16,13 +16,13 @@ model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 domain_config.temp_dir = './test_results/'
 
 levels = [
-    'my_levels/star_level',
-    'my_levels/alt_level'
+    'my_levels/space_level',
+    'my_levels/alt_level2'
 ]
 
 logs = [
-    'logs/log_20250513110238.log',
-    'logs/log_20250513114848.log'
+    'logs/log_20250513151645.log',
+    'logs/log_20250513151900.log'
 ]
 
 def get_semantic_similarity(sentences: List[str]) -> float:
@@ -137,8 +137,8 @@ def analyze_log(log_name: str) -> None:
     matches = re.findall(r"FreyrLLM Time:\s*([0-9.]+)", log)
     for match in matches:
         all_freyr_times.append(float(match))
-    print(f'Average response duration: {sum(all_freyr_times) / len(all_freyr_times):.2f}s (min: {min(all_freyr_times):.2f}s; max: {max(all_freyr_times):.2f}s)')
-
+    print(f'Average FREYR duration: {sum(all_freyr_times) / len(all_freyr_times):.2f}s (min: {min(all_freyr_times):.2f}s; max: {max(all_freyr_times):.2f}s)')
+    
     # get SD times
     all_sd_times = []
     for sd_op in ['generate_room', 'generate_corridor', 'generate_entity']:
@@ -149,9 +149,12 @@ def analyze_log(log_name: str) -> None:
 
     # get FREYR elapsed time
     freyr_time = timedelta(seconds=sum(all_freyr_times))
-    sd_time = timedelta(seconds=sum(all_sd_times))
     print(f'Time elapsed by FREYR: {freyr_time} ({freyr_time.total_seconds() / session_duration.total_seconds():.2%})')
+
+    # get SD elapsed time
+    sd_time = timedelta(seconds=sum(all_sd_times))
     print(f'Time elapsed by SD: {sd_time} ({sd_time.total_seconds() / session_duration.total_seconds():.2%})')
+
     print(f'Time elapsed by user: {session_duration - freyr_time - sd_time} ({(session_duration.total_seconds() - freyr_time.total_seconds() - sd_time.total_seconds()) / session_duration.total_seconds():.2%})')
     
 
