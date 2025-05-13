@@ -213,7 +213,7 @@ class MainWindow(QMainWindow):
 		def handler():
 			dialog = DebugFunctionsDialog(self.level, func, button)
 			dialog.exec()
-			self.versioning.commit(self.level, self.chat_area.conversation)
+			self.versioning.commit(self.level, self.chat_area.conversation.messages)
 		
 		return handler
 
@@ -262,8 +262,8 @@ class MainWindow(QMainWindow):
 						 	   self.chat_area.conversation.messages)
 		self.level.save_to_file(filename=os.path.join(config.levels_dir, config.tmp_level),
 				                        conversation=self.chat_area.conversation.to_json())
-		self.update()
 		self.chat_area.update()
+		self.update()
 	
 	@pyqtSlot()
 	def process_user_input(self):
