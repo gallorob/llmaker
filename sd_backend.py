@@ -1,6 +1,7 @@
 import logging
 import os
 from logging import debug
+from timeit import default_timer
 from typing import Any, List, Optional
 
 import numpy as np
@@ -133,6 +134,7 @@ def generate_room(room_name: str,
 	control_image = invert(load_image(config.room.mask)).resize((config.room.width, config.room.height), Image.Resampling.NEAREST)
 	
 	try:
+		start = default_timer()
 		room_name, room_description = clear_strings_for_prompt([room_name, room_description])
 		formatted_prompt = config.room.prompt.format(room_name=room_name, room_description=room_description)
 		logging.getLogger('llmaker').debug(f'generate_room {formatted_prompt=}')
@@ -153,6 +155,8 @@ def generate_room(room_name: str,
 		filename = os.path.join(config.room.save_dir, f'{room_name}.png')
 		logging.getLogger('llmaker').debug(f'generate_room {filename=}')
 		room_image.save(filename)
+		end = default_timer()
+		logging.getLogger('llmaker').debug(f'generate_room Time: {(end - start):.4f}')
 		return os.path.basename(filename)
 	except Exception as e:
 		print(e)
@@ -279,6 +283,7 @@ def generate_corridor(room_names: List[str],
 			tmp_image.save(debugging_image)
 	
 	try:
+		start = default_timer()
 		room_names = clear_strings_for_prompt(room_names)
 		room_descriptions = clear_strings_for_prompt(room_descriptions)
 		
@@ -307,7 +312,10 @@ def generate_corridor(room_names: List[str],
 					to_generate.append(i)
 			__generate_encounter_image(room_names, room_descriptions, tile_image, control_image,
 			                           to_generate)
-						
+
+		end = default_timer()
+		logging.getLogger('llmaker').debug(f'generate_corridor Time: {(end - start):.4f}')
+
 		return [
 			door_fname.format(n=1),
 			*[cells_fname.format(n=i) for i in range(corridor_length - 2)],
@@ -323,6 +331,7 @@ def generate_entity(entity_name: str,
                     room_name: str,
                     room_description: str) -> str:
 	try:
+		start = default_timer()
 		# generate initial semantic-context image
 		entity_name, entity_description, place_name, place_description = clear_strings_for_prompt(
 			[entity_name, entity_description, room_name, room_description])
@@ -358,6 +367,8 @@ def generate_entity(entity_name: str,
 		filename = os.path.join(config.entity.save_dir, f'{entity_name}_{place_name}.png')
 		logging.getLogger('llmaker').debug(f'generate_entity {filename=}')
 		entity_image.save(filename)
+		end = default_timer()
+		logging.getLogger('llmaker').debug(f'generate_entity Time: {(end - start):.4f}')
 		return os.path.basename(filename)
 	except Exception as e:
 		print(e)
