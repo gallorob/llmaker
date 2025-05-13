@@ -132,7 +132,7 @@ class FreyrLLM:
 		options = {
 			'temperature': params['temperature'],
 			'top_p': params['top_p'],
-			'seed': config.rng_seed
+			# 'seed': config.rng_seed
 		}
 		res = ollama.chat(model=model_name,
 		                  messages=messages,

@@ -36,7 +36,7 @@ class ToolLLM:
 		options = {
 			'temperature': self.temperature,
 			'top_p': self.top_p,
-			'seed': config.rng_seed,
+			# 'seed': config.rng_seed,
 			'num_ctx': 32768 * 3
 		}
 		res = ollama.chat(model=self.model_name,
