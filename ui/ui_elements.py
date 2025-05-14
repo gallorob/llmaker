@@ -369,7 +369,7 @@ class MainWindow(QMainWindow):
 					self.chat_area.add_message(msg.content)
 				
 				self.set_level(level)
-				self.versioning = VersionHandler(self.level, conversation)
+				self.versioning = VersionHandler(self.level, conversation.messages)
 
 				dlg = QMessageBox(self)
 				dlg.setWindowTitle("LLMaker Message")
