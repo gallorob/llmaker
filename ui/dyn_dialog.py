@@ -110,13 +110,10 @@ class UserModeDialog(QDialog):
 		# Add submit button
 		self.submit_btn = QPushButton("Submit")
 		self.submit_btn.clicked.connect(self.submit)
-		self.layout.addWidget(self.submit_btn)
 		
 		self.pbar = QProgressBar(self)
 		self.pbar.setRange(0, 100)
 		self.pbar.setHidden(True)
-		
-		self.layout.addWidget(self.pbar)
 		
 		self.setLayout(self.layout)
 
@@ -175,14 +172,27 @@ class CreateRoomDialog(UserModeDialog):
 			self.rooms_combobox = QComboBox()
 			self.rooms_combobox.addItems(list(self.level.rooms.keys()))
 			self.rooms_combobox.setCurrentText(self.level.current_room)
+			self.rooms_combobox.currentTextChanged.connect(self.room_from_changed)
 			self.layout.addWidget(QLabel('Connecting room:'))
 			self.layout.addWidget(self.rooms_combobox)
 
 			self.directions_combobox = QComboBox()
-			self.directions_combobox.addItems([direction.value for direction in Direction])
-			self.directions_combobox.setCurrentText(Direction.NORTH.value)
+			valid_directions = [direction.value for direction in Direction if self.level.connections[self.level.current_room][direction] == '']
+			self.directions_combobox.addItems(valid_directions)
+			self.directions_combobox.setCurrentText(valid_directions[0])
 			self.layout.addWidget(QLabel('Direction to:'))
 			self.layout.addWidget(self.directions_combobox)
+		
+		self.submit_btn.setText('Add room')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+	def room_from_changed(self, room_name: str) -> None:
+		self.directions_combobox.clear()
+		valid_directions = [direction.value for direction in Direction if self.level.connections[room_name][direction] == '']
+		self.directions_combobox.addItems(valid_directions)
+		self.directions_combobox.setCurrentText(valid_directions[0])
+		
 
 	def get_kwargs(self) -> Dict[str, Any]:
 		room_name = self.roomname_widget.text()
