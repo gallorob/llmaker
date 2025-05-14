@@ -102,11 +102,13 @@ class MainWindow(QMainWindow):
 		# 	button.hide()
 		# 	self.actions_buttons.append(button)
 		# 	self.actions_vertical_layout.addWidget(button)
-		button = QPushButton('Create Room')
-		button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict['create_room'], button))
-		button.hide()
-		self.actions_buttons.append(button)
-		self.actions_vertical_layout.addWidget(button)
+		for btitle, funcname in zip(['Create Room', 'Update Room', 'Remove Room'],
+							  		['create_room', 'update_room', 'remove_room']):
+			button = QPushButton(btitle)
+			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
+			button.hide()
+			self.actions_buttons.append(button)
+			self.actions_vertical_layout.addWidget(button)
 
 		
 		self.setCentralWidget(self.main_ui_widget)

@@ -193,7 +193,6 @@ class CreateRoomDialog(UserModeDialog):
 		self.directions_combobox.addItems(valid_directions)
 		self.directions_combobox.setCurrentText(valid_directions[0])
 		
-
 	def get_kwargs(self) -> Dict[str, Any]:
 		room_name = self.roomname_widget.text()
 		room_description = self.roomdescription_widget.text()
@@ -213,8 +212,77 @@ class CreateRoomDialog(UserModeDialog):
 		}
 
 
+class RemoveRoomDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Remove Room')
+
+		self.layout.addWidget(QLabel('Room name:'))
+		self.roomname_widget = QComboBox()
+		self.roomname_widget.addItems(list(self.level.rooms.keys()))
+		self.roomname_widget.setCurrentText(self.level.current_room)
+		self.layout.addWidget(self.roomname_widget)
+		
+		self.submit_btn.setText('Remove room')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		room_name = self.roomname_widget.currentText()
+		return {
+			'self': None,
+			'level': self.level,
+			'name': room_name,
+		}
+
+
+class UpdateRoomDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Update Room Properties')
+
+		self.layout.addWidget(QLabel('Which room?'))
+		self.roomrefname_widget = QComboBox()
+		self.roomrefname_widget.addItems(list(self.level.rooms.keys()))
+		self.roomrefname_widget.setCurrentText(self.level.current_room)
+		self.roomrefname_widget.currentTextChanged.connect(self.refroom_changed)
+		self.layout.addWidget(self.roomrefname_widget)
+
+		self.layout.addWidget(QLabel('Room name:'))
+		self.roomname_widget = QLineEdit()
+		self.roomname_widget.setText(self.level.current_room)
+		self.layout.addWidget(self.roomname_widget)
+
+		self.layout.addWidget(QLabel('Description'))
+		self.roomdescription_widget = QLineEdit()
+		self.roomdescription_widget.setText(self.level.rooms[self.level.current_room].description)
+		self.layout.addWidget(self.roomdescription_widget)
+		
+		self.submit_btn.setText('Update room')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+	def refroom_changed(self, room_ref_name: str) -> None:
+		self.roomname_widget.setText(room_ref_name)
+		self.roomdescription_widget.setText(self.level.rooms[room_ref_name].description)
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		room_reference_name = self.roomrefname_widget.currentText()
+		room_name = self.roomname_widget.text()
+		room_description = self.roomdescription_widget.text()
+		return {
+			'self': None,
+			'level': self.level,
+			'room_reference_name': room_reference_name,
+			'name': room_name,
+			'description': room_description,
+		}
+
+
 function_to_dialog = {
-	'create_room': CreateRoomDialog
+	'create_room': CreateRoomDialog,
+	'remove_room': RemoveRoomDialog,
+	'update_room': UpdateRoomDialog
 }
 
 
