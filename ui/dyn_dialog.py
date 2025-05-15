@@ -127,6 +127,7 @@ class UserModeDialog(QDialog):
 		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} task_finished - Edit finished')
 		self.pbar.reset()
 		self.pbar.setHidden(True)
+		self.submit_btn.setDisabled(False)
 		button_pressed = QMessageBox.information(self, "Output", f"{result}")
 		if button_pressed == QMessageBox.StandardButton.Ok:
 			self.close()
@@ -152,6 +153,8 @@ class UserModeDialog(QDialog):
 		self.pbar.setHidden(False)
 		self.pbar.reset()
 		
+		self.submit_btn.setDisabled(True)
+
 		self.thread.start()
 
 
