@@ -811,10 +811,79 @@ class EditEntityDialog(UserModeDialog):
 class RemoveEntityDialog(UserModeDialog):
 	def __init__(self, level, func, parent=None):
 		super().__init__(level, func, parent)
-		self.setWindowTitle('Edit Entity')
+		self.setWindowTitle('Remove Entity')
+		self.func = DungeonCrawlerFunctions().FunctionDict['remove_entity']
+
+		self.layout.addWidget(QLabel('In which room/corridor?'))
+		self.roomname_widget = QComboBox()
+		self.roomname_widget.addItems(list(self.level.rooms.keys()))
+		self.roomname_widget.addItems(list(self.level.corridors.keys()))
+		self.roomname_widget.setCurrentText(self.level.current_room)
+		self.roomname_widget.currentTextChanged.connect(self.roomname_changed)
+		self.layout.addWidget(self.roomname_widget)
+
+		self.corridorcell_container = QWidget(parent=self)
+		corridorcell_layout = QVBoxLayout(self.corridorcell_container)
+		corridorcell_layout.addWidget(QLabel('In which corridor cell?'))
+		self.corridorcell_widget = QSpinBox()
+		self.corridorcell_widget.setValue(1)
+		self.corridorcell_widget.setMinimum(1)
+		self.corridorcell_widget.setMaximum(config.dungeon.corridor_max_length)
+		self.corridorcell_widget.valueChanged.connect(self.corridorcell_changed)
+		corridorcell_layout.addWidget(self.corridorcell_widget)
+		self.layout.addWidget(self.corridorcell_container)
+
+		self.layout.addWidget(QLabel('Which type?'))
+		self.type_widget = QComboBox()
+		self.type_widget.addItems([t.value for t in EntityEnum])
+		self.type_widget.setCurrentText(EntityEnum.ENEMY.value)
+		self.type_widget.currentTextChanged.connect(self.type_changed)
+		self.layout.addWidget(self.type_widget)
+
+		self.name_label = QLabel(f'Which {EntityEnum.ENEMY.value}?')
+		self.layout.addWidget(self.name_label)
+		self.name_widget = QComboBox()
+		self.layout.addWidget(self.name_widget)
+
+		self.roomname_changed(self.level.current_room)
+
+	def roomname_changed(self, roomname: str) -> None:
+		if roomname in self.level.rooms.keys():
+			self.corridorcell_container.hide()
+		else:
+			self.corridorcell_container.show()
+			corridor = self.level.corridors[roomname]
+			self.corridorcell_widget.setMaximum(corridor.length)
+		self.refresh_names()
+		
+	def type_changed(self, t: str) -> None:
+		self.name_label.setText(f'Which {t}?')
+		self.refresh_names()
+	
+	def corridorcell_changed(self, v: int) -> None:
+		self.refresh_names()
+
+	def refresh_names(self):
+		t_enum = get_enum_by_value(EntityEnum, self.type_widget.currentText())
+		if self.roomname_widget.currentText() in self.level.rooms.keys():
+			encounter = self.level.rooms[self.roomname_widget.currentText()].encounter
+		else:
+			encounter = self.level.corridors[self.roomname_widget.currentText()].encounters[self.corridorcell_widget.value()]
+		self.name_widget.clear()
+		self.name_widget.addItems([x.name for x in encounter.entities[t_enum.value]])
 	
 	def get_kwargs(self) -> Dict[str, Any]:
-		return {}
+		room_name = self.roomname_widget.currentText()
+		cell_index = self.corridorcell_widget.value() if room_name in self.level.corridors.keys() else -1
+
+		return {
+			'self': None,
+			'level': Level,
+			'room_name': room_name,
+			'cell_index': cell_index,
+			'entity_tpye': self.type_widget.currentText(),
+			'entity_name': self.name_widget.currentText()
+		}
 
 
 function_to_dialog = {
