@@ -17,7 +17,7 @@ from dungeon_despair.functions import DungeonCrawlerFunctions
 from freyr_llm import get_freyr_model, LLMsCache
 from tool_llm import get_tool_model
 from ui.chat import ConversationWidget
-from ui.dyn_dialog import DebugFunctionsDialog, function_to_dialog
+from ui.dyn_dialog import AddEntityDialog, DebugFunctionsDialog, EditEntityDialog, RemoveEntityDialog, function_to_dialog
 from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
