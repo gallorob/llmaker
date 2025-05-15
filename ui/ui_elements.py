@@ -110,6 +110,17 @@ class MainWindow(QMainWindow):
 			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
 			self.corridor_edits_layout.addWidget(button)
 		self.user_mode_layout.addWidget(self.corridor_edits_widget)
+		
+		self.user_mode_layout.addWidget(QLabel('Entity edits:'))
+		self.entity_edits_widget = QWidget(parent=self.user_mode_area)
+		self.entity_edits_layout = QHBoxLayout(self.entity_edits_widget)
+		for btitle, bclass in zip(['Add', 'Edit', 'Remove'],
+								  [AddEntityDialog, EditEntityDialog, RemoveEntityDialog]):
+			button = QPushButton(btitle)
+			button.clicked.connect(self.create_button_handler(func=None, button=button, dialogclass=bclass))
+			self.entity_edits_layout.addWidget(button)
+		self.user_mode_layout.addWidget(self.entity_edits_widget)
+
 		self.actions_vertical_layout.addWidget(self.user_mode_area, 8)
 
 		self.chat_area = ConversationWidget(parent=self.actions_groupbox)
@@ -230,9 +241,12 @@ class MainWindow(QMainWindow):
 		
 		self.chat_box.setFocus()
 	
-	def create_button_handler(self, func, button):
+	def create_button_handler(self, func, button, dialogclass=None):
 		def handler():
-			dialog = function_to_dialog[func.internal_name](self.level, func, button)
+			if not dialogclass:
+				dialog = function_to_dialog[func.internal_name](self.level, func, button)
+			else:
+				dialog = dialogclass(self.level, None, button)
 			dialog.exec()
 			self.versioning.commit(self.level, self.chat_area.conversation.messages)
 		

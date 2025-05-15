@@ -4,10 +4,11 @@ from typing import Any, Dict
 
 from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
 	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget, QComboBox
 from dungeon_despair.domain.level import Level
-from dungeon_despair.domain.utils import Direction, ModifierType, get_enum_by_value
+from dungeon_despair.domain.utils import Direction, EntityEnum, ModifierType, get_enum_by_value
+from dungeon_despair.functions import DungeonCrawlerFunctions
 from gptfunctionutil import LibCommand
 
 from configs import config
@@ -447,6 +448,373 @@ class UpdateCorridorDialog(UserModeDialog):
 			'corridor_length': corridor_length,
 			'direction': direction,
 		}
+
+
+class AddEntityDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Add Entity')
+
+		self.layout.addWidget(QLabel('Which type?'))
+		self.type_widget = QComboBox()
+		self.type_widget.addItems([t.value for t in EntityEnum])
+		self.type_widget.setCurrentText(EntityEnum.ENEMY.value)
+		self.type_widget.currentTextChanged.connect(self.type_changed)
+		self.layout.addWidget(self.type_widget)
+
+		self.layout.addWidget(QLabel('To which room/corridor?'))
+		self.roomname_widget = QComboBox()
+		self.roomname_widget.addItems(list(self.level.rooms.keys()))
+		self.roomname_widget.addItems(list(self.level.corridors.keys()))
+		self.roomname_widget.setCurrentText(self.level.current_room)
+		self.roomname_widget.currentTextChanged.connect(self.roomname_changed)
+		self.layout.addWidget(self.roomname_widget)
+
+		self.corridorcell_container = QWidget(parent=self)
+		corridorcell_layout = QVBoxLayout(self.corridorcell_container)
+		corridorcell_layout.addWidget(QLabel('In which corridor cell?'))
+		self.corridorcell_widget = QSpinBox()
+		self.corridorcell_widget.setValue(1)
+		self.corridorcell_widget.setMinimum(1)
+		self.corridorcell_widget.setMaximum(config.dungeon.corridor_max_length)
+		corridorcell_layout.addWidget(self.corridorcell_widget)
+		self.layout.addWidget(self.corridorcell_container)
+
+		self.layout.addWidget(QLabel('Name:'))
+		self.name_widget = QLineEdit()
+		self.layout.addWidget(self.name_widget)
+
+		self.layout.addWidget(QLabel('Description'))
+		self.description_widget = QLineEdit()
+		self.layout.addWidget(self.description_widget)
+
+		# enemy properties
+		self.species_container = QWidget(parent=self)
+		species_layout = QVBoxLayout(self.species_container)
+		species_layout.addWidget(QLabel('Species:'))
+		self.species_widget = QLineEdit()
+		species_layout.addWidget(self.species_widget)
+		self.layout.addWidget(self.species_container)
+
+		self.hp_container = QWidget(parent=self)
+		hp_layout = QHBoxLayout(self.hp_container)
+		hp_layout.addWidget(QLabel('HP:'))
+		self.hp_widget = QDoubleSpinBox()
+		self.hp_widget.setSingleStep(0.01)
+		self.hp_widget.setValue(config.dungeon.min_hp)
+		self.hp_widget.setMinimum(config.dungeon.min_hp)
+		self.hp_widget.setMaximum(config.dungeon.max_hp)
+		hp_layout.addWidget(self.hp_widget)
+		self.layout.addWidget(self.hp_container)
+
+		self.dodge_container = QWidget(parent=self)
+		dodge_layout = QHBoxLayout(self.dodge_container)
+		dodge_layout.addWidget(QLabel('Dodge:'))
+		self.dodge_widget = QDoubleSpinBox()
+		self.dodge_widget.setSingleStep(0.01)
+		self.dodge_widget.setValue(config.dungeon.min_dodge)
+		self.dodge_widget.setMinimum(config.dungeon.min_dodge)
+		self.dodge_widget.setMaximum(config.dungeon.max_dodge)
+		dodge_layout.addWidget(self.dodge_widget)
+		self.layout.addWidget(self.dodge_container)
+
+		self.prot_container = QWidget(parent=self)
+		prot_layout = QHBoxLayout(self.prot_container)
+		prot_layout.addWidget(QLabel('Protection:'))
+		self.prot_widget = QDoubleSpinBox()
+		self.prot_widget.setSingleStep(0.01)
+		self.prot_widget.setValue(config.dungeon.min_prot)
+		self.prot_widget.setMinimum(config.dungeon.min_prot)
+		self.prot_widget.setMaximum(config.dungeon.max_prot)
+		prot_layout.addWidget(self.prot_widget)
+		self.layout.addWidget(self.prot_container)
+
+		self.spd_container = QWidget(parent=self)
+		spd_layout = QHBoxLayout(self.spd_container)
+		spd_layout.addWidget(QLabel('Speed:'))
+		self.spd_widget = QDoubleSpinBox()
+		self.spd_widget.setSingleStep(0.01)
+		self.spd_widget.setValue(config.dungeon.min_spd)
+		self.spd_widget.setMinimum(config.dungeon.min_spd)
+		self.spd_widget.setMaximum(config.dungeon.max_spd)
+		spd_layout.addWidget(self.spd_widget)
+		self.layout.addWidget(self.spd_container)
+
+		# trap properties
+		self.effect_container = QWidget(parent=self)
+		effect_layout = QVBoxLayout(self.effect_container)
+		effect_layout.addWidget(QLabel('Effect:'))
+		self.effect_widget = QLineEdit()
+		effect_layout.addWidget(self.effect_widget)
+		self.layout.addWidget(self.effect_container)
+
+		# treasure properties
+		self.loot_container = QWidget(parent=self)
+		loot_layout = QVBoxLayout(self.loot_container)
+		loot_layout.addWidget(QLabel('Loot'))
+		self.loot_widget = QLineEdit()
+		loot_layout.addWidget(self.loot_widget)
+		self.layout.addWidget(self.loot_container)
+
+		self.trappedchance_container = QWidget(parent=self)
+		trappedchance_layout = QHBoxLayout(self.trappedchance_container)
+		trappedchance_layout.addWidget(QLabel('Trapped Chance:'))
+		self.trappedchance_widget = QDoubleSpinBox()
+		self.trappedchance_widget.setSingleStep(0.01)
+		self.trappedchance_widget.setValue(0.0)
+		self.trappedchance_widget.setMinimum(0.0)
+		self.trappedchance_widget.setMaximum(1.0)
+		trappedchance_layout.addWidget(self.trappedchance_widget)
+		self.layout.addWidget(self.trappedchance_container)
+
+		self.dmg_container = QWidget(parent=self)
+		dmg_layout = QHBoxLayout(self.dmg_container)
+		dmg_layout.addWidget(QLabel('Damage:'))
+		self.dmg_widget = QDoubleSpinBox()
+		self.dmg_widget.setSingleStep(0.01)
+		self.dmg_widget.setValue(config.dungeon.min_base_dmg)
+		self.dmg_widget.setMinimum(config.dungeon.min_base_dmg)
+		self.dmg_widget.setMaximum(config.dungeon.max_base_dmg)
+		dmg_layout.addWidget(self.dmg_widget)
+		self.layout.addWidget(self.dmg_container)
+
+		self.modifier_container = QWidget(parent=self)
+		modifier_layout = QHBoxLayout(self.modifier_container)
+		modifier_layout.addWidget(QLabel('Modifier:'))
+		self.modifier_widget = QComboBox()
+		self.modifier_widget.addItems(['None'] + [x.value for x in ModifierType])
+		self.modifier_widget.setCurrentText('None')
+		self.modifier_widget.currentTextChanged.connect(self.modifiertype_changed)
+		modifier_layout.addWidget(self.modifier_widget)
+		self.layout.addWidget(self.modifier_container)
+
+		self.modifierchance_container = QWidget(parent=self)
+		modifierchance_layout = QHBoxLayout(self.modifierchance_container)
+		modifierchance_layout.addWidget(QLabel('Modifier Chance:'))
+		self.modifierchance_widget = QDoubleSpinBox()
+		self.modifierchance_widget.setSingleStep(0.01)
+		self.modifierchance_widget.setValue(0.0)
+		self.modifierchance_widget.setMinimum(0.0)
+		self.modifierchance_widget.setMaximum(1.0)
+		modifierchance_layout.addWidget(self.modifierchance_widget)
+		self.layout.addWidget(self.modifierchance_container)
+
+		self.modifierturns_container = QWidget(parent=self)
+		modifierturns_layout = QHBoxLayout(self.modifierturns_container)
+		modifierturns_layout.addWidget(QLabel('Modifier Turns:'))
+		self.modifierturns_widget = QSpinBox()
+		self.modifierturns_widget.setSingleStep(1)
+		self.modifierturns_widget.setValue(0)
+		self.modifierturns_widget.setMinimum(0)
+		self.modifierturns_widget.setMaximum(5)
+		modifierturns_layout.addWidget(self.modifierturns_widget)
+		self.layout.addWidget(self.modifierturns_container)
+
+		self.modifieramount_container = QWidget(parent=self)
+		modifieramount_layout = QHBoxLayout(self.modifieramount_container)
+		modifieramount_layout.addWidget(QLabel('Modifier Amount:'))
+		self.modifieramount_widget = QDoubleSpinBox()
+		self.modifieramount_widget.setSingleStep(0.01)
+		self.modifieramount_widget.setValue(config.dungeon.min_base_dmg)
+		self.modifieramount_widget.setMinimum(config.dungeon.min_base_dmg)
+		self.modifieramount_widget.setMaximum(config.dungeon.max_base_dmg)
+		modifieramount_layout.addWidget(self.modifieramount_widget)
+		self.layout.addWidget(self.modifieramount_container)
+
+		self.submit_btn.setText('Add enemy')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+		self.type_changed(EntityEnum.ENEMY.value)
+		self.roomname_changed(self.level.current_room)
+		self.modifiertype_changed('None')
+	
+	def type_changed(self, t: str) -> None:
+		t_enum = get_enum_by_value(EntityEnum, t)
+		if t_enum == EntityEnum.ENEMY:
+			suffix = 'enemy'
+
+			self.species_container.show()
+			self.hp_container.show()
+			self.dodge_container.show()
+			self.prot_container.show()
+			self.spd_container.show()
+			self.effect_container.hide()
+			self.loot_container.hide()
+			self.trappedchance_container.hide()
+			self.dmg_container.hide()
+			self.modifier_container.hide()
+			self.modifierchance_container.hide()
+			self.modifierturns_container.hide()
+			self.modifieramount_container.hide()
+
+			self.roomname_widget.clear()
+			self.roomname_widget.addItems(list(self.level.rooms.keys()))
+			self.roomname_widget.addItems(list(self.level.corridors.keys()))
+			self.roomname_widget.setCurrentText(self.level.current_room)
+	
+		elif t_enum == EntityEnum.TRAP:
+			suffix = 'trap'
+
+			self.species_container.hide()
+			self.hp_container.hide()
+			self.dodge_container.hide()
+			self.prot_container.hide()
+			self.spd_container.hide()
+			self.effect_container.show()
+			self.loot_container.hide()
+			self.trappedchance_container.show()
+			self.dmg_container.show()
+			self.modifier_container.show()
+			self.modifierchance_container.show()
+			self.modifierturns_container.show()
+			self.modifieramount_container.show()
+
+			self.roomname_widget.clear()
+			self.roomname_widget.addItems(list(self.level.corridors.keys()))
+			if self.level.current_room in self.level.corridors.keys():
+				self.roomname_widget.setCurrentText(self.level.current_room)
+			else:
+				self.roomname_widget.setCurrentText(list(self.level.corridors.keys())[0])
+
+			self.trappedchance_container.children()[1].setText('Chance:')
+
+			self.modifiertype_changed(self.modifier_widget.currentText())
+
+		else:
+			suffix = 'treasure'
+
+			self.species_container.hide()
+			self.hp_container.hide()
+			self.dodge_container.hide()
+			self.prot_container.hide()
+			self.spd_container.hide()
+			self.effect_container.hide()
+			self.loot_container.show()
+			self.trappedchance_container.show()
+			self.dmg_container.show()
+			self.modifier_container.show()
+			self.modifierchance_container.show()
+			self.modifierturns_container.show()
+			self.modifieramount_container.show()
+
+			self.roomname_widget.clear()
+			self.roomname_widget.addItems(list(self.level.rooms.keys()))
+			self.roomname_widget.addItems(list(self.level.corridors.keys()))
+			self.roomname_widget.setCurrentText(self.level.current_room)
+
+			self.trappedchance_container.children()[1].setText('Trapped Chance:')
+
+			self.modifiertype_changed(self.modifier_widget.currentText())
+
+		self.func = DungeonCrawlerFunctions().FunctionDict[f'add_{suffix}']
+		self.submit_btn.setText(f'Add {suffix}')
+
+	def roomname_changed(self, roomname: str) -> None:
+		if roomname in self.level.rooms.keys():
+			self.corridorcell_container.hide()
+		elif roomname in self.level.corridors.keys():
+			self.corridorcell_container.show()
+
+			corridor = self.level.corridors[roomname]
+			self.corridorcell_widget.setMaximum(corridor.length)
+		else:  # triggered on .clear()
+			pass
+
+	def modifiertype_changed(self, modifiertype: str) -> None:
+		if modifiertype == 'None':
+			self.modifierchance_container.hide()
+			self.modifierturns_container.hide()
+			self.modifieramount_container.hide()
+		else:
+			self.modifierchance_container.show()
+			self.modifierturns_container.show()
+
+			m_type = get_enum_by_value(ModifierType, modifiertype)
+
+			if m_type == ModifierType.BLEED or m_type == ModifierType.HEAL:
+				self.modifieramount_container.show()
+				self.modifieramount_widget.setValue(config.dungeon.min_base_dmg)
+				self.modifieramount_widget.setMinimum(config.dungeon.min_base_dmg)
+				self.modifieramount_widget.setMaximum(config.dungeon.max_base_dmg)
+			elif m_type == ModifierType.SCARE:
+				self.modifieramount_container.show()
+				self.modifieramount_widget.setValue(0.0)
+				self.modifieramount_widget.setMinimum(0.0)
+				self.modifieramount_widget.setMaximum(1.0)
+			else:  # m_type is STUN
+				self.modifieramount_container.hide()
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		room_name = self.roomname_widget.currentText()
+		cell_index = self.corridorcell_widget.value() if room_name in self.level.corridors.keys() else -1
+		t_enum = get_enum_by_value(EntityEnum, self.type_widget.currentText())
+		if t_enum == EntityEnum.ENEMY:
+			return {
+				'self': None,
+				'level': self.level,
+				'room_name': room_name,
+				'cell_index': cell_index,
+				'name': self.name_widget.text(),
+				'description': self.description_widget.text(),
+				'species': self.species_widget.text(),
+				'hp': self.hp_widget.value(),
+				'dodge': self.dodge_widget.value(),
+				'prot': self.prot_widget.value(),
+				'spd': self.spd_widget.value(),
+			}
+		elif t_enum == EntityEnum.TRAP:
+			m_str = self.modifier_widget.currentText()
+			if m_str == 'None': m_str = 'no-modifier'
+			return {
+				'self': None,
+				'level': self.level,
+				'corridor_name': room_name,
+				'cell_index': cell_index,
+				'name': self.name_widget.text(),
+				'description': self.description_widget.text(),
+				'effect': self.effect_widget.text(),
+				'chance': self.trappedchance_widget.value(),
+				'dmg': self.dmg_widget.value(),
+				'modifier_type': m_str,
+				'modifier_chance': self.modifierchance_widget.value(),
+				'modifier_turns': self.modifierturns_widget.value(),
+				'modifier_amount': self.modifieramount_widget.value()
+			}
+		else:  # t_enum is EntityEnum.TREASURE
+			m_str = self.modifier_widget.currentText()
+			if m_str == 'None': m_str = 'no-modifier'
+			return {
+				'self': None,
+				'level': self.level,
+				'room_name': room_name,
+				'cell_index': cell_index,
+				'name': self.name_widget.text(),
+				'description': self.description_widget.text(),
+				'loot': self.loot_widget.text(),
+				'trapped_chance': self.trappedchance_widget.value(),
+				'dmg': self.dmg_widget.value(),
+				'modifier_type': m_str,
+				'modifier_chance': self.modifierchance_widget.value(),
+				'modifier_turns': self.modifierturns_widget.value(),
+				'modifier_amount': self.modifieramount_widget.value()
+			}
+	
+class EditEntityDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Edit Entity')
+	
+	def get_kwargs(self) -> Dict[str, Any]:
+		return {}
+
+class RemoveEntityDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Edit Entity')
+	
+	def get_kwargs(self) -> Dict[str, Any]:
+		return {}
 
 
 function_to_dialog = {
