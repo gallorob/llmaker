@@ -279,10 +279,180 @@ class UpdateRoomDialog(UserModeDialog):
 		}
 
 
+class AddCorridorDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Add Corridor')
+
+		self.layout.addWidget(QLabel('From which room?'))
+		self.roomfrom_widget = QComboBox()
+		self.roomfrom_widget.addItems(list(self.level.rooms.keys()))
+		self.roomfrom_widget.setCurrentText(self.level.current_room)
+		self.roomfrom_widget.currentTextChanged.connect(self.refroom_changed)
+		self.layout.addWidget(self.roomfrom_widget)
+
+		self.layout.addWidget(QLabel('To which room?'))
+		self.roomto_widget = QComboBox()
+		self.roomto_widget.addItems(list(self.level.rooms.keys()))
+		self.roomto_widget.setCurrentText(list(self.level.rooms.keys())[0])
+		self.layout.addWidget(self.roomto_widget)
+
+		self.layout.addWidget(QLabel('Corridor length:'))
+		self.corridorlen_widget = QSpinBox()
+		self.corridorlen_widget.setValue(config.dungeon.corridor_min_length)
+		self.corridorlen_widget.setMinimum(config.dungeon.corridor_min_length)
+		self.corridorlen_widget.setMaximum(config.dungeon.corridor_max_length)
+		self.layout.addWidget(self.corridorlen_widget)
+
+		self.directions_combobox = QComboBox()
+		valid_directions = [direction.value for direction in Direction if self.level.connections[self.level.current_room][direction] == '']
+		self.directions_combobox.addItems(valid_directions)
+		self.directions_combobox.setCurrentText(valid_directions[0])
+		self.layout.addWidget(QLabel('To which direction?:'))
+		self.layout.addWidget(self.directions_combobox)
+
+		self.submit_btn.setText('Add corridor')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+	def refroom_changed(self, room_name: str) -> None:
+		self.directions_combobox.clear()
+		valid_directions = [direction.value for direction in Direction if self.level.connections[room_name][direction] == '']
+		self.directions_combobox.addItems(valid_directions)
+		self.directions_combobox.setCurrentText(valid_directions[0])
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		room_from_name = self.roomfrom_widget.currentText()
+		room_to_name = self.roomto_widget.currentText()
+		corridor_length = self.corridorlen_widget.value()
+		direction = self.directions_combobox.currentText()
+		return {
+			'self': None,
+			'level': self.level,
+			'room_from_name': room_from_name,
+			'room_to_name': room_to_name,
+			'corridor_length': corridor_length,
+			'direction': direction,
+		}
+
+
+class RemoveCorridorDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Remove Corridor')
+
+		self.layout.addWidget(QLabel('Which corridor?'))
+		self.corridors_widget = QComboBox()
+		self.corridors_widget.addItems(list(self.level.corridors.keys()))
+		self.layout.addWidget(self.corridors_widget)
+
+		self.submit_btn.setText('Remove corridor')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		corridor = self.level.corridors[self.corridors_widget.currentText()]
+		room_from_name = corridor.room_from
+		room_to_name = corridor.room_to
+		return {
+			'self': None,
+			'level': self.level,
+			'room_from_name': room_from_name,
+			'room_to_name': room_to_name,
+		}
+
+
+class UpdateCorridorDialog(UserModeDialog):
+	def __init__(self, level, func, parent=None):
+		super().__init__(level, func, parent)
+		self.setWindowTitle('Update Corridor')
+
+		if self.level.current_room in self.level.corridors.keys():
+			ref_corridor = self.level.corridors[self.level.current_room]
+		else:
+			ref_corridor = list(self.level.corridors.values())[0]
+
+		self.layout.addWidget(QLabel('Which corridor?'))
+		self.corridors_widget = QComboBox()
+		self.corridors_widget.addItems(list(self.level.corridors.keys()))
+		self.corridors_widget.setCurrentText(ref_corridor.name)
+		self.corridors_widget.currentTextChanged.connect(self.corridor_changed)
+		self.layout.addWidget(self.corridors_widget)
+
+		self.layout.addWidget(QLabel('From which room?'))
+		self.roomfrom_widget = QComboBox()
+		self.roomfrom_widget.addItems(list(self.level.rooms.keys()))
+		self.roomfrom_widget.setCurrentText(ref_corridor.room_from)
+		self.roomfrom_widget.currentTextChanged.connect(self.roomfrom_changed)
+		self.layout.addWidget(self.roomfrom_widget)
+
+		self.layout.addWidget(QLabel('To which room?'))
+		self.roomto_widget = QComboBox()
+		self.roomto_widget.addItems(list(self.level.rooms.keys()))
+		self.roomto_widget.setCurrentText(ref_corridor.room_to)
+		self.layout.addWidget(self.roomto_widget)
+
+		self.layout.addWidget(QLabel('Corridor length:'))
+		self.corridorlen_widget = QSpinBox()
+		self.corridorlen_widget.setValue(ref_corridor.length)
+		self.corridorlen_widget.setMinimum(config.dungeon.corridor_min_length)
+		self.corridorlen_widget.setMaximum(config.dungeon.corridor_max_length)
+		self.layout.addWidget(self.corridorlen_widget)
+
+		self.directions_combobox = QComboBox()
+		valid_directions = [direction.value for direction in Direction if self.level.connections[ref_corridor.room_from][direction] == '']
+		self.directions_combobox.addItems(valid_directions)
+		self.directions_combobox.setCurrentText(ref_corridor.direction)
+		self.layout.addWidget(QLabel('To which direction?:'))
+		self.layout.addWidget(self.directions_combobox)
+
+		self.submit_btn.setText('Update corridor')
+		self.layout.addWidget(self.submit_btn)
+		self.layout.addWidget(self.pbar)
+
+	def corridor_changed(self, corridor_name: str) -> None:
+		corridor = self.level.corridors[corridor_name]
+		self.roomfrom_widget.setCurrentText(corridor.room_from)
+		self.roomto_widget.setCurrentText(corridor.room_to)
+		self.corridorlen_widget.setValue(corridor.length)
+		self.directions_combobox.clear()
+		valid_directions = [direction.value for direction in Direction if self.level.connections[corridor.room_from][direction] == '']
+		self.directions_combobox.addItems(valid_directions)
+		self.directions_combobox.setCurrentText(valid_directions[0])
+
+	def roomfrom_changed(self, roomfrom_name: str) -> None:
+		self.directions_combobox.clear()
+		valid_directions = [direction.value for direction in Direction if self.level.connections[roomfrom_name][direction] == '']
+		self.directions_combobox.addItems(valid_directions)
+		self.directions_combobox.setCurrentText(valid_directions[0])
+
+	def get_kwargs(self) -> Dict[str, Any]:
+		corridor = self.level.corridors[self.corridors_widget.currentText()]
+		room_from_reference_name = corridor.room_from
+		room_to_reference_name = corridor.room_to
+		room_from_name = self.roomfrom_widget.currentText()
+		room_to_name = self.roomto_widget.currentText()
+		corridor_length = self.corridorlen_widget.value()
+		direction = self.directions_combobox.currentText()
+		return {
+			'self': None,
+			'level': self.level,
+			'room_from_reference_name': room_from_reference_name,
+			'room_to_reference_name': room_to_reference_name,
+			'room_from_name': room_from_name,
+			'room_to_name': room_to_name,
+			'corridor_length': corridor_length,
+			'direction': direction,
+		}
+
+
 function_to_dialog = {
 	'create_room': CreateRoomDialog,
 	'remove_room': RemoveRoomDialog,
-	'update_room': UpdateRoomDialog
+	'update_room': UpdateRoomDialog,
+	'add_corridor': AddCorridorDialog,
+	'update_corridor': UpdateCorridorDialog,
+	'remove_corridor': RemoveCorridorDialog
 }
 
 

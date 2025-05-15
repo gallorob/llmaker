@@ -36,19 +36,19 @@ class MainWindow(QMainWindow):
 		super().__init__()
 		self.level = level
 
-		self.mode = ToolMode.LLM
+		self.mode = ToolMode.USER
 		self.llm_mode = LLMMode.FREYR
+		self.theme = ThemeMode.DARK
+
+		self.apply_theme()
 		
 		self.setObjectName("LLMaker")
 		
-		self.setWindowTitle("LLMaker Demo")
+		self.setWindowTitle("LLMaker")
 		self.resize(1280, 720)
 		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
 		
 		self.main_ui_widget = QWidget(parent=self)
-		
-		self.theme = ThemeMode.DARK
-		self.apply_theme()
 		
 		self.main_ui_layout = QHBoxLayout(self.main_ui_widget)
 		
@@ -78,11 +78,40 @@ class MainWindow(QMainWindow):
 		self.previews_vertical_layout.addWidget(self.map_preview, 2)
 		
 		self.actions_groupbox = QGroupBox(parent=self.main_ui_widget)
+
 		self.actions_groupbox.setTitle('Chat History')
 		self.main_ui_layout.addWidget(self.actions_groupbox, 1)
 		
 		self.actions_vertical_layout = QVBoxLayout(self.actions_groupbox)
 		
+		self.user_mode_area = QGroupBox(parent=self.actions_groupbox)
+		self.user_mode_layout = QVBoxLayout(self.user_mode_area)
+
+		# TODO: Buttons should be enabled/disabled based on current level properties
+		#  Needs to have a separate function that gets executed on every level update, regardless of user/llm mode
+		#  And executed once on init / level load
+
+		self.user_mode_layout.addWidget(QLabel('Room edits:'))
+		self.room_edits_widget = QWidget(parent=self.user_mode_area)
+		self.room_edits_layout = QHBoxLayout(self.room_edits_widget)
+		for btitle, funcname in zip(['Create', 'Update', 'Remove'],
+							  		['create_room', 'update_room', 'remove_room']):
+			button = QPushButton(btitle)
+			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
+			self.room_edits_layout.addWidget(button)
+		self.user_mode_layout.addWidget(self.room_edits_widget)
+
+		self.user_mode_layout.addWidget(QLabel('Corridor edits:'))
+		self.corridor_edits_widget = QWidget(parent=self.user_mode_area)
+		self.corridor_edits_layout = QHBoxLayout(self.corridor_edits_widget)
+		for btitle, funcname in zip(['Add', 'Update', 'Remove'],
+							  		['add_corridor', 'update_corridor', 'remove_corridor']):
+			button = QPushButton(btitle)
+			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
+			self.corridor_edits_layout.addWidget(button)
+		self.user_mode_layout.addWidget(self.corridor_edits_widget)
+		self.actions_vertical_layout.addWidget(self.user_mode_area, 8)
+
 		self.chat_area = ConversationWidget(parent=self.actions_groupbox)
 		self.actions_vertical_layout.addWidget(self.chat_area, 8)
 		
@@ -94,23 +123,7 @@ class MainWindow(QMainWindow):
 		self.pbar.setRange(0, 100)
 		self.pbar.setHidden(True)
 		self.actions_vertical_layout.addWidget(self.pbar)
-		
-		self.actions_buttons = []
-		# for k, func in DungeonCrawlerFunctions().FunctionDict.items():
-		# 	button = QPushButton(k)
-		# 	button.clicked.connect(self.create_button_handler(func, button))
-		# 	button.hide()
-		# 	self.actions_buttons.append(button)
-		# 	self.actions_vertical_layout.addWidget(button)
-		for btitle, funcname in zip(['Create Room', 'Update Room', 'Remove Room'],
-							  		['create_room', 'update_room', 'remove_room']):
-			button = QPushButton(btitle)
-			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
-			button.hide()
-			self.actions_buttons.append(button)
-			self.actions_vertical_layout.addWidget(button)
-
-		
+				
 		self.setCentralWidget(self.main_ui_widget)
 		
 		self.menuFile = self.menuBar().addMenu('&File')
@@ -211,7 +224,7 @@ class MainWindow(QMainWindow):
 		self.actionRedo.triggered.connect(self.redo_edit)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
-		# self.switch_mode()
+		self.switch_mode()
 		self.versioning = VersionHandler(level=self.level,
 										 chat=self.chat_area.conversation.messages)
 		
@@ -451,14 +464,12 @@ class MainWindow(QMainWindow):
 			self.chat_area.hide()
 			self.chat_box.hide()
 			self.actions_groupbox.setTitle('Available Commands')
-			for b in self.actions_buttons:
-				b.show()
+			self.user_mode_area.show()
 		else:
 			self.chat_area.show()
 			self.chat_box.show()
 			self.actions_groupbox.setTitle('Chat History')
-			for b in self.actions_buttons:
-				b.hide()
+			self.user_mode_area.hide()
 		logging.info(f'Switched mode to {"USER" if self.mode == ToolMode.USER else "LLM"}')
 		self.update()
 	
