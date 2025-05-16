@@ -1325,15 +1325,15 @@ class AddAttackDialog(UserModeDialog):
 		self.startpos_container = QWidget(parent=self)
 		startpos_layout = QHBoxLayout(self.startpos_container)
 		startpos_layout.addWidget(QLabel('Starting Positions:'))
-		for _ in range(config.dungeon.max_enemies_per_encounter):
-			startpos_layout.addWidget(QCheckBox())
+		for i in range(config.dungeon.max_enemies_per_encounter):
+			startpos_layout.addWidget(QCheckBox(f'@{i + 1}'))
 		self.layout.addWidget(self.startpos_container)
 
 		self.targetpos_container = QWidget(parent=self)
 		targetpos_layout = QHBoxLayout(self.targetpos_container)
 		targetpos_layout.addWidget(QLabel('Target Positions:'))
-		for _ in range(config.dungeon.max_enemies_per_encounter):
-			targetpos_layout.addWidget(QCheckBox())
+		for i in range(config.dungeon.max_enemies_per_encounter):
+			targetpos_layout.addWidget(QCheckBox(f'@{i + 1}'))
 		self.layout.addWidget(self.targetpos_container)
 
 		self.dmg_container = QWidget(parent=self)
@@ -1535,15 +1535,15 @@ class UpdateAttackDialog(UserModeDialog):
 		self.startpos_container = QWidget(parent=self)
 		startpos_layout = QHBoxLayout(self.startpos_container)
 		startpos_layout.addWidget(QLabel('Starting Positions:'))
-		for _ in range(config.dungeon.max_enemies_per_encounter):
-			startpos_layout.addWidget(QCheckBox())
+		for i in range(config.dungeon.max_enemies_per_encounter):
+			startpos_layout.addWidget(QCheckBox(f'@{i + 1}'))
 		self.layout.addWidget(self.startpos_container)
 
 		self.targetpos_container = QWidget(parent=self)
 		targetpos_layout = QHBoxLayout(self.targetpos_container)
 		targetpos_layout.addWidget(QLabel('Target Positions:'))
-		for _ in range(config.dungeon.max_enemies_per_encounter):
-			targetpos_layout.addWidget(QCheckBox())
+		for i in range(config.dungeon.max_enemies_per_encounter):
+			targetpos_layout.addWidget(QCheckBox(f'@{i + 1}'))
 		self.layout.addWidget(self.targetpos_container)
 
 		self.dmg_container = QWidget(parent=self)
