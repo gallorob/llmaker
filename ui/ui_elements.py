@@ -251,6 +251,7 @@ class MainWindow(QMainWindow):
 				dialog = dialogclass(self.level, None, button)
 			dialog.exec()
 			self.versioning.commit(self.level, self.chat_area.conversation.messages)
+			self.validate_actions_buttons()
 		
 		return handler
 
