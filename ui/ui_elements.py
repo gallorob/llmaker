@@ -249,7 +249,6 @@ class MainWindow(QMainWindow):
 				dialog = function_to_dialog[func.internal_name](self.level, func, button)
 			else:
 				dialog = dialogclass(self.level, None, button)
-			button.setProperty('validation', dialog.validate)
 			dialog.exec()
 			self.versioning.commit(self.level, self.chat_area.conversation.messages)
 		
