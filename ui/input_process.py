@@ -1,17 +1,14 @@
 import logging
+from random import random
 import time
-from typing import List, Union, Any, Dict
+from typing import List, Any, Dict
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QMessageBox, QDialog
 from gptfunctionutil import LibCommand
 
-from dungeon_despair.domain.corridor import Corridor
-from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
-from dungeon_despair.domain.room import Room
 from chat_message import ChatMessage
-from sd_backend import generate_room, generate_entity, generate_corridor
 from utils import LLMMode, compute_level_diffs, process_diff
 from freyr_llm import get_freyr_model
 from tool_llm import get_tool_model
@@ -35,25 +32,35 @@ class UIInputProcessor(QObject):
 	
 	def run(self) -> str:
 		self.progress_n = 0
-		if self.mode == LLMMode.FREYR:
-			ai_response = get_freyr_model()(user_message=self.user_input,
-							 		  conversation_history=self.conversation_history,
-									  level=self.level)
-		elif self.mode == LLMMode.TOOL:
-			ai_response = get_tool_model()(user_message=self.user_input,
-									 conversation_history=self.conversation_history,
-									 level=self.level)
-		else:
-			raise ValueError(f'Unknown LLM mode: {self.mode}')
+		
+		if self.mode == LLMMode.FREYR: m = get_freyr_model
+		elif self.mode == LLMMode.TOOL: m = get_tool_model
+		else: raise ValueError(f'Unknown LLM mode: {self.mode}')
 
+		ai_response = m()(user_message=self.user_input,
+						  conversation_history=self.conversation_history,
+						  level=self.level)
 		self.result.emit(ai_response)
-		
+
+		# TODO: This is a temporary variable, should be taken from config
+		with_feedback = random() > 0.5
+		logging.getLogger('llmaker').debug(msg=f'UIInputProcessor.run {with_feedback=}')
+
 		to_process, additional_data = compute_level_diffs(level=self.level)
-		
-		progress_delta = int((1 / (1 + len(to_process))) * 100)
+		progress_delta = int((1 / (1 + (1 if with_feedback else 0) + len(to_process))) * 100)
 		
 		self.progress_n += progress_delta
 		self.progress.emit(self.progress_n)
+
+		if with_feedback:
+			# TODO: Message is temporary, should be defined elsewhere
+			side_response = m()(user_message='Let\'s CHAT. Tell me what we could change next in the level. Keep your suggestion brief.',
+								conversation_history=[],
+								level=self.level)
+			self.result.emit(side_response)
+			
+			self.progress_n += progress_delta
+			self.progress.emit(self.progress_n)
 		
 		for i, obj in enumerate(to_process):
 			process_diff(obj, additional_data[i])
