@@ -8,6 +8,7 @@ from typing import Dict, List, Any, Optional, Union
 import ollama
 from timeit import default_timer
 
+from chat_message import ChatMessage
 from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
@@ -213,14 +214,14 @@ class FreyrLLM:
 			raise ValueError(f"Unknown type {t}")
 	
 	def trim_and_convert_conversation(self,
-	                                  conversation_history: List[str]) -> List[Dict[str, str]]:
+	                                  conversation_history: List[ChatMessage]) -> List[Dict[str, str]]:
 		conversation_messages = []
 		if len(conversation_history) > 0:
 			valid_conversation = conversation_history[self.history_cutoff_idx:]
 			conversation_messages = [
 				{'role': 'user',
-				 'content': f"{'Designer' if (i + self.history_cutoff_idx) % 2 == 0 else 'Colleague'}: {msg}"}
-				for i, msg in enumerate(valid_conversation)
+				 'content': f"{'Designer' if msg.role == 'me' else 'Colleague'}: {msg.content}"}
+				for msg in valid_conversation
 			]
 		return conversation_messages
 	
@@ -402,7 +403,7 @@ class FreyrLLM:
 	
 	def __call__(self,
 	             user_message: str,
-	             conversation_history: List[str],
+	             conversation_history: List[ChatMessage],
 	             level: Level) -> str:
 		start = default_timer()
 		logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM History cutoff: {self.history_cutoff_idx}; Conversation length: {len(conversation_history)}')

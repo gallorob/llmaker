@@ -69,8 +69,8 @@ class ConversationWidget(QWidget):
 			message.setMaximumWidth(self.width())
 		super().resizeEvent(event)
 	
-	def get_conversation(self) -> List[str]:
-		return [message.content for message in self.conversation.messages]
+	def get_conversation(self) -> List[ChatMessage]:
+		return [msg for msg in self.conversation.messages]
 
 	def update(self):
 		# Scroll to the bottom of the scroll area

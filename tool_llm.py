@@ -6,6 +6,7 @@ from typing import List, Dict, Any, Optional, Union
 import ollama
 import logging
 
+from chat_message import ChatMessage
 from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
@@ -47,14 +48,14 @@ class ToolLLM:
 	
 	def __call__(self,
 	             user_message: str,
-	             conversation_history: List[str],
+	             conversation_history: List[ChatMessage],
 	             level: Level) -> str:
 		
 		prompt = self.prompt.format(level_str=str(level))
 		
 		messages = [
 			{'role': 'system', 'content': prompt},
-			*[{'role': 'user' if i % 2 == 0 else 'assistant', 'content': msg} for i, msg in enumerate(conversation_history)],
+			*[{'role': 'user' if msg.role == 'me' else 'assistant', 'content': msg.content} for msg in conversation_history],
 			{'role': 'user', 'content': user_message}
 		]
 		

@@ -10,6 +10,7 @@ from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
+from chat_message import ChatMessage
 from sd_backend import generate_room, generate_entity, generate_corridor
 from utils import LLMMode, compute_level_diffs, process_diff
 from freyr_llm import get_freyr_model
@@ -24,7 +25,7 @@ class UIInputProcessor(QObject):
 	def __init__(self,
 	             level: Level,
 	             user_input: str,
-	             conversation_history: List[str],
+	             conversation_history: List[ChatMessage],
 				 llm_mode: LLMMode):
 		super(UIInputProcessor, self).__init__()
 		self.level = level
