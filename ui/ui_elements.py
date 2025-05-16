@@ -121,6 +121,16 @@ class MainWindow(QMainWindow):
 			self.entity_edits_layout.addWidget(button)
 		self.user_mode_layout.addWidget(self.entity_edits_widget)
 
+		self.user_mode_layout.addWidget(QLabel('Attacks edits:'))
+		self.attack_edits_widget = QWidget(parent=self.user_mode_area)
+		self.attack_edits_layout = QHBoxLayout(self.attack_edits_widget)
+		for btitle, funcname in zip(['Add', 'Update', 'Remove'],
+							  		['add_attack', 'update_attack', 'remove_attack']):
+			button = QPushButton(btitle)
+			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
+			self.attack_edits_layout.addWidget(button)
+		self.user_mode_layout.addWidget(self.attack_edits_widget)
+
 		self.actions_vertical_layout.addWidget(self.user_mode_area, 8)
 
 		self.chat_area = ConversationWidget(parent=self.actions_groupbox)
@@ -256,7 +266,7 @@ class MainWindow(QMainWindow):
 		return handler
 
 	def validate_actions_buttons(self) -> None:
-		for container_widget in [self.room_edits_widget, self.corridor_edits_widget, self.entity_edits_widget]:
+		for container_widget in [self.room_edits_widget, self.corridor_edits_widget, self.entity_edits_widget, self.attack_edits_widget]:
 			for btn in container_widget.children()[1:]:
 				btn.setDisabled(not check_available_action(self.level, btn.property('dialogclass')))
 
