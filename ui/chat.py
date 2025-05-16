@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QScrollArea, QVBoxLayout, QLabel, QSizePolicy
@@ -43,8 +43,9 @@ class ConversationWidget(QWidget):
 		self.conversation = Conversation()
 		self.update()
 		
-	def add_message(self, message: str):
-		new_chat_message = ChatMessage(role='me' if len(self.conversation) % 2 == 0 else 'them',
+	def add_message(self, message: str, role: Optional[str] = None):
+		role = role if role is not None else 'me' if len(self.conversation) % 2 == 0 else 'them'
+		new_chat_message = ChatMessage(role=role,
 								       msg=message)
 		self.conversation.append(new_chat_message)
 

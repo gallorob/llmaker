@@ -290,7 +290,7 @@ class MainWindow(QMainWindow):
 	@pyqtSlot(str)
 	def handle_result(self, result):
 		logging.getLogger().debug(f'handle_result Received LLM response')
-		self.chat_area.add_message(result)
+		self.chat_area.add_message(result, role='them')
 	
 	@pyqtSlot()
 	def task_finished(self):
@@ -317,7 +317,7 @@ class MainWindow(QMainWindow):
 		logging.getLogger().debug(f'process_user_input Received input')
 		
 		self.chat_box.clear()
-		self.chat_area.add_message(user_input)
+		self.chat_area.add_message(user_input, role='me')
 		self.chat_area.update()
 		
 		self.chat_box.setDisabled(True)
@@ -404,7 +404,7 @@ class MainWindow(QMainWindow):
 							
 				conversation = Conversation.from_json(conversation_json)
 				for msg in conversation.messages:
-					self.chat_area.add_message(msg.content)
+					self.chat_area.add_message(msg.content, role=msg.role)
 				
 				self.set_level(level)
 				self.versioning = VersionHandler(self.level, conversation.messages)
@@ -463,7 +463,7 @@ class MainWindow(QMainWindow):
 			self.set_level(prev_level)
 			self.chat_area.reset()
 			for msg in prev_chat:
-				self.chat_area.add_message(msg.content)
+				self.chat_area.add_message(msg.content, msg.role)
 			self.update()
 			self.chat_area.update()
 			if self.mode == ToolMode.USER:
@@ -478,7 +478,7 @@ class MainWindow(QMainWindow):
 			self.set_level(next_level)
 			self.chat_area.reset()
 			for msg in next_chat:
-				self.chat_area.add_message(msg.content)
+				self.chat_area.add_message(msg.content, msg.role)
 			self.update()
 			self.chat_area.update()
 			if self.mode == ToolMode.USER:

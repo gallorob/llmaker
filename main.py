@@ -65,7 +65,7 @@ if __name__ == '__main__':
 			conversation_json = f.read()
 		conversation = Conversation.from_json(conversation_json)
 		for message in conversation.messages:
-			win.chat_area.add_message(message.content)
+			win.chat_area.add_message(message.content, role=message.role)
 		logging.getLogger('llmaker').info('Updating GUI...')
 		win.map_preview.show_map_preview()
 		win.room_preview.show_room_preview()
