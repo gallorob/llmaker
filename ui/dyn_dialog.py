@@ -197,7 +197,7 @@ class CreateRoomDialog(UserModeDialog):
 		valid_directions = [direction.value for direction in Direction if self.level.connections[room_name][direction] == '']
 		self.directions_combobox.addItems(valid_directions)
 		self.directions_combobox.setCurrentText(valid_directions[0])
-		
+	
 	def get_kwargs(self) -> Dict[str, Any]:
 		room_name = self.roomname_widget.text()
 		room_description = self.roomdescription_widget.text()
@@ -801,7 +801,7 @@ class AddEntityDialog(UserModeDialog):
 				'modifier_amount': self.modifieramount_widget.value()
 			}
 	
-class EditEntityDialog(UserModeDialog):
+class UpdateEntityDialog(UserModeDialog):
 	def __init__(self, level, func, parent=None):
 		super().__init__(level, func, parent)
 		self.setWindowTitle('Edit Entity')
@@ -1280,6 +1280,33 @@ function_to_dialog = {
 	'update_corridor': UpdateCorridorDialog,
 	'remove_corridor': RemoveCorridorDialog
 }
+
+
+def check_available_action(level: Level, dialogclass) -> bool:
+	if dialogclass == CreateRoomDialog:
+		return True  # create room is always possible
+	elif dialogclass == RemoveRoomDialog or dialogclass == UpdateRoomDialog:
+		return len(level.rooms.keys()) > 0
+	elif dialogclass == AddCorridorDialog:
+		# minimum number of rooms to add a new corridor is 4
+		return len(level.rooms.keys()) > 3
+	elif dialogclass == UpdateCorridorDialog or dialogclass == RemoveCorridorDialog:
+		return len(level.corridors.keys()) > 0
+	elif dialogclass == AddEntityDialog:
+		return len(level.rooms.keys()) > 0
+	elif dialogclass == UpdateEntityDialog or dialogclass == RemoveEntityDialog:
+		has_enemy, has_treasure, has_trap = False, False, False
+		for room in level.rooms.values():
+			has_enemy |= len(room.encounter.enemies) > 0
+			has_treasure |= len(room.encounter.treasures) > 0
+		for corridor in level.corridors.values():
+			for encounter in corridor.encounters:
+				has_enemy |= len(encounter.enemies) > 0
+				has_treasure |= len(encounter.treasures) > 0
+				has_trap |= len(encounter.traps) > 0
+		return has_enemy or has_trap or has_treasure
+	else:
+		raise NotImplementedError(f'No validity check for {dialogclass}')
 
 
 class DebugFunctionsDialog(QDialog):

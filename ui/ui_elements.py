@@ -17,7 +17,7 @@ from dungeon_despair.functions import DungeonCrawlerFunctions
 from freyr_llm import get_freyr_model, LLMsCache
 from tool_llm import get_tool_model
 from ui.chat import ConversationWidget
-from ui.dyn_dialog import AddEntityDialog, DebugFunctionsDialog, EditEntityDialog, RemoveEntityDialog, function_to_dialog
+from ui.dyn_dialog import AddEntityDialog, DebugFunctionsDialog, UpdateEntityDialog, RemoveEntityDialog, check_available_action, function_to_dialog
 from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
 		self.entity_edits_widget = QWidget(parent=self.user_mode_area)
 		self.entity_edits_layout = QHBoxLayout(self.entity_edits_widget)
 		for btitle, bclass in zip(['Add', 'Edit', 'Remove'],
-								  [AddEntityDialog, EditEntityDialog, RemoveEntityDialog]):
+								  [AddEntityDialog, UpdateEntityDialog, RemoveEntityDialog]):
 			button = QPushButton(btitle)
 			button.clicked.connect(self.create_button_handler(func=None, button=button, dialogclass=bclass))
 			self.entity_edits_layout.addWidget(button)
@@ -236,21 +236,29 @@ class MainWindow(QMainWindow):
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
 		self.switch_mode()
+		self.validate_actions_buttons()
 		self.versioning = VersionHandler(level=self.level,
 										 chat=self.chat_area.conversation.messages)
 		
 		self.chat_box.setFocus()
 	
 	def create_button_handler(self, func, button, dialogclass=None):
+		button.setProperty('dialogclass', dialogclass if dialogclass is not None else function_to_dialog[func.internal_name])
 		def handler():
 			if not dialogclass:
 				dialog = function_to_dialog[func.internal_name](self.level, func, button)
 			else:
 				dialog = dialogclass(self.level, None, button)
+			button.setProperty('validation', dialog.validate)
 			dialog.exec()
 			self.versioning.commit(self.level, self.chat_area.conversation.messages)
 		
 		return handler
+
+	def validate_actions_buttons(self) -> None:
+		for container_widget in [self.room_edits_widget, self.corridor_edits_widget, self.entity_edits_widget]:
+			for btn in container_widget.children()[1:]:
+				btn.setDisabled(not check_available_action(self.level, btn.property('dialogclass')))
 
 	def create_freyr_models_handler(self, role: str, menu: QMenu, action: QAction):
 		def handler():
@@ -296,8 +304,10 @@ class MainWindow(QMainWindow):
 		self.versioning.commit(self.level,
 						 	   self.chat_area.conversation.messages)
 		self.level.save_to_file(filename=os.path.join(config.levels_dir, config.tmp_level),
-				                        conversation=self.chat_area.conversation.to_json())
+						  		conversation=self.chat_area.conversation.to_json())
 		self.chat_area.update()
+		if self.mode == ToolMode.USER:
+			self.validate_actions_buttons()
 		self.update()
 	
 	@pyqtSlot()
@@ -407,6 +417,8 @@ class MainWindow(QMainWindow):
 				
 				self.update()
 				self.chat_area.update()
+				if self.mode == ToolMode.USER:
+					self.validate_actions_buttons()
 			except Exception as e:
 				dlg = QErrorMessage(self)
 				dlg.setWindowTitle("LLMaker Error")
@@ -419,6 +431,8 @@ class MainWindow(QMainWindow):
 		self.versioning = VersionHandler(level=self.level, chat=[])
 		self.chat_box.clear()
 		self.chat_area.reset()
+		if self.mode == ToolMode.USER:
+			self.validate_actions_buttons()
 		self.update()
 	
 	@pyqtSlot()
@@ -453,6 +467,8 @@ class MainWindow(QMainWindow):
 				self.chat_area.add_message(msg.content)
 			self.update()
 			self.chat_area.update()
+			if self.mode == ToolMode.USER:
+				self.validate_actions_buttons()
 		else:
 			QMessageBox.warning(self, "LLMaker Warning", "No undos available!")
 	
@@ -466,6 +482,8 @@ class MainWindow(QMainWindow):
 				self.chat_area.add_message(msg.content)
 			self.update()
 			self.chat_area.update()
+			if self.mode == ToolMode.USER:
+				self.validate_actions_buttons()
 		else:
 			QMessageBox.warning(self, "LLMaker Warning", "No redos available!")
 
@@ -479,6 +497,7 @@ class MainWindow(QMainWindow):
 			self.chat_box.hide()
 			self.actions_groupbox.setTitle('Available Commands')
 			self.user_mode_area.show()
+			self.validate_actions_buttons()
 		else:
 			self.chat_area.show()
 			self.chat_box.show()
