@@ -284,17 +284,17 @@ class MainWindow(QMainWindow):
 
 	@pyqtSlot(int)
 	def update_progress(self, progress):
-		logging.getLogger().debug(f'update_progress Task progress: {progress}')
+		logging.getLogger('llmaker').debug(f'MainWindow.update_progress Task progress: {progress}')
 		self.pbar.setValue(progress)
 	
 	@pyqtSlot(str)
 	def handle_result(self, result):
-		logging.getLogger().debug(f'handle_result Received LLM response')
+		logging.getLogger('llmaker').debug(f'MainWindow.handle_result Received LLM response')
 		self.chat_area.add_message(result, role='them')
 	
 	@pyqtSlot()
 	def task_finished(self):
-		logging.getLogger().debug(f'task_finished Exchange finished')
+		logging.getLogger('llmaker').debug(f'MainWindow.task_finished Exchange finished')
 		self.chat_box.setDisabled(False)
 		self.chat_box.setFocus()
 		self.pbar.reset()
@@ -314,7 +314,7 @@ class MainWindow(QMainWindow):
 		user_input = self.chat_box.text()
 		conversation_history = self.chat_area.get_conversation()
 		
-		logging.getLogger().debug(f'process_user_input Received input')
+		logging.getLogger('llmaker').debug(f'MainWindow.process_user_input Received input')
 		
 		self.chat_box.clear()
 		self.chat_area.add_message(user_input, role='me')
@@ -322,7 +322,7 @@ class MainWindow(QMainWindow):
 		
 		self.chat_box.setDisabled(True)
 		
-		logging.getLogger().debug(f'process_user_input Starting separate thread')
+		logging.getLogger('llmaker').debug(f'MainWindow.process_user_input Starting separate thread')
 		
 		self.worker = UIInputProcessor(self.level, user_input, conversation_history, self.llm_mode)
 		self.thread = QThread()
@@ -502,7 +502,7 @@ class MainWindow(QMainWindow):
 			self.chat_box.show()
 			self.actions_groupbox.setTitle('Chat History')
 			self.user_mode_area.hide()
-		logging.info(f'Switched mode to {"USER" if self.mode == ToolMode.USER else "LLM"}')
+		logging.info(f'MainWindow.switch_mode Switched mode to {"USER" if self.mode == ToolMode.USER else "LLM"}')
 		self.update()
 	
 	@pyqtSlot()
@@ -513,7 +513,7 @@ class MainWindow(QMainWindow):
 		self.theme = ThemeMode.DARK if self.theme == ThemeMode.LIGHT else ThemeMode.LIGHT
 		self.apply_theme()
 		self.update()
-		logging.info(f'Switched theme to {"Light" if self.theme == ThemeMode.LIGHT else "Dark"}')
+		logging.info(f'MainWindow.switch_theme Switched theme to {"Light" if self.theme == ThemeMode.LIGHT else "Dark"}')
 	
 	@pyqtSlot()
 	def show_about_dialog(self):
