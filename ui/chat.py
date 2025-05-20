@@ -50,6 +50,7 @@ class ConversationWidget(QWidget):
 		self.conversation.append(new_chat_message)
 
 		new_message = QLabel(parent=self.central_widget, text=new_chat_message.content)
+		new_message.setTextFormat(Qt.TextFormat.MarkdownText)
 		new_message.setProperty('messageType', new_chat_message.role)
 		new_message.setWordWrap(True)
 		new_message.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
