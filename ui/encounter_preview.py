@@ -14,6 +14,7 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
 from ui.dyn_dialog import EnemyPreviewDialog
 from utils import ThemeMode, get_modifier_icon, basic_entity_description
+from configs import resource_path
 
 
 def show_enemy_dialog(event: QMouseEvent, parent: QWidget, enemy: Enemy):
@@ -95,7 +96,7 @@ class EncounterPreviewWidget(QWidget):
 						if hasattr(entity, 'modifier'):
 							modifier = entity.modifier
 							if modifier is not None:
-								modifier_sprite = QPixmap(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type)))
+								modifier_sprite = QPixmap(resource_path(get_modifier_icon(get_enum_by_value(ModifierType, modifier.type))))
 								modifier_rect = QGraphicsPixmapItem(modifier_sprite)
 								modifier_rect.setScale(config.ui.modifier_scale)
 								modifier_rect.setToolTip(str(modifier))

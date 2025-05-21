@@ -2,6 +2,7 @@ pyyaml
 gptfunctionutil
 pydantic
 pillow
-openai
 pyqt6
 numpy
+pyinstaller
+requests

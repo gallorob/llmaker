@@ -23,10 +23,11 @@ from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
 from utils import LLMMode, ToolMode, ThemeMode
 from versioning import VersionHandler
+from configs import resource_path
 
 
 def get_splash_screen():
-	pixmap = QPixmap('assets/llmaker_splash.png')
+	pixmap = QPixmap(resource_path('assets/llmaker_splash.png'))
 	splash = QSplashScreen(pixmap)
 	return splash
 
@@ -46,7 +47,7 @@ class MainWindow(QMainWindow):
 		
 		self.setWindowTitle("LLMaker")
 		self.resize(1280, 720)
-		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
+		self.setWindowIcon(QIcon(resource_path('assets/llmaker_logo.png')))
 		
 		self.main_ui_widget = QWidget(parent=self)
 		
@@ -538,7 +539,7 @@ class MainWindow(QMainWindow):
 	
 	def apply_theme(self):
 		try:
-			with open(f'assets/themes/stylesheet_{self.theme.value}.css', 'r') as f:
+			with open(resource_path(f'assets/themes/stylesheet_{self.theme.value}.css'), 'r') as f:
 				self.setStyleSheet(f.read())
 		except FileNotFoundError:
 			raise ValueError(f'Unknown theme: {self.theme.name}')

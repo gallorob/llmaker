@@ -14,7 +14,7 @@ from dungeon_despair.domain.utils import ActionType, Direction, EntityEnum, Modi
 from dungeon_despair.functions import DungeonCrawlerFunctions
 from gptfunctionutil import LibCommand
 
-from configs import config
+from configs import config, resource_path
 from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
@@ -28,7 +28,7 @@ class EnemyPreviewDialog(QDialog):
 		super().__init__(parent)
 		
 		self.setWindowTitle(f"Details for {enemy.name}")
-		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
+		self.setWindowIcon(QIcon(resource_path('assets/llmaker_logo.png')))
 		self.setMinimumSize(QSize(400, 300))
 		
 		layout = QGridLayout(self)
@@ -75,7 +75,7 @@ class EnemyPreviewDialog(QDialog):
 			attacks_grid_layout.addWidget(QLabel(attack.target_positions), row, 3)
 			attacks_grid_layout.addWidget(QLabel(str(attack.base_dmg)), row, 4)
 			if attack.modifier is not None:
-				icon = get_modifier_icon(get_enum_by_value(ModifierType, attack.modifier.type))
+				icon = resource_path(get_modifier_icon(get_enum_by_value(ModifierType, attack.modifier.type)))
 				widg = QLabel(f'<img src="{icon}" width="16" height="16">')
 				widg.setToolTip(str(attack.modifier))
 				attacks_grid_layout.addWidget(widg, row, 5)
@@ -106,7 +106,7 @@ class UserModeDialog(QDialog):
 		self.level: Level = level
 		self.func: LibCommand = func
 
-		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
+		self.setWindowIcon(QIcon(resource_path('assets/llmaker_logo.png')))
 
 		self.layout = QVBoxLayout()
 				
@@ -1897,7 +1897,7 @@ class DebugFunctionsDialog(QDialog):
 		self.initUI()
 		
 		self.setWindowTitle(self.func.internal_name)
-		self.setWindowIcon(QIcon('assets/llmaker_logo.png'))
+		self.setWindowIcon(QIcon(resource_path('assets/llmaker_logo.png')))
 	
 	def initUI(self):
 		layout = QVBoxLayout()

@@ -13,6 +13,7 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
 
 from utils import send_to_server
+from configs import resource_path
 
 import logging
 
@@ -47,7 +48,7 @@ class LLMsCache:
 		else:
 			raise ValueError(f'Unknown role: {role}')
 		prompt = ''
-		with open(fname, 'r') as f:
+		with open(resource_path(fname), 'r') as f:
 			prompt = f.read()
 		return prompt
 	
@@ -117,7 +118,7 @@ class FreyrLLM:
 		
 		self.PARAM_ERROR_MSG = 'OpError'
 		
-		with open(config.llm.params.err_msg, 'r') as f:
+		with open(resource_path(config.llm.params.err_msg), 'r') as f:
 			self.feedback_error = f.read()
 		
 		self.intents = []  # For testing purposes only

@@ -8,3 +8,5 @@ logs
 my_levels
 my_scenarios
 pilot_study/*
+build/
+dist/
