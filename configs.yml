@@ -3,6 +3,9 @@ temp_dir: './test_results'
 levels_dir: './my_levels'
 scenarios_dir: './my_scenarios'
 tmp_level: 'temp.bin'
+server_ip: '10.60.19.36'
+server_port: 8080
+username: 'gallorob'
 icons:
   bleed: './assets/icons/bleed_icon.png'
   heal: './assets/icons/heal_icon.png'

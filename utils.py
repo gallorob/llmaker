@@ -1,6 +1,10 @@
+import base64
+from hashlib import sha224
+from io import BytesIO
 import logging
 from enum import Enum, auto
-from typing import List, Union, Any, Tuple, Dict
+import os
+from typing import List, Optional, Union, Any, Tuple, Dict
 
 from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.enemy import Enemy
@@ -10,8 +14,10 @@ from dungeon_despair.domain.entities.treasure import Treasure
 from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.room import Room
 from dungeon_despair.domain.utils import ModifierType
-from sd_backend import generate_room, generate_corridor, generate_entity
+import requests
+from requests import Response
 from configs import config
+from PIL import Image
 
 
 class ToolMode(Enum):
@@ -27,7 +33,28 @@ class LLMMode(Enum):
 class ThemeMode(Enum):
 	LIGHT = 'light'
 	DARK = 'dark'
-	
+
+
+def send_to_server(data: Optional[Dict[str, Any]],
+				   endpoint) -> Response:
+	server_url = f'http://{config.server_ip}:{config.server_port}'
+	if data:
+		uid = sha224(config.username.encode('utf-8')).hexdigest()
+		payload = {'uid': uid, **data}
+		response = requests.post(f'{server_url}/{endpoint}', json=payload)
+	else:
+		response = requests.get(f'{server_url}/{endpoint}')
+	return response.json()
+
+
+def convert_and_save(b64_img: str,
+					 fname: str,
+					 dirname: str) -> str:
+	full_name = os.path.join(dirname, fname)
+	with open(full_name, 'wb') as f:
+		f.write(base64.b64decode(b64_img))
+	return os.path.basename(full_name)
+
 
 def get_modifier_icon(modifier_type: ModifierType):
 	if modifier_type == ModifierType.BLEED:
@@ -117,20 +144,62 @@ def process_diff(obj: Any,
                  additional_data: Dict[str, str]) -> None:
 	if isinstance(obj, Room):
 		logging.info(f'Room {obj.name} has no sprite; generating...')
-		obj.sprite = generate_room(room_name=obj.name,
-		                           room_description=obj.description)
+		data = {'action': 'generate_room',
+		  		'action_args': {
+					  'room_name': obj.name,
+					  'room_description': obj.description}}
+		res = send_to_server(data=data, endpoint='sd_generate')
+		obj.sprite = convert_and_save(b64_img=res['image_base64'],
+									  fname=res['fname'],
+									  dirname=config.room.save_dir)
 	elif isinstance(obj, Corridor):
-		logging.info(f'Room {obj.name} has no sprite; generating...')
+		logging.info(f'Corridor {obj.name} has no sprite; generating...')
 		obj_data = additional_data
-		obj.sprites = generate_corridor(room_names=[obj.room_from, obj.room_to],
-		                               corridor_length=obj.length + 2,
-		                               **obj_data,
-		                               corridor_sprites=obj.sprites)
+		if len(obj.sprites) != 0:  # Corridor sprites have been generated already in the past
+			buffered = BytesIO()
+			img = Image.open(os.path.join(config.corridor.save_dir, f'{obj.name}_swapped.png'))
+			img.save(buffered, format='PNG')
+			img_b64 = base64.b64encode(buffered.getvalue()).decode()
+		else:
+			img_b64 = None
+		data = {'action': 'generate_corridor',
+		  		'action_args': {'room_names': [obj.room_from, obj.room_to],
+					  			'corridor_length': obj.length + 2,
+								'tile_image': img_b64,
+								'corridor_sprites': obj.sprites,
+								**obj_data}}
+		res = send_to_server(data=data, endpoint='sd_generate')
+
+		if len(obj.sprites) == 0:
+			# On new corridors, save the "swapped" image before assigning any sprite
+			_ = convert_and_save(b64_img=res[0]['image_base64'],
+								 fname=res[0]['fname'],
+								 dirname=config.corridor.save_dir)
+			res = res[1:]
+		
+			for tile in res:
+				obj.sprites.append(convert_and_save(b64_img=tile['image_base64'],
+													fname=tile['fname'],
+													dirname=config.corridor.save_dir))
+		
+		else:
+			for tile_res in res:
+				for i in range(len(obj.sprites)):
+					if obj.sprites[i] is None:
+						obj.sprites[i] = convert_and_save(b64_img=tile_res['image_base64'],
+														fname=tile_res['fname'],
+														dirname=config.corridor.save_dir)
+						break
 	elif isinstance(obj, Entity):
 		obj_data = additional_data
 		logging.info(f'Entity {obj.name} has no sprite; generating...')
-		obj.sprite = generate_entity(entity_name=obj.name,
-		                             entity_description=obj.description,
-		                             **obj_data)
+		data = {'action': 'generate_entity',
+		  		'action_args': {'entity_name': obj.name,
+					  			'entity_description': obj.description,
+								**obj_data}}
+		res = send_to_server(data=data, endpoint='sd_generate')
+		obj.sprite = convert_and_save(b64_img=res['image_base64'],
+									  fname=res['fname'],
+									  dirname=config.entity.save_dir)
 	else:
 		raise ValueError(f'Unsupported object type: {type(obj)}')

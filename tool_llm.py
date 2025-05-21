@@ -3,13 +3,14 @@ from time import sleep
 from timeit import default_timer
 from typing import List, Dict, Any, Optional, Union
 
-import ollama
 import logging
 
 from chat_message import ChatMessage
 from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
+
+from utils import send_to_server
 
 
 class ToolLLM:
@@ -22,13 +23,11 @@ class ToolLLM:
 		self.tools = DungeonCrawlerFunctions()
 		with open(config.llm.tools.prompt, 'r') as f:
 			self.prompt = f.read()
-		ollama.generate(model=self.model_name, keep_alive=-1)
+		send_to_server(data={'model_name': self.model_name}, endpoint='ollama_init_model')
 	
 	def __del__(self):
 		try:
-			subprocess.check_call(['ollama', 'stop', self.model_name])
-			sleep(self.timeout)
-			assert self.model_name not in [x['name'] for x in ollama.ps()['models']], f'Could not stop model {self.model_name}'
+			send_to_server(data={'model_name': self.model_name}, endpoint='ollama_unload_model')
 		except subprocess.CalledProcessError as e:
 			print(f'Failed to unload model {self.model_name}: {e}')
 	
@@ -40,10 +39,12 @@ class ToolLLM:
 			# 'seed': config.rng_seed,
 			'num_ctx': 32768 * 3
 		}
-		res = ollama.chat(model=self.model_name,
-		                  messages=messages,
-		                  tools=self.tools.get_tool_schema(),
-		                  options=options)
+		data = {
+			'model_name': self.model_name,
+			'messages': messages,
+			'tools': self.tools.get_tool_schema()
+		} | options
+		res = send_to_server(data=data, endpoint='ollama_generate')
 		return res
 	
 	def __call__(self,

@@ -529,7 +529,7 @@ class MainWindow(QMainWindow):
 	@pyqtSlot()
 	def show_about_dialog(self):
 		QMessageBox.about(self, 'About LLMaker',
-		                  f'LLMaker v0.1\nIEEE Conference on Games 2024 Demo\n\nDeveloped by: Roberto Gallota (Institute of Digital Games, University of Malta)')
+		                  f'LLMaker Client v0.1\n\nDeveloped by: Roberto Gallota (Institute of Digital Games, University of Malta)')
 	
 	def set_level(self, level: Level):
 		self.level = level

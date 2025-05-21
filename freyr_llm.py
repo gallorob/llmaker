@@ -5,13 +5,14 @@ import subprocess
 from time import sleep
 from typing import Dict, List, Any, Optional, Union
 
-import ollama
 from timeit import default_timer
 
 from chat_message import ChatMessage
 from configs import config
 from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
+
+from utils import send_to_server
 
 import logging
 
@@ -31,7 +32,7 @@ class LLMsCache:
 
 	@staticmethod
 	def get_ollama_models() -> List[str]:
-		return [x['model'] for x in ollama.list()['models']]
+		return send_to_server(data=None, endpoint='ollama_list_models')['models']
 	
 	@staticmethod
 	def load_prompt(role: str) -> str:
@@ -55,10 +56,7 @@ class LLMsCache:
 	                  role_configs: Namespace) -> None:
 		assert role not in self.roles, f'{role} already has a model: {self.__cache[role]}'
 		model_name = role_configs.model
-		if model_name not in self.ollama_models:
-			ollama.pull(model_name)
-			self.ollama_models = LLMsCache.get_ollama_models()
-		ollama.generate(model=model_name, keep_alive=-1)
+		send_to_server(data={'model_name': model_name}, endpoint='ollama_init_model')
 		self.__cache[role] = {
 			'prompt': LLMsCache.load_prompt(role),
 			'model': model_name,
@@ -95,9 +93,7 @@ class LLMsCache:
 		# Stop a model ONLY if not used in another role
 		if model_id not in [self.__cache[x]['model'] for x in list(other_roles)]:
 			try:
-				subprocess.check_call(['ollama', 'stop', model_id])
-				sleep(self.timeout)
-				assert model_id not in [x['name'] for x in ollama.ps()['models']], f'Could not stop model {model_id}'
+				send_to_server(data={'model_name': model_id}, endpoint='ollama_unload_model')
 			except subprocess.CalledProcessError as e:
 				print(f'Failed to unload model {model_id} for role {role}: {e}')
 		del self.__cache[role]
@@ -130,15 +126,11 @@ class FreyrLLM:
 	           model_name: str,
 			   params: Dict[str, float],
 	           messages: List[Dict[str, str]]) -> Dict[str, Any]:
-		options = {
-			'temperature': params['temperature'],
-			'top_p': params['top_p'],
-			# 'seed': config.rng_seed
-		}
-		res = ollama.chat(model=model_name,
-		                  messages=messages,
-		                  options=options,
-						  keep_alive=-1)
+		data = {
+			'model_name': model_name,
+			'messages': messages
+		} | params
+		res = send_to_server(data=data, endpoint='ollama_generate')
 		return res
 	
 	def tools_as_dict(self) -> Dict[str, str]:

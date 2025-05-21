@@ -19,7 +19,6 @@ from dungeon_despair.domain.corridor import Corridor
 from dungeon_despair.domain.entities.enemy import Enemy
 from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.room import Room
-from sd_backend import generate_room, generate_corridor, generate_entity
 from ui.input_process import DebugInputProcessor
 from utils import compute_level_diffs, get_modifier_icon
 
@@ -407,7 +406,7 @@ class UpdateCorridorDialog(UserModeDialog):
 		self.layout.addWidget(self.corridorlen_widget)
 
 		self.directions_combobox = QComboBox()
-		valid_directions = [direction.value for direction in Direction if self.level.connections[ref_corridor.room_from][direction] == '']
+		valid_directions = [direction.value for direction in Direction if self.level.connections[ref_corridor.room_from][direction] == '' or self.level.connections[ref_corridor.room_from][direction] == ref_corridor.room_to]
 		self.directions_combobox.addItems(valid_directions)
 		self.directions_combobox.setCurrentText(ref_corridor.direction)
 		self.layout.addWidget(QLabel('To which direction?:'))
@@ -423,7 +422,7 @@ class UpdateCorridorDialog(UserModeDialog):
 		self.roomto_widget.setCurrentText(corridor.room_to)
 		self.corridorlen_widget.setValue(corridor.length)
 		self.directions_combobox.clear()
-		valid_directions = [direction.value for direction in Direction if self.level.connections[corridor.room_from][direction] == '']
+		valid_directions = [direction.value for direction in Direction if self.level.connections[corridor.room_from][direction] == '' or self.level.connections[corridor.room_from][direction] == corridor.room_to]
 		self.directions_combobox.addItems(valid_directions)
 		self.directions_combobox.setCurrentText(valid_directions[0])
 
