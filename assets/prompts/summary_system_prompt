@@ -2,6 +2,7 @@
 You will be given a list of edits made to a level, along with its version before and after the edits are made.
 Your task is to summarize the results to the user in ONE message.
 Your response will be given as if YOU made those edits.
+You must make names bold with markdown formatting.
 
 [Level]
 Before the edits, the level was as follows:
