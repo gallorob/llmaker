@@ -67,6 +67,9 @@ llm:
     temperature: 0.4
     top_p: 0.2
     top_k: 10
+  proactive:
+    msg: './assets/prompts/proactive_msg'
+    chance: 0.5
 room:
   height: 512
   width: 1024

@@ -10,6 +10,7 @@ from gptfunctionutil import LibCommand
 
 from dungeon_despair.domain.level import Level
 from chat_message import ChatMessage
+from configs import resource_path, config
 from utils import LLMMode, compute_level_diffs, process_diff
 from freyr_llm import get_freyr_model
 from tool_llm import get_tool_model
@@ -49,21 +50,22 @@ class UIInputProcessor(QRunnable):
 							level=self.level)
 			self.signals.result.emit(ai_response)
 
-			# TODO: This is a temporary variable, should be taken from config
-			with_feedback = random() > 0.5
+			to_process, additional_data = compute_level_diffs(level=self.level)
+			
+			with_feedback = random() > config.llm.proactive.chance if len(to_process) > 0 else False
 			logging.getLogger('llmaker').debug(msg=f'UIInputProcessor.run {with_feedback=}')
 
-			to_process, additional_data = compute_level_diffs(level=self.level)
 			progress_delta = int((1 / (1 + (1 if with_feedback else 0) + len(to_process))) * 100)
 			
 			self.progress_n += progress_delta
 			self.signals.progress.emit(self.progress_n)
 
 			if with_feedback:
-				# TODO: Message is temporary, should be defined elsewhere
-				side_response = m()(user_message='Let\'s CHAT. Tell me what we could change next in the level. Keep your suggestion brief.',
-									conversation_history=[],
+				side_response = m()(user_message=resource_path(config.llm.proactive.msg),
+									conversation_history=self.conversation_history,
 									level=self.level)
+				if self.mode == LLMMode.FREYR: m().history_cutoff_idx -= 1
+
 				self.signals.result.emit(side_response)
 				
 				self.progress_n += progress_delta
