@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Any, Dict
 
-from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt
+from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt, QThreadPool
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
 	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget, QComboBox, \
@@ -114,51 +114,49 @@ class UserModeDialog(QDialog):
 		self.submit_btn = QPushButton("Submit")
 		self.submit_btn.clicked.connect(self.submit)
 		
+		self.threadpool = QThreadPool()
+
 		self.pbar = QProgressBar(self)
 		self.pbar.setRange(0, 100)
 		self.pbar.setHidden(True)
 		
 		self.setLayout(self.layout)
 
-	@pyqtSlot(int)
 	def update_progress(self, progress):
 		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} update_progress - Task progress: {progress}')
 		self.pbar.setValue(progress)
 
-	@pyqtSlot(str)
-	def task_finished(self, result):
-		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} task_finished - Edit finished')
-		self.pbar.reset()
-		self.pbar.setHidden(True)
-		self.submit_btn.setDisabled(False)
+	def task_success(self, result):
+		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} task_success - Edit finished')
 		button_pressed = QMessageBox.information(self, "Output", f"{result}")
 		if button_pressed == QMessageBox.StandardButton.Ok:
 			self.close()
 	
+	def task_finished(self):
+		self.pbar.reset()
+		self.pbar.setHidden(True)
+		self.submit_btn.setDisabled(False)
+
+	def task_error(self, err_data):
+		QMessageBox.critical(self, f'LLMaker Error: {str(err_data[0])}', str(err_data[1]))
+
 	def get_kwargs(self) -> Dict[str, Any]:
 		raise NotImplementedError()
 
 	def submit(self):
-		self.worker = DebugInputProcessor(self.get_kwargs(),
-										self.func,
-										None)
-		self.thread = QThread()
-		
-		self.worker.moveToThread(self.thread)
-		
-		self.thread.started.connect(self.worker.run)
-		self.worker.finished.connect(self.task_finished)
-		self.worker.progress.connect(self.update_progress)
-		self.worker.finished.connect(self.thread.quit)
-		self.worker.finished.connect(self.worker.deleteLater)
-		self.thread.finished.connect(self.thread.deleteLater)
+		worker = DebugInputProcessor(self.get_kwargs(),
+										  self.func,)
+		worker.signals.result.connect(self.task_success)
+		worker.signals.error.connect(self.task_error)
+		worker.signals.progress.connect(self.update_progress)
+		worker.signals.finished.connect(self.task_finished)
 		
 		self.pbar.setHidden(False)
 		self.pbar.reset()
 		
 		self.submit_btn.setDisabled(True)
 
-		self.thread.start()
+		self.threadpool.start(worker)
 
 
 class CreateRoomDialog(UserModeDialog):

@@ -2,7 +2,7 @@ import copy
 import logging
 import os
 
-from PyQt6.QtCore import QThread, pyqtSlot
+from PyQt6.QtCore import QThread, pyqtSlot, QThreadPool
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, \
 	QMessageBox, QProgressBar, QPushButton, QSplashScreen, \
@@ -242,6 +242,8 @@ class MainWindow(QMainWindow):
 		self.actionRedo.triggered.connect(self.redo_edit)
 		self.actionAbout.triggered.connect(self.show_about_dialog)
 		
+		self.threadpool = QThreadPool()
+
 		self.switch_mode()
 		self.validate_actions_buttons()
 		self.versioning = VersionHandler(level=self.level,
@@ -290,17 +292,17 @@ class MainWindow(QMainWindow):
 
 		return handler
 
-	@pyqtSlot(int)
 	def update_progress(self, progress):
 		logging.getLogger('llmaker').debug(f'MainWindow.update_progress Task progress: {progress}')
 		self.pbar.setValue(progress)
 	
-	@pyqtSlot(str)
 	def handle_result(self, result):
 		logging.getLogger('llmaker').debug(f'MainWindow.handle_result Received LLM response')
 		self.chat_area.add_message(result, role='them')
 	
-	@pyqtSlot()
+	def task_error(self, err_data):
+		QMessageBox.critical(self, f'LLMaker Error: {str(err_data[0])}', str(err_data[1]))
+
 	def task_finished(self):
 		logging.getLogger('llmaker').debug(f'MainWindow.task_finished Exchange finished')
 		self.chat_box.setDisabled(False)
@@ -332,27 +334,20 @@ class MainWindow(QMainWindow):
 		
 		logging.getLogger('llmaker').debug(f'MainWindow.process_user_input Starting separate thread')
 		
-		self.worker = UIInputProcessor(self.level, user_input, conversation_history, self.llm_mode)
-		self.thread = QThread()
+		worker = UIInputProcessor(self.level, user_input, conversation_history, self.llm_mode)
 		
-		self.worker.moveToThread(self.thread)
-		
-		# Connect signals and slots
-		self.thread.started.connect(self.worker.run)
-		self.worker.result.connect(self.handle_result)
-		self.worker.finished.connect(self.task_finished)
-		self.worker.progress.connect(self.update_progress)
-		self.worker.finished.connect(self.thread.quit)
-		self.worker.finished.connect(self.worker.deleteLater)
-		self.thread.finished.connect(self.thread.deleteLater)
-		
+		worker.signals.result.connect(self.handle_result)
+		worker.signals.error.connect(self.task_error)
+		worker.signals.progress.connect(self.update_progress)
+		worker.signals.finished.connect(self.task_finished)
+				
 		self.pbar.setHidden(False)
 		self.pbar.reset()
 		self.actions_groupbox.update()
 		self.chat_area.update()
 		
 		# Start the thread
-		self.thread.start()
+		self.threadpool.start(worker)
 	
 	def paintEvent(self, a0):
 		if self.level.current_room:
