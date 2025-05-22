@@ -138,7 +138,7 @@ class UserModeDialog(QDialog):
 		self.submit_btn.setDisabled(False)
 
 	def task_error(self, err_data):
-		QMessageBox.critical(self, f'LLMaker Error: {str(err_data[0])}', str(err_data[1]))
+		QMessageBox.critical(self, f'LLMaker Error: {err_data[0].__name__}', str(err_data[1]))
 
 	def get_kwargs(self) -> Dict[str, Any]:
 		raise NotImplementedError()

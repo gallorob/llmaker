@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
 		self.chat_area.add_message(result, role='them')
 	
 	def task_error(self, err_data):
-		QMessageBox.critical(self, f'LLMaker Error: {str(err_data[0])}', str(err_data[1]))
+		QMessageBox.critical(self, f'LLMaker Error: {err_data[0].__name__}', str(err_data[1]))
 
 	def task_finished(self):
 		logging.getLogger('llmaker').debug(f'MainWindow.task_finished Exchange finished')
