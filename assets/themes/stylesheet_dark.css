@@ -39,6 +39,7 @@ QLabel[messageType="me"] {
     border-radius: 5px;
     padding: 5px;
     margin: 2px 5px 2px 50px;
+    qproperty-alignment: AlignRight;
 }
 
 QLabel[messageType="them"] {
