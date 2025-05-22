@@ -88,14 +88,10 @@ class MainWindow(QMainWindow):
 		self.user_mode_area = QGroupBox(parent=self.actions_groupbox)
 		self.user_mode_layout = QVBoxLayout(self.user_mode_area)
 
-		# TODO: Buttons should be enabled/disabled based on current level properties
-		#  Needs to have a separate function that gets executed on every level update, regardless of user/llm mode
-		#  And executed once on init / level load
-
 		self.user_mode_layout.addWidget(QLabel('Room edits:'))
 		self.room_edits_widget = QWidget(parent=self.user_mode_area)
 		self.room_edits_layout = QHBoxLayout(self.room_edits_widget)
-		for btitle, funcname in zip(['Create', 'Update', 'Remove'],
+		for btitle, funcname in zip(['Add', 'Update', 'Remove'],
 							  		['create_room', 'update_room', 'remove_room']):
 			button = QPushButton(btitle)
 			button.clicked.connect(self.create_button_handler(DungeonCrawlerFunctions().FunctionDict[funcname], button))
@@ -420,12 +416,7 @@ class MainWindow(QMainWindow):
 				
 				self.set_level(level)
 				self.versioning = VersionHandler(self.level, conversation.messages)
-
-				dlg = QMessageBox(self)
-				dlg.setWindowTitle("LLMaker Message")
-				dlg.setText(f"The level has been successfully loaded!")
-				_ = dlg.exec()
-				
+				QMessageBox.information(self, "LLMaker Message", f"The level {tmp_filename} has been successfully loaded!")
 				self.update()
 				self.chat_area.update()
 				if self.mode == ToolMode.USER:
@@ -454,14 +445,9 @@ class MainWindow(QMainWindow):
 			                                              directory=config.scenarios_dir,
 			                                              filter="All Files(*);;Binary Files(*.bin)")
 			if tmp_filename:
-				
 				if check_level_playability(self.level, ScenarioType.EXPLORE):
 					self.level.export_level_as_scenario(filename=tmp_filename)
-				
-					dlg = QMessageBox(self)
-					dlg.setWindowTitle("LLMaker Message")
-					dlg.setText(f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!")
-					_ = dlg.exec()
+					QMessageBox.information(self, "LLMaker Message", f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!")
 		except Exception as e:
 			dlg = QErrorMessage(self)
 			dlg.setWindowTitle("LLMaker Error")

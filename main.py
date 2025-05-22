@@ -25,6 +25,23 @@ logging.getLogger('llmaker').setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
 	domain_config.temp_dir = './test_results/'
+	
+	# clear tmp folder
+	if os.path.exists(config.temp_dir):
+		shutil.rmtree(config.temp_dir)
+	# create tmp folder if it does not exist
+	if not os.path.exists(config.temp_dir):
+		os.makedirs(config.temp_dir)
+	# create log folder if it does not exist
+	if not os.path.exists('./logs'):
+		os.makedirs('./logs')
+	# create levels folder if it does not exist
+	if not os.path.exists(config.levels_dir):
+		os.makedirs(config.levels_dir)
+	# create scenarios folder if it does not exist
+	if not os.path.exists(config.scenarios_dir):
+		os.makedirs(config.scenarios_dir)
+	
 	logging.getLogger('llmaker').setLevel(logging.DEBUG)
 	log_filename = f'./logs/log_{datetime.now().strftime("%Y%m%d%H%M%S")}.log'
 	handler = logging.FileHandler(log_filename)
@@ -35,14 +52,7 @@ if __name__ == '__main__':
 	
 	splash_screen = get_splash_screen()
 	splash_screen.show()
-	
-	# clear tmp folder
-	if os.path.exists(config.temp_dir):
-		shutil.rmtree(config.temp_dir)
-	# create tmp folder if it does not exist
-	if not os.path.exists(config.temp_dir):
-		os.makedirs(config.temp_dir)
-	
+		
 	splash_screen.showMessage('Loading Large Language Models...')
 	load_local_llm(splash_screen)
 	splash_screen.showMessage('Loaded Large Language Models')

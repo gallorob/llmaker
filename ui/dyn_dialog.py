@@ -138,10 +138,10 @@ class UserModeDialog(QDialog):
 	def get_kwargs(self) -> Dict[str, Any]:
 		raise NotImplementedError()
 
-	def submit(self):	
+	def submit(self):
 		self.worker = DebugInputProcessor(self.get_kwargs(),
-		                                  self.func,
-		                                  self)
+										self.func,
+										None)
 		self.thread = QThread()
 		
 		self.worker.moveToThread(self.thread)

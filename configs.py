@@ -23,5 +23,5 @@ def dict_to_namespace(d):
         return d
 
 
-with open(resource_path('configs.yml'), 'r') as file:
+with open('configs.yml', 'r') as file:
     config = dict_to_namespace(yaml.safe_load(file))
