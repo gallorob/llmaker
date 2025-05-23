@@ -171,8 +171,11 @@ class FreyrLLM:
 				if param_value != '':
 					# convert param_value to its correct type
 					if param_type != str and param_value.lstrip('-').replace('.', '', 1).isdigit():
-						param_value = param_type(
-							eval(param_value))  # Allow for floats to be cast to int from string, basically
+						try:
+							param_value = param_type(
+								eval(param_value))  # Allow for floats to be cast to int from string, basically
+						except Exception:
+							raise ValueError(f'Wrong parameter type: you passed {param_value} but it should be of type {str(param_type)}.')
 					else:
 						param_value = param_type(param_value)
 				else:
@@ -313,15 +316,20 @@ class FreyrLLM:
 			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool {response=}; {n_retries=}')
 			messages.append({'role': 'assistant', 'content': response})
 			
-			tool_args = self.prepare_params_for_tool_call(tool_name=intent,
-			                                              response=response)
-			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool {intent=}; {tool_args=}')
+			try:
+				tool_args = self.prepare_params_for_tool_call(tool_name=intent,
+															response=response)
+				logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool {intent=}; {tool_args=}')
+
+				# try call function
+				func_output = self.tools.try_call_func(func_name=intent,
+													func_args=json.dumps(tool_args),
+													level=level)
+				logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool {func_output=}')
+
+			except ValueError as e:
+				func_output = f'Domain validation error: {e.args}'
 			
-			# try call function
-			func_output = self.tools.try_call_func(func_name=intent,
-			                                       func_args=json.dumps(tool_args),
-			                                       level=level)
-			logging.getLogger('llmaker').log(logging.DEBUG, msg=f'FreyrLLM.generate_params_and_execute_tool {func_output=}')
 			if 'Domain validation error' in func_output or 'Missing arguments' in func_output:
 				func_err_msg = func_output.replace('Domain validation error: ', '').replace('Missing arguments: ', '')
 				messages.append({'role': 'user', 'content': self.feedback_error.format(operation=intent,
