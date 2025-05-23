@@ -759,7 +759,6 @@ class AddEntityDialog(UserModeDialog):
 				'description': self.description_widget.text(),
 				'species': self.species_widget.text(),
 				'hp': self.hp_widget.value(),
-				'dmg': self.dmg_widget.value(),
 				'dodge': self.dodge_widget.value(),
 				'prot': self.prot_widget.value(),
 				'spd': self.spd_widget.value(),

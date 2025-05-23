@@ -1,7 +1,7 @@
 pyyaml
 gptfunctionutil
 pydantic
-pillow
+pillow<=11.1
 pyqt6
 numpy
 pyinstaller
