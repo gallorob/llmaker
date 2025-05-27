@@ -1,0 +1,37 @@
+name: LLMaker Build and Release
+
+on:
+  push:
+    branches: 
+    - "client-only"
+
+permissions:
+  contents: read
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        git pull https://github.com/gallorob/dungeon-despair-domain
+        pip install -r ./dungeon-despair-domain/requirements.txt && pip install ./dungeon-despair-domain
+        pip install -r requirements.txt
+    - name: Build application
+      run: |
+        pyinstaller main.spec
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+        asset_path: ./dist/LLMaker.exe
+        asset_name: LLMaker.exe
