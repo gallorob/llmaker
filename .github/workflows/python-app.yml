@@ -20,19 +20,29 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        git pull https://github.com/gallorob/dungeon-despair-domain
+        git pull https://github.com/gallorob/dungeon-despair-domain --allow-unrelated-histories
         pip install -r ./dungeon-despair-domain/requirements.txt && pip install ./dungeon-despair-domain
         pip install -r requirements.txt
     - name: Build application
       run: |
         pyinstaller main.spec
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v0.0.1
+        release_name: Release v0.0.1
+        draft: false
+        prerelease: true
     - name: Upload Release Asset
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./dist/LLMaker.exe
         asset_name: LLMaker (Windows)
         asset_content_type: application/octet-stream
