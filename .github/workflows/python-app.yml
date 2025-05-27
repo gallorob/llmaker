@@ -16,6 +16,9 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Get latest tag
+      id: get_latest_tag
+      run: echo "tag_name=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -32,8 +35,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v0.0.1
-        release_name: Release v0.0.1
+        tag_name: ${{ env.tag_name }}
+        release_name: Release ${{ env.tag_name }}
         draft: false
         prerelease: true
     - name: Upload Release Asset
@@ -50,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Get latest tag
+      id: get_latest_tag
+      run: echo "tag_name=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -66,8 +72,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v0.0.1
-        release_name: Release v0.0.1
+        tag_name: ${{ env.tag_name }}
+        release_name: Release ${{ env.tag_name }}
         draft: false
         prerelease: true
     - name: Upload Release Asset
@@ -84,6 +90,9 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Get latest tag
+      id: get_latest_tag
+      run: echo "tag_name=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -100,8 +109,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v0.0.1
-        release_name: Release v0.0.1
+        tag_name: ${{ env.tag_name }}
+        release_name: Release ${{ env.tag_name }}
         draft: false
         prerelease: true
     - name: Upload Release Asset
