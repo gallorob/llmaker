@@ -1,3 +1,4 @@
+dungeon_despair_domain @ git+https://github.com/gallorob/dungeon-despair-domain
 pyyaml
 gptfunctionutil
 pydantic
