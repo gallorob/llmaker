@@ -6,7 +6,8 @@ on:
     - "client-only"
 
 permissions:
-  contents: read
+  # write permission are necessary to get GITHUB_TOKEN
+  contents: write
 
 jobs:
   build_windows:
