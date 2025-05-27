@@ -83,8 +83,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/LLMaker.exe
-        asset_name: "LLMaker (Windows).exe"
+        asset_path: ./dist/LLMaker
+        asset_name: "LLMaker (Ubuntu)"
         asset_content_type: application/octet-stream
   build_macos:
     runs-on: macos-latest
@@ -120,6 +120,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/LLMaker.exe
-        asset_name: "LLMaker (Windows).exe"
+        asset_path: ./dist/LLMaker
+        asset_name: "LLMaker (MacOS)"
         asset_content_type: application/octet-stream
