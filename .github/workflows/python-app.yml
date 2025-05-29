@@ -51,10 +51,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      # Separate artifacts by OS to avoid same name conflicts
+      - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts/
+          name: LLMaker-windows-latest
+          path: artifacts/windows/
+
+      - name: Download Ubuntu artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: LLMaker-ubuntu-latest
+          path: artifacts/ubuntu/
+
+      - name: Download MacOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: LLMaker-macos-latest
+          path: artifacts/macos/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -65,7 +79,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/**/*
+            artifacts/windows/**
+            artifacts/ubuntu/**
+            artifacts/macos/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
