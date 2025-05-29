@@ -39,7 +39,7 @@ jobs:
     - name: Zip package
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
-          powershell Compress-Archive -Path package\* -DestinationPath LLMaker-${{ matrix.os }}.zip
+          powershell Compress-Archive -Path (Get-ChildItem -Path package\*) -DestinationPath LLMaker-${{ matrix.os }}.zip
         else
           cd package
           zip -r ../LLMaker-${{ matrix.os }}.zip .
