@@ -2,124 +2,65 @@ name: LLMaker Build and Release
 
 on:
   push:
-    branches: 
-    - "client-only"
     tags:
-    - v0.**
+    - 'v*'
 
 permissions:
   # write permission are necessary to get GITHUB_TOKEN
   contents: write
 
 jobs:
-  build_windows:
-    runs-on: windows-latest
+  build:
+    name: Build LLMaker for {{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
-    - uses: actions/checkout@v4
-    - name: Get latest tag
-      id: get_latest_tag
-      run: echo "tag_name=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
+    
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-    - name: Build application
+    
+    - name: Build with PyInstaller
       run: |
         pyinstaller main.spec
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        mkdir package
+        cp -r dist/* package/
+        cp configs.yml package/
+    
+    - name: Upload package as artifact
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: ${{ env.tag_name }}
-        release_name: Release ${{ env.tag_name }}
-        draft: true
-        prerelease: true
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/LLMaker.exe
-        asset_name: LLMaker (Windows)
-        asset_content_type: application/octet-stream
-  build_ubuntu:
+        name: LLMaker-${{ matrix.os }}
+        path: package/
+  
+  release:
+    name: Create Release and Upload Assets
+    needs: build
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Get latest tag
-      id: get_latest_tag
-      run: echo "tag_name=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    - name: Build application
-      run: |
-        pyinstaller main.spec
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.tag_name }}
-        release_name: Release ${{ env.tag_name }}
-        draft: true
-        prerelease: true
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/LLMaker
-        asset_name: "LLMaker (Ubuntu)"
-        asset_content_type: application/octet-stream
-  build_macos:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Get latest tag
-      id: get_latest_tag
-      run: echo "tag_name=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    - name: Build application
-      run: |
-        pyinstaller main.spec
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.tag_name }}
-        release_name: Release ${{ env.tag_name }}
-        draft: true
-        prerelease: true
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/LLMaker
-        asset_name: "LLMaker (MacOS)"
-        asset_content_type: application/octet-stream
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
