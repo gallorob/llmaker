@@ -40,7 +40,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: LLMaker-${{ matrix.os }}
-        path: package/
+        path: package/*.zip
   
   release:
     name: Create Release and Upload Assets
@@ -51,37 +51,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Separate artifacts by OS to avoid same name conflicts
-      - name: Download Windows artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: LLMaker-windows-latest
-          path: artifacts/windows/
-
-      - name: Download Ubuntu artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: LLMaker-ubuntu-latest
-          path: artifacts/ubuntu/
-
-      - name: Download MacOS artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: LLMaker-macos-latest
-          path: artifacts/macos/
+          path: artifacts/**
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body_path: RELEASE_NOTES.md
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: false
+          automatic_release_tag: ${{ github.ref_name }}
+          title: Release ${{ github.ref_name }}
           files: |
-            artifacts/windows/**
-            artifacts/ubuntu/**
-            artifacts/macos/**
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+            artifacts/**/*.zip
