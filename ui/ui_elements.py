@@ -255,6 +255,8 @@ class MainWindow(QMainWindow):
 		self.chat_box.setFocus()
 
 		self.time_to_first_action_start = time()
+		self.chat_box_pause_last_time = None
+		self.chat_box_pause_times = []
 	
 	def create_button_handler(self, func, button, dialogclass=None):
 		button.setProperty('dialogclass', dialogclass if dialogclass is not None else function_to_dialog[func.internal_name])
@@ -279,6 +281,15 @@ class MainWindow(QMainWindow):
 			time_diff = time() - self.time_to_first_action_start
 			logging.getLogger('llmaker').debug(f'MainWindow.chat_box_text_changed Time to first action: {time_diff:.2f}s')
 			self.time_to_first_action_start = time()
+			self.chat_box_pause_last_time = time()
+		else:
+			# compute time took to type a word, delimiting via space
+			if len(self.chat_box.text()) > 0 and self.chat_box.text()[-1] == ' ':
+				time_diff = time() - self.chat_box_pause_last_time
+				self.chat_box_pause_times.append(time_diff)
+				self.chat_box_pause_last_time = time()
+				logging.getLogger('llmaker').debug(f'MainWindow.chat_box_text_changed Time between words: {time_diff:.2f}s')
+
 
 	def validate_actions_buttons(self) -> None:
 		for container_widget in [self.room_edits_widget, self.corridor_edits_widget, self.entity_edits_widget, self.attack_edits_widget]:
@@ -339,7 +350,15 @@ class MainWindow(QMainWindow):
 	def process_user_input(self):
 		user_input = self.chat_box.text()
 		conversation_history = self.chat_area.get_conversation()
-		
+
+		# get the last time for the last word typed
+		time_diff = time() - self.chat_box_pause_last_time
+		self.chat_box_pause_times.append(time_diff)
+		self.chat_box_pause_last_time = time()
+		logging.getLogger('llmaker').debug(f'MainWindow.process_user_input Time between words: {time_diff:.2f}s')
+
+		logging.getLogger('llmaker').debug(f'MainWindow.process_user_input Average pause duration: {sum(self.chat_box_pause_times) / len(self.chat_box_pause_times):.2f}s')
+				
 		logging.getLogger('llmaker').debug(f'MainWindow.process_user_input Received input')
 		
 		self.chat_box.clear()

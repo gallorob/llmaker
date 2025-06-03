@@ -1,8 +1,9 @@
 import logging
 import os
+from time import time
 from typing import Any, Dict
 
-from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt, QThreadPool
+from PyQt6.QtCore import pyqtSlot, QThread, QSize, Qt, QThreadPool, QObject, QEvent
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox, \
 	QDoubleSpinBox, QMessageBox, QProgressBar, QGridLayout, QDialogButtonBox, QScrollArea, QWidget, QComboBox, \
@@ -100,6 +101,17 @@ class EnemyPreviewDialog(QDialog):
 		layout.addWidget(button_box, 2, 0, 1, 2)
 
 
+class FocusWatcher(QObject):
+    def __init__(self, callback):
+        super().__init__()
+        self.callback = callback
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.FocusIn:
+            self.callback()
+        return super().eventFilter(obj, event)
+
+
 class UserModeDialog(QDialog):
 	def __init__(self, level, func, parent=None):
 		super().__init__(parent)
@@ -120,7 +132,30 @@ class UserModeDialog(QDialog):
 		self.pbar.setRange(0, 100)
 		self.pbar.setHidden(True)
 		
+		self.pause_last_time = time()
+		self.pause_times = []
+
 		self.setLayout(self.layout)
+
+		self.focus_watcher = FocusWatcher(self.on_child_focus)
+
+	def connect_child_signals(self) -> None:
+		for c in self.parentWidget().findChildren((QLineEdit, QComboBox)):
+			c.installEventFilter(self.focus_watcher)
+			if hasattr(c, 'currentTextChanged'):
+				c.currentTextChanged.connect(self.on_value_changed)
+			if hasattr(c, 'textChanged'):
+				c.textChanged.connect(self.on_value_changed)
+
+	def on_value_changed(self) -> None:
+		# while we are still editing values, we are not paused
+		self.pause_last_time = time()
+	
+	def on_child_focus(self) -> None:
+		time_diff = time() - self.pause_last_time
+		self.pause_times.append(time_diff)
+		self.pause_last_time = time()
+		logging.getLogger('llmaker').debug(f'UserModeDialog.on_child_focus Time between edits: {time_diff:.2f}s')
 
 	def update_progress(self, progress):
 		logging.getLogger('llmaker').debug(f'UI.{self.func.internal_name} update_progress - Task progress: {progress}')
@@ -144,6 +179,8 @@ class UserModeDialog(QDialog):
 		raise NotImplementedError()
 
 	def submit(self):
+		logging.getLogger('llmaker').debug(f'UserModeDialog.submit Average pause duration: {sum(self.pause_times) / len(self.pause_times):.2f}s')
+
 		worker = DebugInputProcessor(self.get_kwargs(),
 										  self.func,)
 		worker.signals.result.connect(self.task_success)
@@ -187,6 +224,8 @@ class CreateRoomDialog(UserModeDialog):
 			self.layout.addWidget(QLabel('Direction to:'))
 			self.layout.addWidget(self.directions_combobox)
 		
+		self.connect_child_signals()
+
 		self.submit_btn.setText('Add room')
 		self.layout.addWidget(self.submit_btn)
 		self.layout.addWidget(self.pbar)
