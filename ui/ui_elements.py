@@ -7,7 +7,7 @@ from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import QErrorMessage, QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, \
 	QMessageBox, QProgressBar, QPushButton, QSplashScreen, \
 	QVBoxLayout, QWidget, QMenu
-from dungeon_despair.domain.utils import make_corridor_name
+from dungeon_despair.domain.utils import make_corridor_name, get_enum_by_value
 
 from chat_message import Conversation
 from configs import config
@@ -37,9 +37,9 @@ class MainWindow(QMainWindow):
 		super().__init__()
 		self.level = level
 
-		self.mode = ToolMode.USER
-		self.llm_mode = LLMMode.FREYR
-		self.theme = ThemeMode.DARK
+		self.mode = get_enum_by_value(ToolMode, config.start_mode)
+		self.llm_mode = get_enum_by_value(LLMMode, config.llm_mode)
+		self.theme = get_enum_by_value(ThemeMode, config.theme)
 
 		self.apply_theme()
 		
@@ -171,7 +171,8 @@ class MainWindow(QMainWindow):
 		self.actionSwitchMode = QAction(f'Switch to {"LLM" if self.mode == ToolMode.USER else "USER"} mode',
 		                                parent=self)
 		self.actionSwitchMode.setToolTip(f'Switch LLMaker to {"LLM" if self.mode == ToolMode.USER else "USER"} mode.')
-		self.menuOptions.addAction(self.actionSwitchMode)
+		if config.can_switch_mode:
+			self.menuOptions.addAction(self.actionSwitchMode)
 		
 		self.actionSwitchTheme = QAction(f'Switch to {"Light" if self.theme == ThemeMode.DARK else "Dark"} theme',
 		                                 parent=self)
@@ -244,7 +245,7 @@ class MainWindow(QMainWindow):
 		
 		self.threadpool = QThreadPool()
 
-		self.switch_mode()
+		self.switch_mode(keep=True)
 		self.validate_actions_buttons()
 		self.versioning = VersionHandler(level=self.level,
 										 chat=self.chat_area.conversation.messages)
@@ -480,10 +481,12 @@ class MainWindow(QMainWindow):
 			QMessageBox.warning(self, "LLMaker Warning", "No redos available!")
 
 	@pyqtSlot()
-	def switch_mode(self):
-		self.actionSwitchMode.setText(f'Switch to {"USER" if self.mode == ToolMode.USER else "LLM"} mode')
-		self.actionSwitchMode.setToolTip(f'Switch LLMaker to {"USER" if self.mode == ToolMode.USER else "LLM"} mode.')
-		self.mode = ToolMode.USER if self.mode == ToolMode.LLM else ToolMode.LLM
+	def switch_mode(self,
+				 	keep: bool = False):
+		if not keep:
+			self.mode = ToolMode.USER if self.mode == ToolMode.LLM else ToolMode.LLM
+		self.actionSwitchMode.setText(f'Switch to {"USER" if self.mode == ToolMode.LLM else "LLM"} mode')
+		self.actionSwitchMode.setToolTip(f'Switch LLMaker to {"USER" if self.mode == ToolMode.LLM else "LLM"} mode.')
 		if self.mode == ToolMode.USER:
 			self.chat_area.hide()
 			self.chat_box.hide()

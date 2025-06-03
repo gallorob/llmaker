@@ -3,6 +3,10 @@ temp_dir: './test_results'
 levels_dir: './my_levels'
 scenarios_dir: './my_scenarios'
 tmp_level: 'temp.bin'
+start_mode: 'llm'
+llm_mode: 'freyr'
+theme: 'dark'
+can_switch_mode: True
 server_ip: '10.60.19.36'
 server_port: 8080
 username: 'gallorob'
