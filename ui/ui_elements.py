@@ -1,5 +1,6 @@
 import copy
 import logging
+from time import time
 import os
 
 from PyQt6.QtCore import QThread, pyqtSlot, QThreadPool
@@ -135,6 +136,7 @@ class MainWindow(QMainWindow):
 		
 		self.chat_box = QLineEdit(parent=self.actions_groupbox)
 		self.chat_box.setPlaceholderText('Type you message here, then press [Enter] to send it.')
+		self.chat_box.textChanged.connect(self.chat_box_text_changed)
 		self.actions_vertical_layout.addWidget(self.chat_box, 1)
 		
 		self.pbar = QProgressBar(parent=self.actions_groupbox)
@@ -251,6 +253,8 @@ class MainWindow(QMainWindow):
 										 chat=self.chat_area.conversation.messages)
 		
 		self.chat_box.setFocus()
+
+		self.time_to_first_action_start = time()
 	
 	def create_button_handler(self, func, button, dialogclass=None):
 		button.setProperty('dialogclass', dialogclass if dialogclass is not None else function_to_dialog[func.internal_name])
@@ -259,11 +263,22 @@ class MainWindow(QMainWindow):
 				dialog = function_to_dialog[func.internal_name](self.level, func, button)
 			else:
 				dialog = dialogclass(self.level, None, button)
+			# track time to first action (wait time between last function executed and new dialog opened)
+			time_diff = time() - self.time_to_first_action_start
+			logging.getLogger('llmaker').debug(f'MainWindow.handler Time to first action: {time_diff:.2f}s')
+			self.time_to_first_action_start = time()
 			dialog.exec()
 			self.versioning.commit(self.level, self.chat_area.conversation.messages)
 			self.validate_actions_buttons()
 		
 		return handler
+
+	def chat_box_text_changed(self):
+		if len(self.chat_box.text()) == 1:  # trigger on only the first character being typed
+			# track time to first action (wait time between last function executed and a new message is being typed)
+			time_diff = time() - self.time_to_first_action_start
+			logging.getLogger('llmaker').debug(f'MainWindow.chat_box_text_changed Time to first action: {time_diff:.2f}s')
+			self.time_to_first_action_start = time()
 
 	def validate_actions_buttons(self) -> None:
 		for container_widget in [self.room_edits_widget, self.corridor_edits_widget, self.entity_edits_widget, self.attack_edits_widget]:
