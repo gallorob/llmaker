@@ -4,83 +4,66 @@ import shutil
 import sys
 from datetime import datetime
 
-from PyQt6.QtWidgets import QApplication
-
-from dungeon_despair.domain.configs import config as domain_config
-
-from chat_message import Conversation
+import freyr_llm
+import tool_llm
 from configs import config
+from dungeon_despair.domain.configs import config as domain_config
 from dungeon_despair.domain.level import Level
-
-from freyr_llm import load_local_llm
-from ui.ui_elements import MainWindow, get_splash_screen
-
-STARTING_LEVEL = 'empty'
-# STARTING_LEVEL = 'from_file'
-# FILE_NAME = './my_levels/baselevel.bin'
-FILE_NAME = './my_levels/t5_with_attacks.bin'
-
-logging.getLogger('llmaker').setLevel(logging.DEBUG)
+from PyQt6.QtWidgets import QApplication
+from ui.main_window import get_splash_screen, MainWindow
 
 
-if __name__ == '__main__':
-	domain_config.temp_dir = './test_results/'
-	
-	# clear tmp folder
-	if os.path.exists(config.temp_dir):
-		shutil.rmtree(config.temp_dir)
-	# create tmp folder if it does not exist
-	if not os.path.exists(config.temp_dir):
-		os.makedirs(config.temp_dir)
-	# create log folder if it does not exist
-	if not os.path.exists('./logs'):
-		os.makedirs('./logs')
-	# create levels folder if it does not exist
-	if not os.path.exists(config.levels_dir):
-		os.makedirs(config.levels_dir)
-	# create scenarios folder if it does not exist
-	if not os.path.exists(config.scenarios_dir):
-		os.makedirs(config.scenarios_dir)
-	
-	logging.getLogger('llmaker').setLevel(logging.DEBUG)
-	log_filename = f'./logs/log_{datetime.now().strftime("%Y%m%d%H%M%S")}.log'
-	handler = logging.FileHandler(log_filename)
-	handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-	logging.getLogger('llmaker').addHandler(handler)
-	
-	app = QApplication(sys.argv)
-	
-	splash_screen = get_splash_screen()
-	splash_screen.show()
-		
-	splash_screen.showMessage('Loading Large Language Models...')
-	load_local_llm(splash_screen)
-	splash_screen.showMessage('Loaded Large Language Models')
-	win = MainWindow(level=Level())
-	
-	if STARTING_LEVEL == 'from_file' and os.path.exists(FILE_NAME):
-		logging.getLogger('llmaker').info(f'Loading level from file: {FILE_NAME}')
-		splash_screen.showMessage('Loading level from file...')
-		level, _ = Level.load_from_file(FILE_NAME)
-		win.set_level(level)
-		with open('tmp_conversation.txt', 'r') as f:
-			conversation_json = f.read()
-		conversation = Conversation.from_json(conversation_json)
-		for message in conversation.messages:
-			win.chat_area.add_message(message.content, role=message.role)
-		logging.getLogger('llmaker').info('Updating GUI...')
-		win.map_preview.show_map_preview()
-		win.room_preview.show_room_preview()
-		splash_screen.showMessage('Loaded level from file')
-		logging.getLogger('llmaker').info('Loaded level from file')
-	elif STARTING_LEVEL == 'empty':
-		logging.getLogger('llmaker').info('No initial level set')
-	else:
-		raise ValueError(f'STARTING_LEVEL {STARTING_LEVEL} is not valid')
+if __name__ == "__main__":
+    domain_config.temp_dir = "./test_results/"
 
-	win.show()
-	win.update()
-	
-	splash_screen.finish(win)
-	
-	sys.exit(app.exec())
+    # clear tmp folder
+
+    if os.path.exists(config.temp_dir):
+        shutil.rmtree(config.temp_dir)
+    # create tmp folder if it does not exist
+
+    if not os.path.exists(config.temp_dir):
+        os.makedirs(config.temp_dir)
+    # create log folder if it does not exist
+
+    if not os.path.exists("./logs"):
+        os.makedirs("./logs")
+    # create levels folder if it does not exist
+
+    if not os.path.exists(config.levels_dir):
+        os.makedirs(config.levels_dir)
+    # create scenarios folder if it does not exist
+
+    if not os.path.exists(config.scenarios_dir):
+        os.makedirs(config.scenarios_dir)
+    log_filename = f'./logs/log_{datetime.now().strftime("%Y%m%d%H%M%S")}.log'
+    handler = logging.FileHandler(log_filename)
+    handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s"
+        )
+    )
+    logging.getLogger("llmaker").setLevel(logging.DEBUG)
+    logging.getLogger("llmaker").addHandler(handler)
+    logging.getLogger("gui").setLevel(logging.DEBUG)
+    logging.getLogger("gui").addHandler(handler)
+
+    app = QApplication(sys.argv)
+
+    splash_screen = get_splash_screen()
+    splash_screen.show()
+
+    splash_screen.showMessage("Loading Large Language Models...")
+    if config.llm_mode == "freyr":
+        freyr_llm.load_local_llm(splash_screen)
+    else:
+        tool_llm.load_local_llm(splash_screen)
+    splash_screen.showMessage("Loaded Large Language Models")
+    win = MainWindow(level=Level())
+
+    win.show()
+    win.update()
+
+    splash_screen.finish(win)
+
+    sys.exit(app.exec())
