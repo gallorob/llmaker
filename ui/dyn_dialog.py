@@ -223,10 +223,6 @@ class UserModeDialog(QDialog):
         raise NotImplementedError()
 
     def submit(self):
-        logging.getLogger("gui").debug(
-            f"Average pause duration: {sum(self.pause_times) / len(self.pause_times):.2f}s"
-        )
-
         worker = DebugInputProcessor(
             self.get_kwargs(),
             self.func,
@@ -240,6 +236,10 @@ class UserModeDialog(QDialog):
         self.pbar.reset()
 
         self.submit_btn.setDisabled(True)
+
+        logging.getLogger("gui").debug(
+            f"Average pause duration: {(sum(self.pause_times) / len(self.pause_times)) if len(self.pause_times) > 0 else 0.0:.2f}s"
+        )
 
         self.threadpool.start(worker)
 
@@ -266,10 +266,11 @@ class CreateRoomDialog(UserModeDialog):
             self.layout.addWidget(self.rooms_combobox)
 
             self.directions_combobox = QComboBox()
+            room_from = self.level.current_room if self.level.current_room in self.level.rooms.keys() else self.level.corridors[self.level.current_room].room_from
             valid_directions = [
                 direction.value
                 for direction in Direction
-                if self.level.connections[self.level.current_room][direction] == ""
+                if self.level.connections[room_from][direction] == ""
             ]
             self.directions_combobox.addItems(valid_directions)
             self.directions_combobox.setCurrentText(valid_directions[0])
