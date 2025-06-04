@@ -22,7 +22,7 @@ from ui.dyn_dialog import AddEntityDialog, DebugFunctionsDialog, UpdateEntityDia
 from ui.encounter_preview import EncounterPreviewWidget
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
-from utils import LLMMode, ToolMode, ThemeMode
+from utils import LLMMode, ToolMode, ThemeMode, rgb_sum_app_entropy
 from versioning import VersionHandler
 from configs import resource_path
 
@@ -344,6 +344,7 @@ class MainWindow(QMainWindow):
 		self.chat_area.update()
 		if self.mode == ToolMode.USER:
 			self.validate_actions_buttons()
+		logging.getLogger('llmaker').debug(f'MainWindow.task_finished RGB Entropy: {rgb_sum_app_entropy(self)}')
 		self.update()
 	
 	@pyqtSlot()

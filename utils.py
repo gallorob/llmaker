@@ -3,7 +3,11 @@ from hashlib import sha224
 from io import BytesIO
 import logging
 from enum import Enum, auto
+import math
 import os
+from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtGui import QScreen, QGuiApplication, QPixmap
+from PyQt6.QtCore import QRect
 from typing import List, Optional, Union, Any, Tuple, Dict
 
 from dungeon_despair.domain.corridor import Corridor
@@ -56,6 +60,28 @@ def convert_and_save(b64_img: str,
 	return os.path.basename(full_name)
 
 
+def rgb_sum_app_entropy(window: QMainWindow) -> float:
+	screen: QScreen = QGuiApplication.primaryScreen()
+	geo: QRect = window.frameGeometry()
+	screenshot: QPixMap = screen.grabWindow(0, geo.x(), geo.y(), geo.width(), geo.height()).toImage()
+
+	width, height = screenshot.width(), screenshot.height()
+	rgb_sum_counts = {}
+
+	for y in range(height):
+		for x in range(width):
+			rgb = screenshot.pixelColor(x, y)
+			s = rgb.red() + rgb.green() + rgb.blue()
+			rgb_sum_counts[s] = rgb_sum_counts.get(s, 0) + 1
+
+	total_pixels = width * height
+	entropy = 0.0
+	for count in rgb_sum_counts.values():
+		p = count / total_pixels
+		entropy -= p * math.log2(p)
+	return entropy
+
+
 def get_modifier_icon(modifier_type: ModifierType):
 	if modifier_type == ModifierType.BLEED:
 		return config.icons.bleed
@@ -67,8 +93,7 @@ def get_modifier_icon(modifier_type: ModifierType):
 		return config.icons.stun
 	else:
 		raise ValueError(f'Unknown modifier type: {modifier_type.value}')
-		
-
+	
 	
 def basic_room_description(room: Room) -> str:
 	return f'<h2>{room.name}</h2><h3><i>{room.description}</i></h3>'
@@ -140,8 +165,9 @@ def compute_level_diffs(level: Level) -> Tuple[List[Union[Room, Corridor, Entity
 	
 	return to_process, additional_data
 
+
 def process_diff(obj: Any,
-                 additional_data: Dict[str, str]) -> None:
+				 additional_data: Dict[str, str]) -> None:
 	if isinstance(obj, Room):
 		logging.info(f'Room {obj.name} has no sprite; generating...')
 		data = {'action': 'generate_room',
