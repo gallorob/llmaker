@@ -278,7 +278,7 @@ class FreyrLLM:
         while not valid_intents_generated:
             model_name = self.cache.get_model_by_role("intent")
             prompt = self.cache.get_prompt_by_role("intent")
-            level_str = str(level)
+            level_str = level.model_dump_json()
             intents_str = str(self.intents_dict)
             prompt = prompt.format(level_str=level_str, intents_str=intents_str)
             messages = [
@@ -337,7 +337,7 @@ class FreyrLLM:
     ) -> str:
         model_name = self.cache.get_model_by_role("params")
         prompt = self.cache.get_prompt_by_role("params")
-        level_str = str(level)
+        level_str = level.model_dump_json()
         op_params = self.get_tool_parameters(tool_name=intent)
         op_params_str = str(op_params)
         prompt = prompt.format(
@@ -386,7 +386,7 @@ class FreyrLLM:
                 msg=f"{response=}; {n_retries=}",
             )
             messages.append({"role": "assistant", "content": response})
-
+            
             try:
                 tool_args = self.prepare_params_for_tool_call(
                     tool_name=intent, response=response
@@ -444,7 +444,7 @@ class FreyrLLM:
     ) -> str:
         model_name = self.cache.get_model_by_role("summary")
         prompt = self.cache.get_prompt_by_role("summary")
-        level_str = str(level)
+        level_str = level.model_dump_json()
         prev_level_str = str(prev_level)
         tool_results_str = "; ".join(tool_results)
         user_msg = f"Edits:\n{tool_results_str}Current Level:\n{level_str}"
@@ -484,7 +484,7 @@ class FreyrLLM:
         )
         model_name = self.cache.get_model_by_role("chat")
         prompt = self.cache.get_prompt_by_role("chat")
-        level_str = str(level)
+        level_str = level.model_dump_json()
         operations_str = str(self.tools_as_dict())
         prompt = prompt.format(level_str=level_str, operations_str=operations_str)
         messages = [
