@@ -1421,7 +1421,7 @@ class RemoveEntityDialog(UserModeDialog):
             "level": Level,
             "room_name": room_name,
             "cell_index": cell_index,
-            "entity_tpye": self.type_widget.currentText(),
+            "entity_type": self.type_widget.currentText(),
             "entity_name": self.name_widget.currentText(),
         }
 
