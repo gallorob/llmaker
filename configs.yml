@@ -41,25 +41,25 @@ ui:
   unselected_color: '#b38600'
 llm:
   chat:
-    model: 'gemma2:latest'
+    model: 'gemma3:4b'
     prompt: './assets/prompts/chat_system_prompt'
     temperature: 0.6
     top_p: 0.2
     top_k: 10
   summary: 
-    model: 'gemma2:latest'
+    model: 'gemma3:4b'
     prompt: './assets/prompts/summary_system_prompt'
     temperature: 0.6
     top_p: 0.2
     top_k: 10
   intent: 
-    model: 'gemma2:latest'
+    model: 'gemma3:12b'
     prompt: './assets/prompts/intent_system_prompt'
     temperature: 0.01
     top_p: 0.2
     top_k: 10
   params: 
-    model: 'gemma2:latest'
+    model: 'gemma3:12b'
     prompt: './assets/prompts/params_system_prompt'
     err_msg: './assets/prompts/params_err_feedback'
     temperature: 0.2

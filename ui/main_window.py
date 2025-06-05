@@ -85,6 +85,9 @@ class MainWindow(QMainWindow):
         self.room_description.setText("")
         self.previews_vertical_layout.addWidget(self.room_description)
 
+        # Temporary: hide the room description
+        self.room_description.hide()
+
         self.room_preview = EncounterPreviewWidget(
             parent=self.previews, level=self.level
         )
