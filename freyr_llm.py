@@ -485,7 +485,8 @@ class FreyrLLM:
         model_name = self.cache.get_model_by_role("chat")
         prompt = self.cache.get_prompt_by_role("chat")
         level_str = str(level)
-        prompt = prompt.format(level_str=level_str)
+        operations_str = str(self.tools_as_dict())
+        prompt = prompt.format(level_str=level_str, operations_str=operations_str)
         messages = [
             {"role": "system", "content": prompt},
             *chat_conversation,
