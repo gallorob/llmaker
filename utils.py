@@ -22,6 +22,7 @@ from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QGuiApplication, QPixmap, QScreen
 from PyQt6.QtWidgets import QMainWindow
 from requests import get, post, Response
+from requests.exceptions import ConnectionError
 
 
 class ToolMode(Enum):
@@ -37,6 +38,17 @@ class LLMMode(Enum):
 class ThemeMode(Enum):
     LIGHT = "light"
     DARK = "dark"
+
+
+def check_server_connection() -> bool:
+    server_url = f"http://{config.server_ip}:{config.server_port}"
+    try:
+        response = get(f"{server_url}/ollama_list_models")
+        if response.status_code == 200:
+            return True
+        return False
+    except ConnectionError:
+        return False
 
 
 def send_to_server(data: Optional[Dict[str, Any]], endpoint) -> Response:

@@ -9,8 +9,9 @@ import tool_llm
 from configs import config
 from dungeon_despair.domain.configs import config as domain_config
 from dungeon_despair.domain.level import Level
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox
 from ui.main_window import get_splash_screen, MainWindow
+from utils import check_server_connection
 
 
 if __name__ == "__main__":
@@ -52,6 +53,13 @@ if __name__ == "__main__":
 
     splash_screen = get_splash_screen()
     splash_screen.show()
+
+    splash_screen.showMessage("Checking server connection...")
+    if not check_server_connection():
+        QMessageBox.critical(
+            None, 'Connection Error', f"Server at {config.server_ip}:{config.server_port} is unreachable or down!"
+        )
+        sys.exit(-1)
 
     splash_screen.showMessage("Loading Large Language Models...")
     if config.llm_mode == "freyr":
