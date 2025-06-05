@@ -58,6 +58,21 @@ QColorDialog {
     background-color: #1e1d23;
 }
 
+QProgressBar {
+    text-align: center;
+    color: #1e1d23;
+    border-width: 1px;
+    border-radius: 10px;
+    border-color: #a9b7c6;
+    border-style: inset;
+    background-color: #4d4958;
+}
+
+QProgressBar::chunk {
+    background-color: #04b97f;
+    border-radius: 5px;
+}
+
 QTextEdit {
     background-color: #1e1d23;
     color: #a9b7c6;
