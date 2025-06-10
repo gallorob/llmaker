@@ -1434,7 +1434,7 @@ class RemoveEntityDialog(UserModeDialog):
 
         return {
             "self": None,
-            "level": Level,
+            "level": self.level,
             "room_name": room_name,
             "cell_index": cell_index,
             "entity_type": self.type_widget.currentText(),
@@ -2048,7 +2048,7 @@ class RemoveAttackDialog(UserModeDialog):
 
         return {
             "self": None,
-            "level": Level,
+            "level": self.level,
             "room_name": room_name,
             "cell_index": cell_index,
             "entity_name": self.enemy_name_widget.currentText(),
