@@ -62,8 +62,11 @@ class EnemyPreviewDialog(QDialog):
 
         details_layout = QVBoxLayout()
 
+        description_label = QLabel(f"<b>Description</b>: {enemy.description}")
+        description_label.setWordWrap(True)
+
         details_layout.addWidget(QLabel(f"<b>Name</b>: {enemy.name}"))
-        details_layout.addWidget(QLabel(f"<b>Description</b>: {enemy.description}"))
+        details_layout.addWidget(description_label)
         details_layout.addWidget(QLabel(f"<b>Species</b>: {enemy.species}"))
         details_layout.addWidget(QLabel(f"<b>HP</b>: {enemy.hp}"))
         details_layout.addWidget(QLabel(f"<b>Dodge</b>: {enemy.dodge}"))
@@ -94,8 +97,11 @@ class EnemyPreviewDialog(QDialog):
         # Populate the grid with attacks
 
         for row, attack in enumerate(enemy.attacks, start=1):
+            attack_description_label = QLabel(attack.description)
+            attack_description_label.setWordWrap(True)
+
             attacks_grid_layout.addWidget(QLabel(attack.name), row, 0)
-            attacks_grid_layout.addWidget(QLabel(attack.description), row, 1)
+            attacks_grid_layout.addWidget(attack_description_label, row, 1)
             attacks_grid_layout.addWidget(QLabel(attack.starting_positions), row, 2)
             attacks_grid_layout.addWidget(QLabel(attack.target_positions), row, 3)
             attacks_grid_layout.addWidget(QLabel(str(attack.base_dmg)), row, 4)
