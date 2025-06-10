@@ -73,15 +73,16 @@ class UIInputProcessor(QRunnable):
             self.progress_n += progress_delta
             self.signals.progress.emit(self.progress_n)
 
-            if with_feedback:
+            if with_feedback and self.mode == LLMMode.FREYR:
                 with open(resource_path(config.llm.proactive.msg), "r") as f:
                     side_msg = f.read()
-                side_response = m()(
+                valid_conversation_history = m().trim_and_convert_conversation(self.conversation_history)
+                side_response = m().chat(
+                    conversation_history=valid_conversation_history,
                     user_message=side_msg,
-                    conversation_history=self.conversation_history,
-                    level=self.level,
+                    level=self.level
                 )
-
+                
                 self.signals.result.emit(side_response)
 
                 self.progress_n += progress_delta
