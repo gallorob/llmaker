@@ -62,6 +62,7 @@ class ConversationWidget(QWidget):
         new_message.setTextFormat(Qt.TextFormat.MarkdownText)
         new_message.setProperty("messageType", new_chat_message.role)
         new_message.setWordWrap(True)
+        new_message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         new_message.setSizePolicy(
             QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred
         )
