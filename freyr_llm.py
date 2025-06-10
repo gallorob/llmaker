@@ -445,7 +445,7 @@ class FreyrLLM:
         model_name = self.cache.get_model_by_role("summary")
         prompt = self.cache.get_prompt_by_role("summary")
         level_str = level.model_dump_json()
-        prev_level_str = str(prev_level)
+        prev_level_str = prev_level.model_dump_json()
         tool_results_str = "; ".join(tool_results)
         user_msg = f"Edits:\n{tool_results_str}Current Level:\n{level_str}"
         prompt = prompt.format(prev_level_str=prev_level_str)
