@@ -10,7 +10,7 @@ from dungeon_despair.domain.utils import get_enum_by_value, make_corridor_name
 from dungeon_despair.functions import DungeonCrawlerFunctions
 from freyr_llm import get_freyr_model, LLMsCache
 
-from PyQt6.QtCore import pyqtSlot, QThreadPool
+from PyQt6.QtCore import pyqtSlot, Qt, QThreadPool
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QErrorMessage,
@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSplashScreen,
     QVBoxLayout,
     QWidget,
@@ -81,12 +82,20 @@ class MainWindow(QMainWindow):
         self.room_label.setText("<i>No current room</i>")
         self.previews_vertical_layout.addWidget(self.room_label)
 
-        self.room_description = QLabel(parent=self.previews)
+        self.desc_scroll_area = QScrollArea(parent=self.previews)
+        self.desc_scroll_area.setWidgetResizable(True)
+        self.desc_scroll_area.setMaximumHeight(self.room_label.height() * 2)
+        self.desc_scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.desc_scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.room_description = QLabel(self.desc_scroll_area)
         self.room_description.setText("")
-        self.previews_vertical_layout.addWidget(self.room_description)
-
-        # Temporary: hide the room description
-        self.room_description.hide()
+        self.room_description.setWordWrap(True)
+        self.desc_scroll_area.setWidget(self.room_description)
+        self.previews_vertical_layout.addWidget(self.desc_scroll_area)
 
         self.room_preview = EncounterPreviewWidget(
             parent=self.previews, level=self.level

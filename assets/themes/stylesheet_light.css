@@ -80,6 +80,10 @@ QGroupBox {
     color: #000;
 }
 
+QScrollArea {
+    border: transparent;
+}
+
 QToolTip {
    background-color: #e5e5ea;
    color: #000;
