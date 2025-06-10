@@ -954,6 +954,7 @@ class UpdateEntityDialog(UserModeDialog):
         self.corridorcell_widget.setValue(1)
         self.corridorcell_widget.setMinimum(1)
         self.corridorcell_widget.setMaximum(config.dungeon.corridor_max_length)
+        self.corridorcell_widget.valueChanged.connect(self.corridorcell_changed)
         corridorcell_layout.addWidget(self.corridorcell_widget)
         self.layout.addWidget(self.corridorcell_container)
 
@@ -1186,6 +1187,15 @@ class UpdateEntityDialog(UserModeDialog):
             ]
         )
 
+    def corridorcell_changed(self, cell_index: int) -> None:
+        self.ref_name_widget.clear()
+        self.ref_name_widget.addItems(
+            [
+                x.name
+                for x in self.get_encounter().entities[self.type_widget.currentText()]
+            ]
+        )
+
     def modifiertype_changed(self, modifiertype: str) -> None:
         if modifiertype == "None":
             self.modifierchance_container.hide()
@@ -1223,7 +1233,7 @@ class UpdateEntityDialog(UserModeDialog):
         else:
             encounter = self.level.corridors[
                 self.roomname_widget.currentText()
-            ].encounters[self.corridorcell_widget.value()]
+            ].encounters[self.corridorcell_widget.value() - 1]
         return encounter
 
     def refname_changed(self, refname: str) -> None:

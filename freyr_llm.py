@@ -143,7 +143,7 @@ class FreyrLLM:
 
     @staticmethod
     def polish_intents_output(response: str):
-        possible_intents = response.split("\n\n")[0]
+        possible_intents = response.replace('*', '').split("\n\n")[0]
         possible_intents = [
             intent.strip().replace(",", "") for intent in possible_intents.split(",")
         ]
