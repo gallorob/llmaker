@@ -230,15 +230,15 @@ class MapPreviewWidget(QWidget):
         if self.room_draw_size is None:
             self.room_draw_size = self.rect().height() * config.ui.minimap_room_scale
         self.scene.clear()
-        self.scene.setBackgroundBrush(
-            QBrush(
-                QColor(
-                    "#1e1d23"
-                    if self.parent().parent().parent().theme == ThemeMode.DARK
-                    else "#ececec"
-                )
-            )
-        )
+        # self.scene.setBackgroundBrush(
+        #     QBrush(
+        #         QColor(
+        #             "#1e1d23"
+        #             if self.parent().parent().parent().theme == ThemeMode.DARK
+        #             else "#ececec"
+        #         )
+        #     )
+        # )
 
         if self.level.current_room != "":
             if self.level.current_room in self.level.rooms.keys():

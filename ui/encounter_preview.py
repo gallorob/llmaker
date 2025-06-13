@@ -10,7 +10,7 @@ from dungeon_despair.domain.room import Room
 from dungeon_despair.domain.utils import get_enum_by_value, ModifierType
 
 from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QBrush, QColor, QMouseEvent, QPainter, QPixmap
+from PyQt6.QtGui import QMouseEvent, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsScene,
@@ -43,19 +43,27 @@ class EncounterPreviewWidget(QWidget):
         self.view_layout.addWidget(self.view)
 
     def paintEvent(self, a0):
+        super().paintEvent(a0)
+
+    def refresh(self):
         self.scene.clear()
         self.show_room_preview()
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.rescale_view()
+
+    def rescale_view(self):
+        if self.scene.items():
+            view_rect = self.view.viewport().rect()
+            scene_rect = self.scene.sceneRect()
+            if not scene_rect.isNull():
+                scale_x = view_rect.width() / scene_rect.width()
+                scale_y = view_rect.height() / scene_rect.height()
+                self.view.resetTransform()
+                self.view.scale(scale_x, scale_y)
+    
     def show_room_preview(self):
-        self.scene.setBackgroundBrush(
-            QBrush(
-                QColor(
-                    "#1e1d23"
-                    if self.parent().parent().parent().theme == ThemeMode.DARK
-                    else "#ececec"
-                )
-            )
-        )
         if self.level.current_room != "":
             if self.level.current_room in self.level.rooms.keys():
                 room = self.level.rooms[self.level.current_room]

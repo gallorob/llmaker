@@ -475,6 +475,7 @@ class MainWindow(QMainWindow):
         if self.mode == ToolMode.USER:
             self.validate_actions_buttons()
         logging.getLogger("gui").debug(f"RGB Entropy: {rgb_sum_app_entropy(self)}")
+        self.room_preview.refresh()
         self.update()
 
     @pyqtSlot()
@@ -542,6 +543,7 @@ class MainWindow(QMainWindow):
 
     def on_room_press(self, room_name, event):
         self.level.current_room = room_name
+        self.room_preview.refresh()
         self.update()
 
     def on_corridor_press(self, room_from_name, room_to_name, event):
@@ -549,6 +551,7 @@ class MainWindow(QMainWindow):
             make_corridor_name(room_from_name=room_from_name, room_to_name=room_to_name)
         ]
         self.level.current_room = corridor.name
+        self.room_preview.refresh()
         self.update()
 
     @pyqtSlot()
@@ -607,6 +610,7 @@ class MainWindow(QMainWindow):
                     "LLMaker Message",
                     f"The level {os.path.basename(tmp_filename)} has been successfully loaded!",
                 )
+                self.room_preview.refresh()
                 self.update()
                 self.chat_area.update()
                 if self.mode == ToolMode.USER:
@@ -626,6 +630,7 @@ class MainWindow(QMainWindow):
         self.chat_area.reset()
         if self.mode == ToolMode.USER:
             self.validate_actions_buttons()
+        self.room_preview.refresh()
         self.update()
         logging.getLogger("gui").debug("Level cleared")
 
@@ -664,6 +669,7 @@ class MainWindow(QMainWindow):
             self.chat_area.reset()
             for msg in prev_chat:
                 self.chat_area.add_message(msg.content, msg.role)
+            self.room_preview.refresh()
             self.update()
             self.chat_area.update()
             if self.mode == ToolMode.USER:
@@ -683,6 +689,7 @@ class MainWindow(QMainWindow):
             self.chat_area.reset()
             for msg in next_chat:
                 self.chat_area.add_message(msg.content, msg.role)
+            self.room_preview.refresh()
             self.update()
             self.chat_area.update()
             if self.mode == ToolMode.USER:
