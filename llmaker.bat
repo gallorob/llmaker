@@ -2,4 +2,6 @@
 
 cls
 
-python main.py
+call conda activate llmaker
+
+call python main.py
