@@ -1,6 +1,6 @@
 [Task]
 You will be given a conversation between a Designer and a Colleague, and a list of operations that can be applied to the level. They are working on designing a dungeon crawler video game level.
-Your task is to list the operations that match ONLY the Designer intent. Return only the name of the operations as comma-separated strings.
+Your task is to list the operations that match ONLY the Designer intent. Assume the Colleague's suggestions are rejected if not explicitly acknowledged by the Designer. Return only the name of the operations as comma-separated strings.
 In case no operation should be executed or the Designer request cannot be solved with any of the operations below, simply return "conversation".
 Do not add anything else.
 
