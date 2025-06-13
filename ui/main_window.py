@@ -13,6 +13,7 @@ from freyr_llm import get_freyr_model, LLMsCache
 from PyQt6.QtCore import pyqtSlot, Qt, QThreadPool
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import (
+    QDialog,
     QErrorMessage,
     QFileDialog,
     QGroupBox,
@@ -26,6 +27,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSplashScreen,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -323,6 +325,12 @@ class MainWindow(QMainWindow):
         self.actionRedo.triggered.connect(self.redo_edit)
         self.actionAbout.triggered.connect(self.show_about_dialog)
 
+        self.actionShowLevelString = QAction("inspect_level", parent=self)
+        self.actionShowLevelString.setShortcut("Ctrl+D")
+        self.actionShowLevelString.setToolTip("Debug view of the current level as JSON string.")
+        self.actionShowLevelString.triggered.connect(self.show_level_as_string)
+        self.addAction(self.actionShowLevelString)
+        
         self.threadpool = QThreadPool()
 
         self.switch_mode(keep=True)
@@ -337,6 +345,23 @@ class MainWindow(QMainWindow):
         self.chat_box_pause_last_time = None
         self.chat_box_pause_times = []
 
+    def show_level_as_string(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Level Inspector")
+
+        layout = QVBoxLayout(dlg)
+        text_edit = QTextEdit(dlg)
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(self.level.model_dump_json(indent=2))
+        layout.addWidget(text_edit)
+
+        btn_close = QPushButton("Close", dlg)
+        btn_close.clicked.connect(dlg.accept)
+        layout.addWidget(btn_close)
+
+        dlg.resize(700, 500)
+        dlg.exec()
+    
     def create_button_handler(self, func, button, dialogclass=None):
         button.setProperty(
             "dialogclass",
