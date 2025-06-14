@@ -143,6 +143,64 @@ def rich_entity_description(entity: Entity) -> str:
     return rich_description
 
 
+def check_applicable_operation(op_name: str, level: Level) -> bool:
+    def has_entities_of_type(entity_type: str) -> bool:
+        has_entity = False
+        for room in level.rooms.values():
+            if entity_type == "enemy":
+                has_entity |= len(room.encounter.enemies) > 0
+            elif entity_type == "treasure":
+                has_entity |= len(room.encounter.treasures) > 0
+        for corridor in level.corridors.values():
+            for encounter in corridor.encounters:
+                if entity_type == "enemy":
+                    has_entity |= len(encounter.enemies) > 0
+                elif entity_type == "treasure":
+                    has_entity |= len(encounter.treasures) > 0
+                elif entity_type == "trap":
+                    has_entity |= len(encounter.traps) > 0
+        return has_entity
+
+    def has_attacks() -> bool:
+        for room in level.rooms.values():
+            for enemy in room.encounter.enemies:
+                if len(enemy.attacks) > 0:
+                    return True
+        for corridor in level.corridors.values():
+            for encounter in corridor.encounters:
+                for enemy in encounter.enemies:
+                    if len(enemy.attacks) > 0:
+                        return True
+        return False
+
+    # Operation checks mapping
+
+    operation_checks = {
+        "create_room": lambda: True,
+        "remove_room": lambda: len(level.rooms) > 0,
+        "update_room": lambda: len(level.rooms) > 0,
+        "add_corridor": lambda: len(level.rooms) > 3,
+        "update_corridor": lambda: len(level.corridors) > 0,
+        "remove_corridor": lambda: len(level.corridors) > 0,
+        "add_enemy": lambda: len(level.rooms) > 0,
+        "add_treasure": lambda: len(level.rooms) > 0,
+        "add_trap": lambda: len(level.corridors) > 0,
+        "update_enemy_properties": lambda: has_entities_of_type("enemy"),
+        "update_treasure_properties": lambda: has_entities_of_type("treasure"),
+        "update_trap_properties": lambda: has_entities_of_type("trap"),
+        "remove_entity": lambda: any(
+            has_entities_of_type(t) for t in ["enemy", "treasure", "trap"]
+        ),
+        "add_attack": lambda: has_entities_of_type("enemy"),
+        "update_attack": has_attacks,
+        "remove_attack": has_attacks,
+    }
+
+    if op_name not in operation_checks:
+        raise NotImplementedError(f"No validity check for {op_name}")
+    return operation_checks[op_name]()
+
+
 def compute_level_diffs(
     level: Level,
 ) -> Tuple[List[Union[Room, Corridor, Entity]], List[Any]]:
@@ -236,6 +294,7 @@ def process_diff(obj: Any, additional_data: Dict[str, str]) -> None:
 
         if len(obj.sprites) == 0:
             # On new corridors, save the "swapped" image before assigning any sprite
+
             _ = convert_and_save(
                 b64_img=res[0]["image_base64"],
                 fname=res[0]["fname"],

@@ -1,11 +1,10 @@
 import logging
 import sys
 import time
-from random import random
 from typing import Any, Dict, List
 
+from autodef import AutoFeedback
 from chat_message import ChatMessage
-from configs import config, resource_path
 
 from dungeon_despair.domain.level import Level
 from freyr_llm import get_freyr_model
@@ -37,20 +36,20 @@ class UIInputProcessor(QRunnable):
         self.user_input = user_input
         self.conversation_history = conversation_history
         self.mode = llm_mode
+        if self.mode == LLMMode.FREYR:
+            self.model = get_freyr_model()
+            self.feedback = AutoFeedback(model=get_freyr_model)
+        elif self.mode == LLMMode.TOOL:
+            self.model = get_tool_model()
+        else:
+            raise ValueError(f"Unknown LLM mode: {self.mode}")
 
     @pyqtSlot()
     def run(self):
         try:
             self.progress_n = 0
 
-            if self.mode == LLMMode.FREYR:
-                m = get_freyr_model
-            elif self.mode == LLMMode.TOOL:
-                m = get_tool_model
-            else:
-                raise ValueError(f"Unknown LLM mode: {self.mode}")
-
-            ai_response = m()(
+            ai_response = self.model(
                 user_message=self.user_input,
                 conversation_history=self.conversation_history,
                 level=self.level,
@@ -60,10 +59,7 @@ class UIInputProcessor(QRunnable):
             to_process, additional_data = compute_level_diffs(level=self.level)
 
             with_feedback = (
-                random() > config.llm.proactive.chance if len(to_process) > 0 else False
-            )
-            logging.getLogger("llmaker").debug(
-                msg=f"{with_feedback=}"
+                len(to_process) > 0 and self.feedback and self.feedback.enabled
             )
 
             progress_delta = int(
@@ -73,17 +69,14 @@ class UIInputProcessor(QRunnable):
             self.progress_n += progress_delta
             self.signals.progress.emit(self.progress_n)
 
-            if with_feedback and self.mode == LLMMode.FREYR:
-                with open(resource_path(config.llm.proactive.msg), "r") as f:
-                    side_msg = f.read()
-                valid_conversation_history = m().trim_and_convert_conversation(self.conversation_history)
-                side_response = m().chat(
-                    conversation_history=valid_conversation_history,
-                    user_message=side_msg,
-                    level=self.level
+            if with_feedback:
+                logging.getLogger("llmaker").debug(
+                    msg="Proactive feedback is enabled, processing additional feedback."
                 )
-                
-                self.signals.result.emit(side_response)
+                feedback_response = self.feedback.give_uninformed_feedback(
+                    level=self.level, conversation_history=self.conversation_history
+                )
+                self.signals.result.emit(feedback_response)
 
                 self.progress_n += progress_delta
                 self.signals.progress.emit(self.progress_n)

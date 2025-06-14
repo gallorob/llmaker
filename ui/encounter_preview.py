@@ -62,7 +62,7 @@ class EncounterPreviewWidget(QWidget):
                 scale_y = view_rect.height() / scene_rect.height()
                 self.view.resetTransform()
                 self.view.scale(scale_x, scale_y)
-    
+
     def show_room_preview(self):
         if self.level.current_room != "":
             if self.level.current_room in self.level.rooms.keys():

@@ -3,3 +3,6 @@ Tell me one thing we could change next in the level.
 Keep your suggestion brief (one sentence max).
 Your response should follow the format of a suggestion (for example: "We should do this" or "We could add that").
 You must make names bold with markdown formatting.  Do NOT use emoticons/emojis.
+
+Your suggestions can change the level based ONLY on the following operations:
+{filtered_operations}
