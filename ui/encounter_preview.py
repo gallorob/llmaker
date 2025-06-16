@@ -58,10 +58,17 @@ class EncounterPreviewWidget(QWidget):
             view_rect = self.view.viewport().rect()
             scene_rect = self.scene.sceneRect()
             if not scene_rect.isNull():
-                scale_x = view_rect.width() / scene_rect.width()
-                scale_y = view_rect.height() / scene_rect.height()
-                self.view.resetTransform()
-                self.view.scale(scale_x, scale_y)
+                if self.level.current_room in self.level.rooms.keys():
+                    # Scale for rooms
+
+                    scale_x = view_rect.width() / scene_rect.width()
+                    scale_y = view_rect.height() / scene_rect.height()
+                    self.view.resetTransform()
+                    self.view.scale(scale_x, scale_y)
+                else:
+                    # Do not scale for corridors, keep them scrollable
+
+                    self.view.resetTransform()
 
     def show_room_preview(self):
         if self.level.current_room != "":
@@ -165,6 +172,7 @@ class EncounterPreviewWidget(QWidget):
                     x_offset = (w - total_width) / 2
                     __draw_entities(entities, x_offset, y_offset, scaled_entity_width)
             else:
+                scaled_entity_width *= 0.75  # Scale down for corridors
                 for i, encounter in enumerate(room.encounters):
                     for entities in [
                         encounter.treasures,
