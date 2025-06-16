@@ -327,10 +327,12 @@ class MainWindow(QMainWindow):
 
         self.actionShowLevelString = QAction("inspect_level", parent=self)
         self.actionShowLevelString.setShortcut("Ctrl+D")
-        self.actionShowLevelString.setToolTip("Debug view of the current level as JSON string.")
+        self.actionShowLevelString.setToolTip(
+            "Debug view of the current level as JSON string."
+        )
         self.actionShowLevelString.triggered.connect(self.show_level_as_string)
         self.addAction(self.actionShowLevelString)
-        
+
         self.threadpool = QThreadPool()
 
         self.switch_mode(keep=True)
@@ -361,7 +363,7 @@ class MainWindow(QMainWindow):
 
         dlg.resize(700, 500)
         dlg.exec()
-    
+
     def create_button_handler(self, func, button, dialogclass=None):
         button.setProperty(
             "dialogclass",
@@ -570,7 +572,9 @@ class MainWindow(QMainWindow):
                     conversation=self.chat_area.conversation.to_json(),
                 )
 
-                logging.getLogger("gui").debug(f"Level saved to {os.path.basename(tmp_filename)}")
+                logging.getLogger("gui").debug(
+                    f"Level saved to {os.path.basename(tmp_filename)}"
+                )
 
                 dlg = QMessageBox(self)
                 dlg.setWindowTitle("LLMaker Message")
@@ -602,9 +606,15 @@ class MainWindow(QMainWindow):
                 conversation = Conversation.from_json(conversation_json)
                 for msg in conversation.messages:
                     self.chat_area.add_message(msg.content, role=msg.role)
+                # Temporary, should be saved and read back
+
+                freyr_llm = get_freyr_model()
+                freyr_llm.history_cutoff_idx = len(conversation)
                 self.set_level(level)
                 self.versioning = VersionHandler(self.level, conversation.messages)
-                logging.getLogger("gui").debug(f"Level {os.path.basename(tmp_filename)} loaded")
+                logging.getLogger("gui").debug(
+                    f"Level {os.path.basename(tmp_filename)} loaded"
+                )
                 QMessageBox.information(
                     self,
                     "LLMaker Message",
