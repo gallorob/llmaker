@@ -194,9 +194,7 @@ class UserModeDialog(QDialog):
         time_diff = time() - self.pause_last_time
         self.pause_times.append(time_diff)
         self.pause_last_time = time()
-        logging.getLogger("gui").debug(
-            f"Time between edits: {time_diff:.2f}s"
-        )
+        logging.getLogger("gui").debug(f"Time between edits: {time_diff:.2f}s")
 
     def update_progress(self, progress):
         logging.getLogger("gui").debug(
@@ -205,9 +203,7 @@ class UserModeDialog(QDialog):
         self.pbar.setValue(progress)
 
     def task_success(self, result):
-        logging.getLogger("gui").debug(
-            f"{self.func.internal_name} - Edit finished"
-        )
+        logging.getLogger("gui").debug(f"{self.func.internal_name} - Edit finished")
         button_pressed = QMessageBox.information(self, "Output", f"{result}")
         if button_pressed == QMessageBox.StandardButton.Ok:
             self.close()
@@ -250,10 +246,10 @@ class UserModeDialog(QDialog):
         self.threadpool.start(worker)
 
 
-class CreateRoomDialog(UserModeDialog):
+class AddRoomDialog(UserModeDialog):
     def __init__(self, level, func, parent=None):
         super().__init__(level, func, parent)
-        self.setWindowTitle("Create Room")
+        self.setWindowTitle("Add Room")
 
         self.layout.addWidget(QLabel("Room name:"))
         self.roomname_widget = QLineEdit()
@@ -272,7 +268,11 @@ class CreateRoomDialog(UserModeDialog):
             self.layout.addWidget(self.rooms_combobox)
 
             self.directions_combobox = QComboBox()
-            room_from = self.level.current_room if self.level.current_room in self.level.rooms.keys() else self.level.corridors[self.level.current_room].room_from
+            room_from = (
+                self.level.current_room
+                if self.level.current_room in self.level.rooms.keys()
+                else self.level.corridors[self.level.current_room].room_from
+            )
             valid_directions = [
                 direction.value
                 for direction in Direction
@@ -2057,7 +2057,7 @@ class RemoveAttackDialog(UserModeDialog):
 
 
 function_to_dialog = {
-    "create_room": CreateRoomDialog,
+    "add_room": AddRoomDialog,
     "remove_room": RemoveRoomDialog,
     "update_room": UpdateRoomDialog,
     "add_corridor": AddCorridorDialog,
@@ -2070,12 +2070,13 @@ function_to_dialog = {
 
 
 def check_available_action(level: Level, dialogclass) -> bool:
-    if dialogclass == CreateRoomDialog:
+    if dialogclass == AddRoomDialog:
         return True  # create room is always possible
     elif dialogclass == RemoveRoomDialog or dialogclass == UpdateRoomDialog:
         return len(level.rooms.keys()) > 0
     elif dialogclass == AddCorridorDialog:
         # minimum number of rooms to add a new corridor is 4
+
         return len(level.rooms.keys()) > 3
     elif dialogclass == UpdateCorridorDialog or dialogclass == RemoveCorridorDialog:
         return len(level.corridors.keys()) > 0

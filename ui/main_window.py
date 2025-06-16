@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         self.room_edits_widget = QWidget(parent=self.user_mode_area)
         self.room_edits_layout = QHBoxLayout(self.room_edits_widget)
         for btitle, funcname in zip(
-            ["Add", "Update", "Remove"], ["create_room", "update_room", "remove_room"]
+            ["Add", "Update", "Remove"], ["add_room", "update_room", "remove_room"]
         ):
             button = QPushButton(btitle)
             button.clicked.connect(

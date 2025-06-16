@@ -176,7 +176,7 @@ def check_applicable_operation(op_name: str, level: Level) -> bool:
     # Operation checks mapping
 
     operation_checks = {
-        "create_room": lambda: True,
+        "add_room": lambda: True,
         "remove_room": lambda: len(level.rooms) > 0,
         "update_room": lambda: len(level.rooms) > 0,
         "add_corridor": lambda: len(level.rooms) > 3,
