@@ -575,20 +575,14 @@ class MainWindow(QMainWindow):
                 logging.getLogger("gui").debug(
                     f"Level saved to {os.path.basename(tmp_filename)}"
                 )
-
-                dlg = QMessageBox(self)
-                dlg.setWindowTitle("LLMaker Message")
-                dlg.setText(
-                    f"The level has been successfully saved to <i>{os.path.basename(tmp_filename)}</i>!"
+                QMessageBox.information(
+                    self,
+                    "LLMaker Message",
+                    f"The level has been successfully saved to <i>{os.path.basename(tmp_filename)}</i>!",
                 )
-                _ = dlg.exec()
         except Exception as e:
             logging.getLogger("gui").error(str(e))
-
-            dlg = QErrorMessage(self)
-            dlg.setWindowTitle("LLMaker Error")
-            dlg.showMessage(str(e))
-            _ = dlg.exec()
+            QMessageBox.critical(self, "LLMaker Error", str(e))
 
     @pyqtSlot()
     def load_level(self):
@@ -627,10 +621,7 @@ class MainWindow(QMainWindow):
                     self.validate_actions_buttons()
             except Exception as e:
                 logging.getLogger("gui").error(str(e))
-                dlg = QErrorMessage(self)
-                dlg.setWindowTitle("LLMaker Error")
-                dlg.showMessage(str(e))
-                _ = dlg.exec()
+                QMessageBox.critical(self, "LLMaker Error", str(e))
 
     @pyqtSlot()
     def clear_level(self):
@@ -666,10 +657,7 @@ class MainWindow(QMainWindow):
                     )
         except Exception as e:
             logging.getLogger("gui").error(str(e))
-            dlg = QErrorMessage(self)
-            dlg.setWindowTitle("LLMaker Error")
-            dlg.showMessage(str(e))
-            _ = dlg.exec()
+            QMessageBox.critical(self, "LLMaker Error", str(e))
 
     @pyqtSlot()
     def undo_edit(self):
