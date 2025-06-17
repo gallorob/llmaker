@@ -13,7 +13,7 @@ from configs import config, resource_path
 from dungeon_despair.domain.level import Level
 from dungeon_despair.functions import DungeonCrawlerFunctions
 
-from utils import send_to_server
+from utils import custom_level_json, send_to_server
 
 
 class LLMsCache:
@@ -64,9 +64,7 @@ class LLMsCache:
             "top_p": role_configs.top_p,
             "top_k": role_configs.top_k,
         }
-        logging.getLogger("llmaker").debug(
-            msg=f"Added {model_name} to {role}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"Added {model_name} to {role}")
 
     def get_model_by_role(self, role: str) -> str:
         assert role in self.__cache, f"{role} has no associated model"
@@ -102,9 +100,7 @@ class LLMsCache:
             except subprocess.CalledProcessError as e:
                 print(f"Failed to unload model {model_id} for role {role}: {e}")
         del self.__cache[role]
-        logging.getLogger("llmaker").debug(
-            msg=f"{role=}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"{role=}")
 
     def __del__(self):
         for role in self.roles:
@@ -143,7 +139,7 @@ class FreyrLLM:
 
     @staticmethod
     def polish_intents_output(response: str):
-        possible_intents = response.replace('*', '').split("\n\n")[0]
+        possible_intents = response.replace("*", "").split("\n\n")[0]
         possible_intents = [
             intent.strip().replace(",", "") for intent in possible_intents.split(",")
         ]
@@ -278,7 +274,7 @@ class FreyrLLM:
         while not valid_intents_generated:
             model_name = self.cache.get_model_by_role("intent")
             prompt = self.cache.get_prompt_by_role("intent")
-            level_str = level.model_dump_json()
+            level_str = custom_level_json(level)
             intents_str = str(self.intents_dict)
             prompt = prompt.format(level_str=level_str, intents_str=intents_str)
             messages = [
@@ -288,9 +284,7 @@ class FreyrLLM:
                 *add_messages,
             ]
             log_msg = str(messages).replace("\n", "")
-            logging.getLogger("llmaker").debug(
-                msg=f"messages={log_msg}"
-            )
+            logging.getLogger("llmaker").debug(msg=f"messages={log_msg}")
             start = default_timer()
             output = self.__chat(
                 model_name=model_name,
@@ -302,13 +296,9 @@ class FreyrLLM:
                 msg=f'Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}',
             )
             response = output["message"]["content"]
-            logging.getLogger("llmaker").debug(
-                msg=f"{response=}"
-            )
+            logging.getLogger("llmaker").debug(msg=f"{response=}")
             intents = FreyrLLM.polish_intents_output(response=response)
-            logging.getLogger("llmaker").debug(
-                msg=f"{intents=}"
-            )
+            logging.getLogger("llmaker").debug(msg=f"{intents=}")
 
             valid_intents_generated = True
 
@@ -337,7 +327,7 @@ class FreyrLLM:
     ) -> str:
         model_name = self.cache.get_model_by_role("params")
         prompt = self.cache.get_prompt_by_role("params")
-        level_str = level.model_dump_json()
+        level_str = custom_level_json(level)
         op_params = self.get_tool_parameters(tool_name=intent)
         op_params_str = str(op_params)
         prompt = prompt.format(
@@ -386,7 +376,7 @@ class FreyrLLM:
                 msg=f"{response=}; {n_retries=}",
             )
             messages.append({"role": "assistant", "content": response})
-            
+
             try:
                 tool_args = self.prepare_params_for_tool_call(
                     tool_name=intent, response=response
@@ -444,8 +434,8 @@ class FreyrLLM:
     ) -> str:
         model_name = self.cache.get_model_by_role("summary")
         prompt = self.cache.get_prompt_by_role("summary")
-        level_str = level.model_dump_json()
-        prev_level_str = prev_level.model_dump_json()
+        level_str = custom_level_json(level)
+        prev_level_str = custom_level_json(prev_level)
         tool_results_str = "; ".join(tool_results)
         user_msg = f"Edits:\n{tool_results_str}Current Level:\n{level_str}"
         prompt = prompt.format(prev_level_str=prev_level_str)
@@ -454,9 +444,7 @@ class FreyrLLM:
             {"role": "user", "content": user_msg},
         ]
         log_msg = str(messages).replace("\n", "")
-        logging.getLogger("llmaker").debug(
-            msg=f"messages={log_msg}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"messages={log_msg}")
         start = default_timer()
         output = self.__chat(
             model_name=model_name,
@@ -468,9 +456,7 @@ class FreyrLLM:
             msg=f'Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}',
         )
         response = output["message"]["content"].strip()
-        logging.getLogger("llmaker").debug(
-            msg=f"{response=}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"{response=}")
         return response
 
     def chat(
@@ -484,7 +470,7 @@ class FreyrLLM:
         )
         model_name = self.cache.get_model_by_role("chat")
         prompt = self.cache.get_prompt_by_role("chat")
-        level_str = level.model_dump_json()
+        level_str = custom_level_json(level)
         operations_str = str(self.tools_as_dict())
         prompt = prompt.format(level_str=level_str, operations_str=operations_str)
         messages = [
@@ -493,9 +479,7 @@ class FreyrLLM:
             {"role": "user", "content": user_message},
         ]
         log_msg = str(messages).replace("\n", "")
-        logging.getLogger("llmaker").debug(
-            msg=f"messages={log_msg}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"messages={log_msg}")
         start = default_timer()
         output = self.__chat(
             model_name=model_name,
@@ -507,9 +491,7 @@ class FreyrLLM:
             msg=f'Prompt Tokens: {output["prompt_eval_count"]}; Completion Tokens: {output["eval_count"]}; Time: {(end - start):.4f}',
         )
         response = output["message"]["content"].strip()
-        logging.getLogger("llmaker").debug(
-            msg=f"{response=}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"{response=}")
         return response
 
     def __call__(
@@ -565,9 +547,7 @@ class FreyrLLM:
                         level=level,
                     )
                     tool_results.append(output)
-                    logging.getLogger("llmaker").debug(
-                        msg=f"{tool_results=}"
-                    )
+                    logging.getLogger("llmaker").debug(msg=f"{tool_results=}")
 
                     # tool error early break
 
@@ -584,9 +564,7 @@ class FreyrLLM:
                 tool_results=tool_results, level=level, prev_level=prev_level
             )
         end = default_timer()
-        logging.getLogger("llmaker").debug(
-            msg=f"Time: {(end - start):.4f}"
-        )
+        logging.getLogger("llmaker").debug(msg=f"Time: {(end - start):.4f}")
         return response
 
 

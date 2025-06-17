@@ -1,4 +1,5 @@
 import base64
+import json
 import logging
 import math
 import os
@@ -15,6 +16,7 @@ from dungeon_despair.domain.entities.entity import Entity
 from dungeon_despair.domain.entities.trap import Trap
 from dungeon_despair.domain.entities.treasure import Treasure
 from dungeon_despair.domain.level import Level
+from dungeon_despair.domain.modifier import Modifier
 from dungeon_despair.domain.room import Room
 from dungeon_despair.domain.utils import ModifierType
 from PIL import Image
@@ -340,3 +342,113 @@ def process_diff(obj: Any, additional_data: Dict[str, str]) -> None:
         )
     else:
         raise ValueError(f"Unsupported object type: {type(obj)}")
+
+
+def custom_level_json(level: Level) -> Dict[str, Any]:
+    """
+    Returns a custom JSON representation of the level.
+    """
+
+    def custom_modifier_json(modifier: Optional[Modifier]) -> Optional[Dict[str, Any]]:
+        """
+        Returns a custom JSON representation of the modifier.
+        """
+        if modifier is None:
+            return None
+        return {
+            "type": modifier.type,
+            "chance": modifier.chance,
+            "turns": modifier.turns,
+            "amount": modifier.amount,
+        }
+
+    def custom_entity_json(entity: Entity) -> Dict[str, Any]:
+        """
+        Returns a custom JSON representation of the entity.
+        """
+        if isinstance(entity, Enemy):
+            return {
+                "name": entity.name,
+                "description": entity.description,
+                "species": entity.species,
+                "hp": entity.hp,
+                "dodge": entity.dodge,
+                "prot": entity.prot,
+                "spd": entity.spd,
+                "attacks": [
+                    {
+                        "name": attack.name,
+                        "description": attack.description,
+                        "type": attack.type,
+                        "starting_positions": attack.starting_positions,
+                        "target_positions": attack.target_positions,
+                        "base_dmg": attack.base_dmg,
+                        "accuracy": attack.accuracy,
+                        "modifier": (custom_modifier_json(attack.modifier)),
+                    }
+                    for attack in entity.attacks
+                ],
+            }
+        elif isinstance(entity, Treasure):
+            return {
+                "name": entity.name,
+                "description": entity.description,
+                "loot": entity.loot,
+                "trapped_chance": entity.trapped_chance,
+                "dmg": entity.dmg,
+                "modifier": custom_modifier_json(entity.modifier),
+            }
+        elif isinstance(entity, Trap):
+            return {
+                "name": entity.name,
+                "description": entity.description,
+                "effect": entity.effect,
+                "chance": entity.chance,
+                "dmg": entity.dmg,
+                "modifier": custom_modifier_json(entity.modifier),
+            }
+        else:
+            raise ValueError(f"Unsupported entity type: {type(entity)}")
+
+    as_obj = {
+        "rooms": {
+            name: {
+                "name": room.name,
+                "description": room.description,
+                "encounter": {
+                    "entities": {
+                        entity_type: [
+                            custom_entity_json(entity)
+                            for entity in room.encounter.entities[entity_type]
+                        ]
+                        for entity_type in room.encounter.entities.keys()
+                    }
+                },
+            }
+            for name, room in level.rooms.items()
+        },
+        "corridors": {
+            name: {
+                "name": corridor.name,
+                "room_from": corridor.room_from,
+                "room_to": corridor.room_to,
+                "direction": corridor.direction,
+                "length": corridor.length,
+                "encounters": [
+                    {
+                        "entities": {
+                            entity_type: [
+                                custom_entity_json(entity)
+                                for entity in encounter.entities[entity_type]
+                            ]
+                            for entity_type in encounter.entities.keys()
+                        }
+                    }
+                    for encounter in corridor.encounters
+                ],
+            }
+            for name, corridor in level.corridors.items()
+        },
+        "current_room": level.current_room,
+    }
+    return json.dumps(as_obj, indent=None)
