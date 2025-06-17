@@ -1,3 +1,4 @@
+import copy
 import os
 from functools import partial
 from typing import List
@@ -28,6 +29,22 @@ def show_enemy_dialog(event: QMouseEvent, parent: QWidget, enemy: Enemy):
         dialog.exec()
 
 
+class EntityGraphicsItem(QGraphicsPixmapItem):
+    def __init__(self, entity: Entity, parent: QWidget):
+        super().__init__()
+        self.entity = entity
+        self.parent = parent
+
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QGraphicsPixmapItem.GraphicsItemFlag.ItemIsSelectable)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if isinstance(self.entity, Enemy):
+            if event.button() == Qt.MouseButton.LeftButton:
+                show_enemy_dialog(event, self.parent, self.entity)
+                event.accept()  # Important: Accept the event (else the same entity will be selected again)
+
+
 class EncounterPreviewWidget(QWidget):
     def __init__(self, parent, level: Level):
         super(EncounterPreviewWidget, self).__init__(parent)
@@ -41,6 +58,9 @@ class EncounterPreviewWidget(QWidget):
 
         self.view_layout = QVBoxLayout(self)
         self.view_layout.addWidget(self.view)
+
+        self.scene.setItemIndexMethod(QGraphicsScene.ItemIndexMethod.BspTreeIndex)
+        self.view.setMouseTracking(True)
 
     def paintEvent(self, a0):
         super().paintEvent(a0)
@@ -72,6 +92,9 @@ class EncounterPreviewWidget(QWidget):
 
     def show_room_preview(self):
         if self.level.current_room != "":
+            # Clear existing items before adding new ones
+
+            self.scene.clear()
             if self.level.current_room in self.level.rooms.keys():
                 room = self.level.rooms[self.level.current_room]
                 background_image = QPixmap(
@@ -124,18 +147,20 @@ class EncounterPreviewWidget(QWidget):
                         entity_sprite = QPixmap(
                             os.path.join(config.entity.save_dir, entity.sprite)
                         )
-                        entity_rect = QGraphicsPixmapItem(entity_sprite)
+                        entity_rect = EntityGraphicsItem(entity=entity, parent=self)
+                        entity_rect.setPixmap(entity_sprite)
                         entity_rect.setScale(config.ui.entity_scale)
                         entity_rect.setToolTip(basic_entity_description(entity=entity))
                         entity_rect.setPos(
                             x_offset + scaled_entity_width * i,
                             y_offset - (entity_sprite.height() * entity_rect.scale()),
                         )
-                        if isinstance(entity, Enemy):
-                            entity_rect.mousePressEvent = partial(
-                                show_enemy_dialog, enemy=entity, parent=self
-                            )
+                        entity_rect.setAcceptHoverEvents(True)
+                        entity_rect.setAcceptedMouseButtons(Qt.MouseButton.LeftButton)
+                        # Add to scene with increasing z-value
+
                         self.scene.addItem(entity_rect)
+                        entity_rect.setZValue(i + 1)  # Ensure items don't overlap
 
                         if hasattr(entity, "modifier"):
                             modifier = entity.modifier

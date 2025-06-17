@@ -44,14 +44,20 @@ from utils import get_modifier_icon
 class EnemyPreviewDialog(QDialog):
     def __init__(self, enemy: Enemy, parent=None):
         super().__init__(parent)
+        self.enemy: Enemy = enemy
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
-        self.setWindowTitle(f"Details for {enemy.name}")
         self.setWindowIcon(QIcon(resource_path("assets/llmaker_logo.png")))
         self.setMinimumSize(QSize(400, 300))
 
-        layout = QGridLayout(self)
+        self.setup_ui()
 
-        pixmap = QPixmap(os.path.join(config.entity.save_dir, enemy.sprite))
+    def setup_ui(self):
+
+        self.setWindowTitle(f"Details for {self.enemy.name}")
+        self.dialog_layout = QGridLayout(self)
+
+        pixmap = QPixmap(os.path.join(config.entity.save_dir, self.enemy.sprite))
 
         sprite_label = QLabel()
         sprite_label.setPixmap(
@@ -62,16 +68,16 @@ class EnemyPreviewDialog(QDialog):
 
         details_layout = QVBoxLayout()
 
-        description_label = QLabel(f"<b>Description</b>: {enemy.description}")
+        description_label = QLabel(f"<b>Description</b>: {self.enemy.description}")
         description_label.setWordWrap(True)
 
-        details_layout.addWidget(QLabel(f"<b>Name</b>: {enemy.name}"))
+        details_layout.addWidget(QLabel(f"<b>Name</b>: {self.enemy.name}"))
         details_layout.addWidget(description_label)
-        details_layout.addWidget(QLabel(f"<b>Species</b>: {enemy.species}"))
-        details_layout.addWidget(QLabel(f"<b>HP</b>: {enemy.hp}"))
-        details_layout.addWidget(QLabel(f"<b>Dodge</b>: {enemy.dodge}"))
-        details_layout.addWidget(QLabel(f"<b>Prot</b>: {enemy.prot}"))
-        details_layout.addWidget(QLabel(f"<b>Spd</b>: {enemy.spd}"))
+        details_layout.addWidget(QLabel(f"<b>Species</b>: {self.enemy.species}"))
+        details_layout.addWidget(QLabel(f"<b>HP</b>: {self.enemy.hp}"))
+        details_layout.addWidget(QLabel(f"<b>Dodge</b>: {self.enemy.dodge}"))
+        details_layout.addWidget(QLabel(f"<b>Prot</b>: {self.enemy.prot}"))
+        details_layout.addWidget(QLabel(f"<b>Spd</b>: {self.enemy.spd}"))
 
         # Layout for Attacks
 
@@ -96,7 +102,7 @@ class EnemyPreviewDialog(QDialog):
 
         # Populate the grid with attacks
 
-        for row, attack in enumerate(enemy.attacks, start=1):
+        for row, attack in enumerate(self.enemy.attacks, start=1):
             attack_description_label = QLabel(attack.description)
             attack_description_label.setWordWrap(True)
 
@@ -127,15 +133,15 @@ class EnemyPreviewDialog(QDialog):
 
         # Add a button box for OK button
 
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        button_box.accepted.connect(self.accept)
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        button_box.rejected.connect(self.reject)
 
         # Layout the dialog
 
-        layout.addWidget(sprite_label, 0, 0)
-        layout.addLayout(details_layout, 0, 1)
-        layout.addLayout(attacks_layout, 1, 0, 1, 2)
-        layout.addWidget(button_box, 2, 0, 1, 2)
+        self.dialog_layout.addWidget(sprite_label, 0, 0)
+        self.dialog_layout.addLayout(details_layout, 0, 1)
+        self.dialog_layout.addLayout(attacks_layout, 1, 0, 1, 2)
+        self.dialog_layout.addWidget(button_box, 2, 0, 1, 2)
 
 
 class FocusWatcher(QObject):
