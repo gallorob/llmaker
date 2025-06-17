@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
 
         self.setObjectName("LLMaker")
 
-        self.setWindowTitle("LLMaker")
+        self.setWindowTitle(f"LLMaker - {self.level.level_name}")
         self.resize(1280, 720)
         self.setWindowIcon(QIcon(resource_path("assets/llmaker_logo.png")))
 
@@ -562,11 +562,16 @@ class MainWindow(QMainWindow):
             tmp_filename, _ = QFileDialog.getSaveFileName(
                 self,
                 caption="Save Level",
-                directory=config.levels_dir,
+                directory=os.path.join(
+                    config.levels_dir, f"{self.level.level_name}.bin"
+                ),
                 filter="All Files(*);;Binary Files(*.bin)",
             )
             if tmp_filename:
                 assert len(self.level.rooms) > 0, "Can't save an empty level!"
+                self.level.level_name = os.path.basename(tmp_filename).replace(
+                    ".bin", ""
+                )
                 self.level.save_to_file(
                     filename=tmp_filename,
                     conversation=self.chat_area.conversation.to_json(),
@@ -580,6 +585,7 @@ class MainWindow(QMainWindow):
                     "LLMaker Message",
                     f"The level has been successfully saved to <i>{os.path.basename(tmp_filename)}</i>!",
                 )
+                self.setWindowTitle(f"LLMaker - {self.level.level_name}")
         except Exception as e:
             logging.getLogger("gui").error(str(e))
             QMessageBox.critical(self, "LLMaker Error", str(e))
@@ -641,15 +647,22 @@ class MainWindow(QMainWindow):
             tmp_filename, _ = QFileDialog.getSaveFileName(
                 self,
                 caption="Export Level as Scenario",
-                directory=config.scenarios_dir,
+                directory=os.path.join(
+                    config.scenarios_dir, f"{self.level.level_name}.bin"
+                ),
                 filter="All Files(*);;Binary Files(*.bin)",
             )
             if tmp_filename:
                 if check_level_playability(self.level, ScenarioType.EXPLORE):
+                    curr_level_name = self.level.level_name
+                    self.level.level_name = os.path.basename(tmp_filename).replace(
+                        ".bin", ""
+                    )
                     self.level.export_level_as_scenario(filename=tmp_filename)
                     logging.getLogger("gui").debug(
                         f"Level {tmp_filename} exported as scenario"
                     )
+                    self.level.level_name = curr_level_name
                     QMessageBox.information(
                         self,
                         "LLMaker Message",
@@ -754,6 +767,7 @@ class MainWindow(QMainWindow):
         self.level = level
         self.room_preview.level = level
         self.map_preview.level = level
+        self.setWindowTitle(f"LLMaker - {self.level.level_name}")
 
     def apply_theme(self):
         try:
