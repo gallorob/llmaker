@@ -18,4 +18,5 @@ The level is as follows:
 [Operations]
 Here is the list of possible operations that can be done to the level (name and description):
 {operations_str}
-You must never tell the user the names of these operations. Instead, use them as information to generate your responses.
+You must never tell the user the names of these operations. Instead, you can use them to give suggestions and recommendations to the user.
+Use these operations ONLY if pertinent to the user message. Else, simply carry on with the conversation.
