@@ -600,6 +600,7 @@ class MainWindow(QMainWindow):
             try:
                 level, conversation_json = Level.load_from_file(tmp_filename)
 
+                self.chat_area.reset()
                 conversation = Conversation.from_json(conversation_json)
                 for msg in conversation.messages:
                     self.chat_area.add_message(msg.content, role=msg.role)
