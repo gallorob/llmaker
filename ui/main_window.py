@@ -41,6 +41,7 @@ from ui.dyn_dialog import (
     UpdateEntityDialog,
 )
 from ui.encounter_preview import EncounterPreviewWidget
+from ui.guide import GuideDialog
 from ui.input_process import UIInputProcessor
 from ui.map_preview import MapPreviewWidget
 from utils import LLMMode, rgb_sum_app_entropy, ThemeMode, ToolMode
@@ -305,6 +306,11 @@ class MainWindow(QMainWindow):
         self.actionRedo.setToolTip("Redo latest change")
         self.menuEdit.addAction(self.actionRedo)
 
+        self.actionGuide = QAction("Guide", parent=self)
+        self.actionGuide.setToolTip("LLMaker User Guide")
+        self.actionGuide.setShortcut("Ctrl+H")
+        self.menuHelp.addAction(self.actionGuide)
+
         self.actionAbout = QAction("About", parent=self)
         self.actionAbout.setToolTip("About LLMaker")
         self.menuHelp.addAction(self.actionAbout)
@@ -323,6 +329,7 @@ class MainWindow(QMainWindow):
         self.actionSwitchTheme.triggered.connect(self.switch_theme)
         self.actionUndo.triggered.connect(self.undo_edit)
         self.actionRedo.triggered.connect(self.redo_edit)
+        self.actionGuide.triggered.connect(self.show_guide_dialog)
         self.actionAbout.triggered.connect(self.show_about_dialog)
 
         self.actionShowLevelString = QAction("inspect_level", parent=self)
@@ -760,6 +767,11 @@ class MainWindow(QMainWindow):
             "About LLMaker",
             f"LLMaker Client v0.1\n\nDeveloped by: Roberto Gallota (Institute of Digital Games, University of Malta)",
         )
+
+    @pyqtSlot()
+    def show_guide_dialog(self):
+        guide = GuideDialog(self)
+        guide.exec()
 
     def set_level(self, level: Level):
         self.level = level
