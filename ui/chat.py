@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from chat_message import ChatMessage, Conversation
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QLabel, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 
@@ -62,7 +62,9 @@ class ConversationWidget(QWidget):
         new_message.setTextFormat(Qt.TextFormat.MarkdownText)
         new_message.setProperty("messageType", new_chat_message.role)
         new_message.setWordWrap(True)
-        new_message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        new_message.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         new_message.setSizePolicy(
             QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred
         )
@@ -75,7 +77,7 @@ class ConversationWidget(QWidget):
             self.placeholder.hide()
         self.central_layout.addWidget(new_message)
 
-        self.update()
+        self.scroll_to_bottom()
 
     def resizeEvent(self, event):
         # Adjust maximum width of all messages on resize
@@ -87,10 +89,12 @@ class ConversationWidget(QWidget):
     def get_conversation(self) -> List[ChatMessage]:
         return [msg for msg in self.conversation.messages]
 
-    def update(self):
+    def scroll_to_bottom(self):
         # Scroll to the bottom of the scroll area
 
-        self.scroll_area.verticalScrollBar().setValue(
-            self.scroll_area.verticalScrollBar().maximum()
+        QTimer.singleShot(
+            5,  # Allow time for the layout to update before scrolling
+            lambda: self.scroll_area.verticalScrollBar().setValue(
+                self.scroll_area.verticalScrollBar().maximum()
+            ),
         )
-        super().update()

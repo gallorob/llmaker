@@ -466,6 +466,7 @@ class MainWindow(QMainWindow):
         self.chat_box.setFocus()
         self.pbar.reset()
         self.pbar.setHidden(True)
+        self.chat_area.scroll_to_bottom()
         # Note: This commits every time a message is sent, regardless of the operation carried out
 
         self.versioning.commit(self.level, self.chat_area.conversation.messages)
@@ -473,7 +474,6 @@ class MainWindow(QMainWindow):
             filename=os.path.join(config.levels_dir, config.tmp_level),
             conversation=self.chat_area.conversation.to_json(),
         )
-        self.chat_area.update()
         if self.mode == ToolMode.USER:
             self.validate_actions_buttons()
         logging.getLogger("gui").debug(f"RGB Entropy: {rgb_sum_app_entropy(self)}")
@@ -499,10 +499,12 @@ class MainWindow(QMainWindow):
         logging.getLogger("gui").debug(f"Received input: {user_input}")
 
         self.chat_box.clear()
-        self.chat_area.add_message(user_input, role="me")
-        self.chat_area.update()
-
         self.chat_box.setDisabled(True)
+        self.pbar.setHidden(False)
+        self.pbar.reset()
+
+        self.chat_area.add_message(user_input, role="me")
+        self.chat_area.scroll_to_bottom()
 
         logging.getLogger("gui").debug(f"Starting separate thread...")
 
@@ -514,11 +516,6 @@ class MainWindow(QMainWindow):
         worker.signals.error.connect(self.task_error)
         worker.signals.progress.connect(self.update_progress)
         worker.signals.finished.connect(self.task_finished)
-
-        self.pbar.setHidden(False)
-        self.pbar.reset()
-        self.actions_groupbox.update()
-        self.chat_area.update()
 
         # Start the thread
 
@@ -622,7 +619,7 @@ class MainWindow(QMainWindow):
                 )
                 self.room_preview.refresh()
                 self.update()
-                self.chat_area.update()
+                self.chat_area.scroll_to_bottom()
                 if self.mode == ToolMode.USER:
                     self.validate_actions_buttons()
             except Exception as e:
@@ -682,7 +679,7 @@ class MainWindow(QMainWindow):
                 self.chat_area.add_message(msg.content, msg.role)
             self.room_preview.refresh()
             self.update()
-            self.chat_area.update()
+            self.chat_area.scroll_to_bottom()
             if self.mode == ToolMode.USER:
                 self.validate_actions_buttons()
             logging.getLogger("gui").debug(f"Undo edit")
@@ -702,7 +699,7 @@ class MainWindow(QMainWindow):
                 self.chat_area.add_message(msg.content, msg.role)
             self.room_preview.refresh()
             self.update()
-            self.chat_area.update()
+            self.chat_area.scroll_to_bottom()
             if self.mode == ToolMode.USER:
                 self.validate_actions_buttons()
             logging.getLogger("gui").debug(f"Redo edit")
