@@ -341,6 +341,7 @@ class FreyrLLM:
 
         n_retries = 3
         response = self.PARAM_ERROR_MSG
+        func_err_msg = ""
 
         while response == self.PARAM_ERROR_MSG:
             log_msg = str(messages).replace("\n", "")
@@ -365,7 +366,7 @@ class FreyrLLM:
                 messages.append(
                     {
                         "role": "assistant",
-                        "content": f"It was not possible to execute {intent}.",
+                        "content": f"It was not possible to execute {intent}: {func_err_msg}",
                     }
                 )
                 logging.getLogger("llmaker").debug(
@@ -408,7 +409,6 @@ class FreyrLLM:
                         "content": self.feedback_error.format(
                             operation=intent,
                             func_err_msg=func_err_msg,
-                            func_args=str(tool_args),
                             err_msg=self.PARAM_ERROR_MSG,
                         ),
                     }
