@@ -154,7 +154,7 @@ class FreyrLLM:
         tool_args = {}
         # get each param
 
-        possible_params = response.split("\n\n")[0]
+        possible_params = response.replace("\n\n", "")
         params = possible_params.strip().split("\n")
         for param in params:
             param_name, param_value = param.split(":", maxsplit=1)
@@ -327,6 +327,7 @@ class FreyrLLM:
         user_message: str,
         intent: str,
         level: Level,
+        past_operations: List[str] = [],
     ) -> str:
         model_name = self.cache.get_model_by_role("params")
         prompt = self.cache.get_prompt_by_role("params")
@@ -341,7 +342,13 @@ class FreyrLLM:
             *conversation_history,
             {"role": "user", "content": f"Designer: {user_message}"},
         ]
-
+        if past_operations:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": f"Colleague: {' '.join(past_operations)}",
+                }
+            )
         n_retries = 3
         response = self.PARAM_ERROR_MSG
         func_err_msg = ""
@@ -548,6 +555,7 @@ class FreyrLLM:
                         user_message=user_message,
                         intent=intent,
                         level=level,
+                        past_operations=tool_results,
                     )
                     tool_results.append(output)
                     logging.getLogger("llmaker").debug(msg=f"{tool_results=}")
