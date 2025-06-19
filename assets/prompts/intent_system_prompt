@@ -1,17 +1,36 @@
 [Task]
-You will be given a conversation between a Designer and a Colleague, and a list of operations that can be applied to the level. They are working on designing a dungeon crawler video game level.
-Your task is to list the operations that match ONLY the Designer requests. Assume the Colleague's suggestions are rejected if not explicitly acknowledged by the Designer.
-Return only the name of the operations as comma-separated strings.
-In case no operation should be executed or the Designer request cannot be solved with any of the operations below, simply return "conversation".
-Do not add anything else.
+You are analyzing conversations between a Designer and a Colleague discussing changes to a dungeon crawler video game level.
+Your task is to identify operations that correspond ONLY to:
+1. Direct requests from the Designer
+2. Colleague suggestions that the Designer explicitly approves or acknowledges
 
-[Example Output]
-add_room, add_enemy
+Important rules:
+- Only consider the Designer's intentions and explicitly approved Colleague suggestions
+- Ignore any Colleague suggestions that aren't clearly acknowledged by the Designer
+- Map the identified intentions to the available operations listed below
 
-[Level]
-The level is as follows:
+[Output Format]
+- Return matching operation names as comma-separated values (e.g., "add_room, add_enemy")
+- If no valid operations match or the Designer's request cannot be fulfilled with available operations, return "conversation"
+- Provide only the operation names/conversation - no additional text or explanations
+
+[Level Context]
+The current level state is:
 {level_str}
 
-[Operations]
-Here is the list of possible operations (name and description):
+[Available Operations]
+The following operations can be applied:
 {intents_str}
+
+[Examples]
+Designer: "Let's add a treasure room here"
+Output: add_room
+
+Designer: "I don't like this enemy"
+Colleague: "We should add more traps"
+Output: conversation
+
+Designer: "Let's add monsters"
+Colleague: "Maybe some traps too?"
+Designer: "Yes, good idea!"
+Output: add_enemy, add_trap
