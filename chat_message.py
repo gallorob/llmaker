@@ -1,11 +1,9 @@
-from typing import List
 import json
+from typing import List
 
 
 class ChatMessage:
-    def __init__(self,
-                 role: str,
-                 msg: str):
+    def __init__(self, role: str, msg: str):
         self.role = role
         self.msg = msg
 
@@ -20,7 +18,7 @@ class ChatMessage:
 class Conversation:
     def __init__(self):
         self.messages: List[ChatMessage] = []
-    
+
     def __len__(self) -> int:
         return len(self.messages)
 
@@ -29,9 +27,9 @@ class Conversation:
 
     def to_json(self) -> str:
         return json.dumps([message.__dict__ for message in self.messages])
-    
+
     @staticmethod
-    def from_json(json_str: str) -> 'Conversation':
+    def from_json(json_str: str) -> "Conversation":
         conversation = Conversation()
         for message in json.loads(json_str):
             conversation.messages.append(ChatMessage(**message))

@@ -1,0 +1,79 @@
+name: LLMaker Build and Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+permissions:
+  # write permission are necessary to get GITHUB_TOKEN
+  contents: write
+
+jobs:
+  build:
+    name: Build LLMaker for {{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller main.spec
+        mkdir package
+        cp -r dist/* package/
+        cp configs.yml package/
+    
+    - name: Zip package
+      run: |
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          powershell -Command "Compress-Archive -Path package\* -DestinationPath LLMaker-${{ matrix.os }}.zip"
+        else
+          cd package
+          zip -r ../LLMaker-${{ matrix.os }}.zip .
+          cd ..
+        fi
+      shell: bash
+
+    - name: Upload package as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LLMaker-${{ matrix.os }}
+        path: LLMaker-${{ matrix.os }}.zip
+  
+  release:
+    name: Create Release and Upload Assets
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/**
+
+      - name: Create GitHub Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false
+          automatic_release_tag: ${{ github.ref_name }}
+          title: Release ${{ github.ref_name }}
+          files: |
+            artifacts/**/*.zip

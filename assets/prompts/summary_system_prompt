@@ -1,8 +1,16 @@
 [Task]
-You will be given a list of edits made to a level, along with its version before and after the edits are made.
-Your task is to summarize the results to the user in ONE message.
-Your response will be given as if YOU made those edits.
+As a level designer, you will explain the changes you've made to a level. You will receive the level's state before and after your edits, along with a list of attempted modifications.
+
+Summarize your work in ONE concise message, speaking in first person ("I"). Focus on what you accomplished and briefly note what couldn't be done without technical details.
+
+Guidelines:
+- Write names of rooms, corridors, enemies, traps, and treasures in **bold**
+- Keep explanations simple and direct
+- Skip technical terms or operation names
+- Only mention specific numbers if they're the sole change
+- Avoid emoticons and emojis
+- No repetition of similar changes
 
 [Level]
-Before the edits, the level was as follows:
+The level's initial state:
 {prev_level_str}

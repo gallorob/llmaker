@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            margin: 0;
+        }
+        h1 {
+            color: rgb(158, 158, 158);
+            border-bottom: 1px solid #eaecef;
+        }
+        h2 {
+            color: rgb(158, 158, 158);
+        }
+        a {
+            color: #00d973;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        code {
+            background-color: #abf5ed;
+            color: #000000;
+            border-radius: 3px;
+            font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        pre {
+            background-color: #abf5ed;
+            color: #000000;
+            border-radius: 6px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to LLMaker</h1>
+
+    <h2>Quick Start Guide</h2>
+    <p>LLMaker is a tool for designing video game levels for <a href="https://github.com/gallorob/dungeon-despair">Dungeon Despair</a> with the support of large language models.</p>
+
+    <h2>Domain Constraints</h2>
+    <p>There are several constraints that the LLM adheres to when trying to process your edit requests. This range from level geomtry constraints to parameters values.</p>
+    <ol>
+        <li>A room and each corridor cell contains a single encounter</li>
+        <li>Trap can only be added to corridor cells, not rooms</li>
+        <li>A room must always be connected to at least a corridor</li>
+        <li>A corridor only connects two rooms together</li>
+    </ol>
+
+    <h2>Tips & Tricks</h2>
+    <ul>
+        <li>Use keyboard shortcuts to speed up your workflow</li>
+        <li>Do not save levels in the middle of a conversation with the LLM. We recommend saving only after edits to the levels are made.</li>
+        <li>In case something breaks <b>catastrophically</b>, use <code>Ctrl+D</code> to display a JSON representation of the level and include it in a new issue on GitHub!</li>
+    </ul>
+
+    <h2>Need Help?</h2>
+    <p>Visit our <a href="https://github.com/gallorob/llmaker">GitHub repository</a> for more information.</p>
+</body>
+</html>

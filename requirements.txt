@@ -1,16 +1,9 @@
-diffusers
-transformers
-xformers
-git+https://github.com/huggingface/accelerate.git
-opencv-contrib-python
-controlnet_aux
+dungeon_despair_domain @ git+https://github.com/gallorob/dungeon-despair-domain
 pyyaml
 gptfunctionutil
 pydantic
-pillow
-openai
+pillow<=11.1
 pyqt6
 numpy
-rembg
-compel
-ollama
+pyinstaller
+requests
