@@ -207,7 +207,10 @@ class FreyrLLM:
                     param_value = param_type()
             else:
                 param_value = param_type()
-            tool_args[param_name] = param_value
+            if param_name not in tool_args.keys():
+                # add param to tool_args
+
+                tool_args[param_name] = param_value
         return tool_args
 
     def get_tool_parameters(self, tool_name) -> Dict[str, str]:
