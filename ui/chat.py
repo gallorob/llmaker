@@ -93,7 +93,7 @@ class ConversationWidget(QWidget):
         # Scroll to the bottom of the scroll area
 
         QTimer.singleShot(
-            5,  # Allow time for the layout to update before scrolling
+            15,  # Allow time for the layout to update before scrolling
             lambda: self.scroll_area.verticalScrollBar().setValue(
                 self.scroll_area.verticalScrollBar().maximum()
             ),
