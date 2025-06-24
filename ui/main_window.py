@@ -248,57 +248,57 @@ class MainWindow(QMainWindow):
         )
         self.menuOptions.addAction(self.actionSwitchTheme)
 
-        self.menuOptions.addSeparator()
+        # self.menuOptions.addSeparator()
 
-        self.llm_menu = self.menuOptions.addMenu("LLMs")
+        # self.llm_menu = self.menuOptions.addMenu("LLMs")
 
-        self.llm_mode_action = QAction(
-            f"Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode",
-            parent=self.llm_menu,
-        )
-        self.llm_mode_action.triggered.connect(self.toggle_llm_mode)
-        self.llm_menu.addAction(self.llm_mode_action)
+        # self.llm_mode_action = QAction(
+        #     f"Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode",
+        #     parent=self.llm_menu,
+        # )
+        # self.llm_mode_action.triggered.connect(self.toggle_llm_mode)
+        # self.llm_menu.addAction(self.llm_mode_action)
 
-        self.llm_menu.addSeparator()
+        # self.llm_menu.addSeparator()
 
-        self.freyr_menu = self.llm_menu.addMenu("Freyr")
-        self.freyr_intent = self.freyr_menu.addMenu("Intent")
-        self.freyr_params = self.freyr_menu.addMenu("Parameters")
-        self.freyr_chat = self.freyr_menu.addMenu("Chat")
-        self.freyr_summary = self.freyr_menu.addMenu("Summary")
+        # self.freyr_menu = self.llm_menu.addMenu("Freyr")
+        # self.freyr_intent = self.freyr_menu.addMenu("Intent")
+        # self.freyr_params = self.freyr_menu.addMenu("Parameters")
+        # self.freyr_chat = self.freyr_menu.addMenu("Chat")
+        # self.freyr_summary = self.freyr_menu.addMenu("Summary")
 
-        self.llm_menu.addSeparator()
-        self.tool_menu = self.llm_menu.addMenu("Tools")
-        self.tool_model = self.tool_menu.addMenu("Model")
+        # self.llm_menu.addSeparator()
+        # self.tool_menu = self.llm_menu.addMenu("Tools")
+        # self.tool_model = self.tool_menu.addMenu("Model")
 
-        for submenu, role in zip(
-            [self.freyr_intent, self.freyr_params, self.freyr_chat, self.freyr_summary],
-            ["intent", "params", "chat", "summary"],
-        ):
-            for available_llm in LLMsCache.get_ollama_models():
-                llm_choice = QAction(available_llm, parent=submenu, checkable=True)
-                if (
-                    self.llm_mode == LLMMode.FREYR
-                    and get_freyr_model().cache.get_model_by_role(role) == available_llm
-                ):
-                    llm_choice.setChecked(True)
-                llm_choice.triggered.connect(
-                    self.create_freyr_models_handler(role, submenu, llm_choice)
-                )
-                submenu.addAction(llm_choice)
-        # TODO: Would make more sense to have this ONLY when in TOOL mode
+        # for submenu, role in zip(
+        #     [self.freyr_intent, self.freyr_params, self.freyr_chat, self.freyr_summary],
+        #     ["intent", "params", "chat", "summary"],
+        # ):
+        #     for available_llm in LLMsCache.get_ollama_models():
+        #         llm_choice = QAction(available_llm, parent=submenu, checkable=True)
+        #         if (
+        #             self.llm_mode == LLMMode.FREYR
+        #             and get_freyr_model().cache.get_model_by_role(role) == available_llm
+        #         ):
+        #             llm_choice.setChecked(True)
+        #         llm_choice.triggered.connect(
+        #             self.create_freyr_models_handler(role, submenu, llm_choice)
+        #         )
+        #         submenu.addAction(llm_choice)
 
-        for available_llm in LLMsCache.get_ollama_models():
-            llm_choice = QAction(available_llm, parent=self.tool_model, checkable=True)
-            if (
-                self.llm_mode == LLMMode.TOOL
-                and available_llm == get_tool_model().model_name
-            ):
-                llm_choice.setChecked(True)
-            llm_choice.triggered.connect(
-                self.create_tool_models_handler(self.tool_model, llm_choice)
-            )
-            self.tool_model.addAction(llm_choice)
+        # for available_llm in LLMsCache.get_ollama_models():
+        #     llm_choice = QAction(available_llm, parent=self.tool_model, checkable=True)
+        #     if (
+        #         self.llm_mode == LLMMode.TOOL
+        #         and available_llm == get_tool_model().model_name
+        #     ):
+        #         llm_choice.setChecked(True)
+        #     llm_choice.triggered.connect(
+        #         self.create_tool_models_handler(self.tool_model, llm_choice)
+        #     )
+        #     self.tool_model.addAction(llm_choice)
+
         self.actionUndo = QAction("Undo", parent=self)
         self.actionUndo.setToolTip("Undo latest change")
         self.menuEdit.addAction(self.actionUndo)
