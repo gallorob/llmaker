@@ -34,7 +34,6 @@ jobs:
         pyinstaller main.spec
         mkdir package
         cp -r dist/* package/
-        cp configs.yml package/
     
     - name: Zip package
       run: |
