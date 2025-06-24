@@ -50,6 +50,10 @@ if __name__ == "__main__":
     logging.getLogger("gui").setLevel(logging.DEBUG)
     logging.getLogger("gui").addHandler(handler)
 
+    logging.getLogger("llmaker").info(
+        f"Username: {config.username}; Mode: {config.start_mode}; Can switch mode: {config.can_switch_mode}"
+    )
+
     app = QApplication(sys.argv)
 
     splash_screen = get_splash_screen()
