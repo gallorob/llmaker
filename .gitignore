@@ -10,3 +10,4 @@ my_scenarios
 pilot_study/*
 build/
 dist/
+configs.yml
