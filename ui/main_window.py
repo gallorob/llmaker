@@ -459,13 +459,19 @@ class MainWindow(QMainWindow):
 
     def handle_result(self, result):
         logging.getLogger("gui").debug(f"Received LLM response")
+        self.chat_area.remove_animated_message()
         self.chat_area.add_message(result, role="them")
+
+    def task_new_message(self, message):
+        logging.getLogger("gui").debug(f"Received status message: {message}")
+        self.chat_area.add_animated_message(operation=message)
 
     def task_error(self, err_data):
         logging.getLogger("gui").error(f"{err_data[0].__name__} - {str(err_data[1])}")
         QMessageBox.critical(
             self, f"LLMaker Error: {err_data[0].__name__}", str(err_data[1])
         )
+        self.chat_area.remove_animated_message()
 
     def task_finished(self):
         logging.getLogger("gui").debug(f"Exchange finished")
@@ -473,7 +479,7 @@ class MainWindow(QMainWindow):
         self.chat_box.setFocus()
         self.pbar.reset()
         self.pbar.setHidden(True)
-        self.chat_area.scroll_to_bottom()
+        self.chat_area.remove_animated_message()
         # Note: This commits every time a message is sent, regardless of the operation carried out
 
         self.versioning.commit(self.level, self.chat_area.conversation.messages)
@@ -511,7 +517,8 @@ class MainWindow(QMainWindow):
         self.pbar.reset()
 
         self.chat_area.add_message(user_input, role="me")
-        self.chat_area.scroll_to_bottom()
+
+        self.chat_area.add_animated_message(operation="Thinking")
 
         logging.getLogger("gui").debug(f"Starting separate thread...")
 
@@ -523,6 +530,7 @@ class MainWindow(QMainWindow):
         worker.signals.error.connect(self.task_error)
         worker.signals.progress.connect(self.update_progress)
         worker.signals.finished.connect(self.task_finished)
+        worker.signals.add_message.connect(self.task_new_message)
 
         # Start the thread
 

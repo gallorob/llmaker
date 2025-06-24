@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from chat_message import ChatMessage, Conversation
+from chat_message import AnimatedChatMessage, ChatMessage, Conversation
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QLabel, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
@@ -41,13 +41,53 @@ class ConversationWidget(QWidget):
             self.placeholder, stretch=1, alignment=Qt.AlignmentFlag.AlignCenter
         )
 
+        self.animated_message = None
+        self.animated_message_timer = None
+
     def reset(self):
+        self.remove_animated_message()
         for message in self.messages:
             self.central_layout.removeWidget(message)
             message.deleteLater()
         self.messages.clear()
         self.conversation = Conversation()
         self.update()
+
+    def add_animated_message(self, operation: str):
+        message = AnimatedChatMessage(role="placeholder", msg=operation, interval=500)
+        self.animated_message = QLabel(parent=self.central_widget, text=message.content)
+        self.animated_message.setTextFormat(Qt.TextFormat.MarkdownText)
+        self.animated_message.setProperty("messageType", message.role)
+        self.animated_message.setWordWrap(True)
+        self.animated_message.setSizePolicy(
+            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred
+        )
+        # Set maximum width to prevent horizontal stretching
+
+        self.animated_message.setMaximumWidth(int(self.width()))
+
+        self.animated_message_timer = QTimer(self)
+        self.animated_message_timer.timeout.connect(
+            lambda: self._animate_message(message)
+        )
+        self.animated_message_timer.start(message.interval)
+
+        self.central_layout.addWidget(self.animated_message)
+
+        self.scroll_to_bottom()
+
+    def _animate_message(self, message: AnimatedChatMessage):
+        self.animated_message.setText(message.animate())
+
+    def remove_animated_message(self):
+        if self.animated_message is not None:
+            self.central_layout.removeWidget(self.animated_message)
+            self.animated_message.deleteLater()
+            self.animated_message = None
+        if self.animated_message_timer is not None:
+            self.animated_message_timer.stop()
+            self.animated_message_timer.deleteLater()
+            self.animated_message_timer = None
 
     def add_message(self, message: str, role: Optional[str] = None):
         role = (

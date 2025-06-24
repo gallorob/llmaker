@@ -15,6 +15,22 @@ class ChatMessage:
         return f"{self.role}: {self.msg}"
 
 
+class AnimatedChatMessage(ChatMessage):
+    def __init__(self, role: str, msg: str, interval: int = 500):
+        super().__init__(role, msg)
+        self.n_dots = 0
+        self.interval = interval
+
+    def str(self) -> str:
+        raise NotImplementedError(
+            "Animated messages do not support str() representation."
+        )
+
+    def animate(self):
+        self.n_dots = (self.n_dots + 1) % 4
+        return f'{self.msg}{"." * self.n_dots}'
+
+
 class Conversation:
     def __init__(self):
         self.messages: List[ChatMessage] = []

@@ -20,6 +20,7 @@ class WorkerSignals(QObject):
     error = pyqtSignal(tuple)
     result = pyqtSignal(object)
     progress = pyqtSignal(int)
+    add_message = pyqtSignal(str)
 
 
 class UIInputProcessor(QRunnable):
@@ -73,6 +74,7 @@ class UIInputProcessor(QRunnable):
                 logging.getLogger("llmaker").debug(
                     msg="Proactive feedback is enabled, processing additional feedback."
                 )
+                self.signals.add_message.emit("Thinking about feedback")
                 feedback_response = self.feedback.give_uninformed_feedback(
                     level=self.level, conversation_history=self.conversation_history
                 )
@@ -80,6 +82,8 @@ class UIInputProcessor(QRunnable):
 
                 self.progress_n += progress_delta
                 self.signals.progress.emit(self.progress_n)
+            if len(to_process) > 0:
+                self.signals.add_message.emit("Processing level changes")
             for i, obj in enumerate(to_process):
                 process_diff(obj, additional_data[i])
                 self.progress_n += progress_delta
