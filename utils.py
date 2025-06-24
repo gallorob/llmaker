@@ -43,7 +43,7 @@ class ThemeMode(Enum):
 
 
 def check_server_connection() -> bool:
-    server_url = f"http://{config.server_ip}:{config.server_port}"
+    server_url = config.server_url
     try:
         response = get(f"{server_url}/ollama_list_models")
         if response.status_code == 200:
@@ -54,7 +54,7 @@ def check_server_connection() -> bool:
 
 
 def send_to_server(data: Optional[Dict[str, Any]], endpoint) -> Response:
-    server_url = f"http://{config.server_ip}:{config.server_port}"
+    server_url = config.server_url
     if data:
         uid = sha224(config.username.encode("utf-8")).hexdigest()
         payload = {"uid": uid, **data}
