@@ -61,7 +61,6 @@ def send_to_server(data: Optional[Dict[str, Any]], endpoint) -> Response:
         response = post(f"{server_url}/{endpoint}", json=payload)
     else:
         response = get(f"{server_url}/{endpoint}")
-    print(f"Server response: {response.status_code} - {response.text}")
     if response.status_code != 200:
         logging.getLogger("llmaker").error(
             f"Server error: {response.status_code} - {response.text}"
