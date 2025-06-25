@@ -10,7 +10,7 @@ from dungeon_despair.domain.utils import get_enum_by_value, make_corridor_name
 from dungeon_despair.functions import DungeonCrawlerFunctions
 from freyr_llm import get_freyr_model, LLMsCache
 
-from PyQt6.QtCore import pyqtSlot, Qt, QThreadPool
+from PyQt6.QtCore import pyqtSlot, QPropertyAnimation, Qt, QThreadPool
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QDialog,
@@ -199,6 +199,7 @@ class MainWindow(QMainWindow):
         self.pbar = QProgressBar(parent=self.actions_groupbox)
         self.pbar.setRange(0, 100)
         self.pbar.setHidden(True)
+
         self.actions_vertical_layout.addWidget(self.pbar)
 
         self.setCentralWidget(self.main_ui_widget)
@@ -455,7 +456,11 @@ class MainWindow(QMainWindow):
 
     def update_progress(self, progress):
         logging.getLogger("gui").debug(f"Task progress: {progress}")
-        self.pbar.setValue(progress)
+        progress_bar_animation = QPropertyAnimation(self.pbar, b"value", self)
+        progress_bar_animation.setDuration(500)
+        progress_bar_animation.setStartValue(self.pbar.value())
+        progress_bar_animation.setEndValue(progress)
+        progress_bar_animation.start()
 
     def handle_result(self, result):
         logging.getLogger("gui").debug(f"Received LLM response")
