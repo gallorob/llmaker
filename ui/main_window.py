@@ -466,6 +466,7 @@ class MainWindow(QMainWindow):
         logging.getLogger("gui").debug(f"Received LLM response")
         self.chat_area.remove_animated_message()
         self.chat_area.add_message(result, role="them")
+        self.room_preview.check_scene()
 
     def task_new_message(self, message):
         logging.getLogger("gui").debug(f"Received status message: {message}")
