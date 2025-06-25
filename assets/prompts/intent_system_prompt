@@ -23,14 +23,12 @@ The following operations can be applied:
 {intents_str}
 
 [Examples]
-Designer: "Let's add a treasure room here"
+Designer: "Let's add a room here"
 Output: add_room
 
-Designer: "I don't like this enemy"
-Colleague: "We should add more traps"
+Designer: "I think the level is too easy"
 Output: conversation
 
-Designer: "Let's add monsters"
-Colleague: "Maybe some traps too?"
+Colleague: "We could add an enemy in this room."
 Designer: "Yes, good idea!"
-Output: add_enemy, add_trap
+Output: add_enemy
