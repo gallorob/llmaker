@@ -214,6 +214,38 @@ def compute_level_diffs(
     to_process: List[Union[Room, Corridor, Entity]] = []
     additional_data: List[Any] = []
 
+    def _get_corridor_tile_args(
+        corridor: Corridor,
+    ) -> Tuple[Corridor, Dict[str, Any]]:
+        return corridor, {
+            "room_names": [corridor.room_from, corridor.room_to],
+            "which_part": "tile",
+        }
+
+    def _get_corridor_door_args(
+        corridor: Corridor, n: int
+    ) -> Tuple[Corridor, Dict[str, Any]]:
+        room_from = level.rooms[corridor.room_from]
+        room_to = level.rooms[corridor.room_to]
+        return corridor, {
+            "room_names": [corridor.room_from, corridor.room_to],
+            "room_descriptions": [room_from.description, room_to.description],
+            "door_number": n,
+            "which_part": "door",
+        }
+
+    def _get_corridor_cell_args(
+        corridor: Corridor, n: int
+    ) -> Tuple[Corridor, Dict[str, Any]]:
+        room_from = level.rooms[corridor.room_from]
+        room_to = level.rooms[corridor.room_to]
+        return corridor, {
+            "room_names": [corridor.room_from, corridor.room_to],
+            "room_descriptions": [room_from.description, room_to.description],
+            "encounter_number": n,
+            "which_part": "cell",
+        }
+
     for room_name in level.rooms.keys():
         room = level.rooms[room_name]
         if room.sprite is None:
@@ -231,15 +263,25 @@ def compute_level_diffs(
                         }
                     )
     for corridor in level.corridors.values():
-        if len(corridor.sprites) == 0 or None in corridor.sprites:
-            to_process.append(corridor)
-            room_from, room_to = (
-                level.rooms[corridor.room_from],
-                level.rooms[corridor.room_to],
-            )
-            additional_data.append(
-                {"room_descriptions": [room_from.description, room_to.description]}
-            )
+        if len(corridor.sprites) == 0:
+            c, args = _get_corridor_tile_args(corridor)
+            to_process.append(c)
+            additional_data.append(args)
+            for n in range(2):
+                c, args = _get_corridor_door_args(corridor, n + 1)
+                to_process.append(c)
+                additional_data.append(args)
+            for n in range(len(corridor.encounters)):
+                c, args = _get_corridor_cell_args(corridor, n)
+                to_process.append(c)
+                additional_data.append(args)
+            corridor.sprites = [None] * (corridor.length + 2)
+        elif None in corridor.sprites:
+            for n in range(len(corridor.sprites)):
+                if corridor.sprites[n] is None:
+                    c, args = _get_corridor_cell_args(corridor, n)
+                    to_process.append(c)
+                    additional_data.append(args)
         for i, encounter in enumerate(corridor.encounters):
             for entity_type in encounter.entities:
                 for entity in encounter.entities[entity_type]:
@@ -272,60 +314,43 @@ def process_diff(obj: Any, additional_data: Dict[str, str]) -> None:
             dirname=config.room.save_dir,
         )
     elif isinstance(obj, Corridor):
-        logging.getLogger("llmaker").debug(
-            f"Corridor {obj.name} has no sprite; generating..."
-        )
-        obj_data = additional_data
-        if (
-            len(obj.sprites) != 0
-        ):  # Corridor sprites have been generated already in the past
+
+        def _load_corridor_tile_image_b64(corridor: Corridor) -> str:
             buffered = BytesIO()
             img = Image.open(
-                os.path.join(config.corridor.save_dir, f"{obj.name}_swapped.png")
+                os.path.join(config.corridor.save_dir, f"{corridor.name}_swapped.png")
             )
             img.save(buffered, format="PNG")
-            img_b64 = base64.b64encode(buffered.getvalue()).decode()
+            return base64.b64encode(buffered.getvalue()).decode()
+
+        obj_data = additional_data
+        logging.getLogger("llmaker").debug(
+            f"Corridor {obj.name} has no sprite ({obj_data=}); generating..."
+        )
+        if obj_data["which_part"] == "tile":
+            data = {"action": "generate_corridor", "action_args": obj_data}
         else:
-            img_b64 = None
-        data = {
-            "action": "generate_corridor",
-            "action_args": {
-                "room_names": [obj.room_from, obj.room_to],
-                "corridor_length": obj.length + 2,
-                "tile_image": img_b64,
-                "corridor_sprites": obj.sprites,
-                **obj_data,
-            },
-        }
+            data = {
+                "action": "generate_corridor",
+                "action_args": {
+                    "tile_image": _load_corridor_tile_image_b64(obj),
+                    **obj_data,
+                },
+            }
         res = send_to_server(data=data, endpoint="sd_generate")
 
-        if len(obj.sprites) == 0:
-            # On new corridors, save the "swapped" image before assigning any sprite
-
-            _ = convert_and_save(
-                b64_img=res[0]["image_base64"],
-                fname=res[0]["fname"],
-                dirname=config.corridor.save_dir,
-            )
-            res = res[1:]
-            for tile in res:
-                obj.sprites.append(
-                    convert_and_save(
-                        b64_img=tile["image_base64"],
-                        fname=tile["fname"],
-                        dirname=config.corridor.save_dir,
-                    )
-                )
-        else:
-            for tile_res in res:
-                for i in range(len(obj.sprites)):
-                    if obj.sprites[i] is None:
-                        obj.sprites[i] = convert_and_save(
-                            b64_img=tile_res["image_base64"],
-                            fname=tile_res["fname"],
-                            dirname=config.corridor.save_dir,
-                        )
-                        break
+        img_b64, img_fname = res["image_base64"], res["fname"]
+        img_path = convert_and_save(
+            b64_img=img_b64,
+            fname=img_fname,
+            dirname=config.corridor.save_dir,
+        )
+        if additional_data["which_part"] == "door":
+            idx = 0 if additional_data["door_number"] == 1 else -1
+            obj.sprites[idx] = img_path
+        elif additional_data["which_part"] == "cell":
+            idx = additional_data["encounter_number"]
+            obj.sprites[idx + 1] = img_path
     elif isinstance(obj, Entity):
         obj_data = additional_data
         logging.getLogger("llmaker").debug(
