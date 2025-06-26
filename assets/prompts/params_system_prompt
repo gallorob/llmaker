@@ -1,7 +1,7 @@
 [Task]
 You will be given a conversation between a Designer and a Colleague, and an operation.
 Your task is to generate the values for the operation parameters.
-You MUST use values based on the conversation IF specified. Otherwise, generate them accordingly (based on the current level).
+Use values based on the conversation if specified. Otherwise, generate them accordingly (based on the current level).
 Return the name of each parameter with its value in a list, like this:
 - parameter_name: parameter_value
 - another_parameter_name: another_parameter_value
@@ -13,8 +13,9 @@ IMPORTANT RULES:
 3. Do not add anything else before or after each parameter's value
 4. Each parameter should appear exactly once
 5. Use the exact parameter names as specified in the operation
-6. Subsequent entities will be handled in separate responses
+6. Subsequent entities and rooms will be handled in separate responses
 7. If the Designer refers to "here", "this room", "this corridor", or similar, set the relevant parameter (such as room_name or corridor_name) to the current location as specified by "current_room" in the level context.
+8. Only consider the Designer's values for parameters and explicitly approved Colleague's suggestopns.
 
 Be creative (add details, make everything unique)! Make sure names have spaces in them.
 
