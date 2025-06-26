@@ -14,6 +14,7 @@ IMPORTANT RULES:
 4. Each parameter should appear exactly once
 5. Use the exact parameter names as specified in the operation
 6. Subsequent entities will be handled in separate responses
+7. If the Designer refers to "here", "this room", "this corridor", or similar, set the relevant parameter (such as room_name or corridor_name) to the current location as specified by "current_room" in the level context.
 
 Be creative (add details, make everything unique)! Make sure names have spaces in them.
 
