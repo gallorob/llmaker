@@ -37,28 +37,66 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to LLMaker</h1>
+    <h1>LLMaker User Guide</h1>
 
-    <h2>Quick Start Guide</h2>
-    <p>LLMaker is a tool for designing video game levels for <a href="https://github.com/gallorob/dungeon-despair">Dungeon Despair</a> with the support of large language models.</p>
+    <h2>Introduction</h2>
+    <p>LLMaker is a graphical tool for designing video game levels for Dungeon Despair, powered by large language models (LLMs). It allows you to create, edit, and manage rooms, corridors, and entities (enemies, traps, treasures) in a visual and interactive way.</p>
 
-    <h2>Domain Constraints</h2>
-    <p>There are several constraints that the LLM adheres to when trying to process your edit requests. This range from level geomtry constraints to parameters values.</p>
+    <h2>Getting Started</h2>
     <ol>
-        <li>A room and each corridor cell contains a single encounter</li>
-        <li>Trap can only be added to corridor cells, not rooms</li>
-        <li>A room must always be connected to at least a corridor</li>
-        <li>A corridor only connects two rooms together</li>
+        <li><b>Launching the App:</b> Start LLMaker and open or create a new level.</li>
+        <li><b>Main Window Layout:</b>
+            <ul>
+                <li><b>Previews Panel:</b> Shows the current room, its description, and a map of the level.</li>
+                <li><b>Actions Panel:</b> Contains chat history, input box, and buttons for editing rooms, corridors, entities, and attacks.</li>
+                <li><b>Menu Bar:</b> Access file operations (Save, Load, Export), undo/redo, theme switching, and this guide.</li>
+            </ul>
+        </li>
+        <li><b>Editing the Level:</b>
+            <ul>
+                <li>In <b>user</b> mode: use the buttons in the Actions Panel to add, update, or remove rooms, corridors, entities, and attacks.</li>
+                <li>In <b>LLM</b> mode: use the chat box to interact with the LLM for suggestions or to process complex changes.</li>
+                <li>The map and previews update as you make changes.</li>
+            </ul>
+        </li>
     </ol>
 
-    <h2>Tips & Tricks</h2>
+    <h2>Domain Properties & Constraints</h2>
+    <h3>Level Structure</h3>
     <ul>
-        <li>Use keyboard shortcuts to speed up your workflow</li>
-        <li>Do not save levels in the middle of a conversation with the LLM. We recommend saving only after edits to the levels are made.</li>
-        <li>In case something breaks <b>catastrophically</b>, use <code>Ctrl+D</code> to display a JSON representation of the level and include it in a new issue on GitHub!</li>
+        <li><b>Rooms:</b> Each room has a unique name and description. Rooms are connected by corridors.</li>
+        <li><b>Corridors:</b> Connect exactly two rooms. Each corridor has a direction and a length (must be within allowed limits).</li>
+        <li><b>Entities:</b> Rooms and corridors can contain enemies, treasures, or traps (traps only in corridors).</li>
+    </ul>
+    <h3>Constraints</h3>
+    <ul>
+        <li>A room and each corridor cell can contain only one encounter (enemy, trap, or treasure).</li>
+        <li>Traps can only be added to corridor cells, not rooms.</li>
+        <li>Every room must be connected to at least one corridor.</li>
+        <li>Corridors only connect two rooms together.</li>
+        <li>Corridor length and direction must be valid and within specified bounds.</li>
+        <li>Entity properties (e.g., enemy HP, treasure loot, trap damage) must be within allowed ranges.</li>
+    </ul>
+    <h3>Entity Properties</h3>
+    <ul>
+        <li><b>Enemies:</b> Name, description, species, HP, dodge, protection, speed, and attacks.</li>
+        <li><b>Traps:</b> Name, description, effect, chance, damage, modifier type/chance/turns/amount.</li>
+        <li><b>Treasures:</b> Name, description, loot, trapped chance, damage, modifier type/chance/turns/amount.</li>
+    </ul>
+
+    <h2>Advanced Usage & Tips</h2>
+    <ul>
+        <li><b>Keyboard Shortcuts:</b> Use shortcuts (e.g., Ctrl+H for this guide, Ctrl+S to save the level) to speed up your workflow.</li>
+        <li><b>Undo/Redo:</b> Use the Edit menu to undo or redo changes.</li>
+        <li><b>Switching Modes:</b> Toggle between USER and LLM modes for manual or AI-assisted editing.</li>
+        <li><b>Theme Switching:</b> Change between light and dark themes in the Options menu.</li>
+        <li><b>Exporting:</b> Use the Export option to finalize and save your level as a scenario.</li>
+        <li><b>Debugging:</b> If something breaks, use Ctrl+D to copy the level’s JSON and include it in a GitHub issue.</li>
+        <li><b>Saving:</b> Avoid saving in the middle of an LLM conversation; save after edits are complete.</li>
+        <li><b>Validation:</b> The app enforces domain constraints and will prevent invalid changes.</li>
     </ul>
 
     <h2>Need Help?</h2>
-    <p>Visit our <a href="https://github.com/gallorob/llmaker">GitHub repository</a> for more information.</p>
+    <p>Visit the <a href="https://github.com/gallorob/llmaker">LLMaker GitHub repository</a> for more information, updates, and support.</p>
 </body>
 </html>

@@ -212,20 +212,24 @@ class MainWindow(QMainWindow):
         # Actions
 
         self.actionSave = QAction("Save", parent=self)
+        self.actionSave.setShortcut("Ctrl+S")
         self.actionSave.setToolTip("Save the current level design.")
         self.menuFile.addAction(self.actionSave)
 
         self.actionLoad = QAction("Load", parent=self)
+        self.actionLoad.setShortcut("Ctrl+L")
         self.actionLoad.setToolTip("Load a saved level design.")
         self.menuFile.addAction(self.actionLoad)
 
         self.actionClear = QAction("Clear", parent=self)
+        self.actionClear.setShortcut("Ctrl+K")
         self.actionClear.setToolTip("Clear the current level and dialogue.")
         self.menuFile.addAction(self.actionClear)
 
         self.menuFile.addSeparator()
 
         self.actionExport = QAction("Export", parent=self)
+        self.actionExport.setShortcut("Ctrl+E")
         self.actionExport.setToolTip(
             "Finalize and export the current level as scenario."
         )
@@ -301,9 +305,11 @@ class MainWindow(QMainWindow):
         #     self.tool_model.addAction(llm_choice)
 
         self.actionUndo = QAction("Undo", parent=self)
+        self.actionUndo.setShortcut("Ctrl+Z")
         self.actionUndo.setToolTip("Undo latest change")
         self.menuEdit.addAction(self.actionUndo)
         self.actionRedo = QAction("Redo", parent=self)
+        self.actionRedo.setShortcut("Ctrl+Y")
         self.actionRedo.setToolTip("Redo latest change")
         self.menuEdit.addAction(self.actionRedo)
 
