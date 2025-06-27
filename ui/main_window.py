@@ -389,14 +389,25 @@ class MainWindow(QMainWindow):
                 )
             else:
                 dialog = dialogclass(self.level, None, button)
-            # track time to first action (wait time between last function executed and new dialog opened)
+            try:
+                # track time to first action (wait time between last function executed and new dialog opened)
 
-            time_diff = time() - self.time_to_first_action_start
-            logging.getLogger("gui").debug(f"Time to first action: {time_diff:.2f}s")
-            self.time_to_first_action_start = time()
-            dialog.exec()
-            self.versioning.commit(self.level, self.chat_area.conversation.messages)
-            self.validate_actions_buttons()
+                time_diff = time() - self.time_to_first_action_start
+                logging.getLogger("gui").debug(
+                    f"Time to first action: {time_diff:.2f}s"
+                )
+                self.time_to_first_action_start = time()
+                dialog.exec()
+                self.versioning.commit(self.level, self.chat_area.conversation.messages)
+                self.validate_actions_buttons()
+                gui_logger.debug(f"RGB Entropy: {rgb_sum_app_entropy(self)}")
+                self.room_preview.refresh()
+                self.update()
+            except Exception as e:
+                gui_logger.error(f"Error in task completion: {str(e)}")
+                QMessageBox.critical(
+                    self, "LLMaker Error", f"Error completing task: {str(e)}"
+                )
 
         return handler
 

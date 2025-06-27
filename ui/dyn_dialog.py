@@ -17,7 +17,7 @@ from dungeon_despair.domain.utils import (
 from dungeon_despair.functions import DungeonCrawlerFunctions
 from gptfunctionutil import LibCommand
 
-from PyQt6.QtCore import pyqtSlot, QEvent, QObject, QSize, Qt, QThread, QThreadPool
+from PyQt6.QtCore import QEvent, QObject, QPropertyAnimation, QSize, Qt, QThreadPool
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -206,7 +206,11 @@ class UserModeDialog(QDialog):
         logging.getLogger("gui").debug(
             f"{self.func.internal_name} - Task progress: {progress}"
         )
-        self.pbar.setValue(progress)
+        progress_bar_animation = QPropertyAnimation(self.pbar, b"value", self)
+        progress_bar_animation.setDuration(500)
+        progress_bar_animation.setStartValue(self.pbar.value())
+        progress_bar_animation.setEndValue(progress)
+        progress_bar_animation.start()
 
     def task_success(self, result):
         logging.getLogger("gui").debug(f"{self.func.internal_name} - Edit finished")
