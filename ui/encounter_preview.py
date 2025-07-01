@@ -91,17 +91,18 @@ class EncounterPreviewWidget(QWidget):
                     self.view.resetTransform()
 
     def check_scene(self):
-        curr_area = (
-            self.level.rooms[self.level.current_room]
-            if self.level.current_room in self.level.rooms
-            else self.level.corridors[self.level.current_room]
-        )
-        if isinstance(curr_area, Room):
-            if not curr_area.sprite:
-                self.scene.clear()
-        else:
-            if None in curr_area.sprites:
-                self.scene.clear()
+        if self.level.current_room != "":
+            curr_area = (
+                self.level.rooms[self.level.current_room]
+                if self.level.current_room in self.level.rooms
+                else self.level.corridors[self.level.current_room]
+            )
+            if isinstance(curr_area, Room):
+                if not curr_area.sprite:
+                    self.scene.clear()
+            else:
+                if None in curr_area.sprites:
+                    self.scene.clear()
 
     def show_room_preview(self):
         if self.level.current_room != "":
