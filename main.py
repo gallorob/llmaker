@@ -15,47 +15,43 @@ from ui.main_window import get_splash_screen, MainWindow
 from utils import check_server_connection
 
 
-if __name__ == "__main__":
-    domain_config.temp_dir = "./test_results/"
-
-    # clear tmp folder
-
-    if os.path.exists(config.temp_dir):
-        shutil.rmtree(config.temp_dir)
-    # create tmp folder if it does not exist
-
-    if not os.path.exists(config.temp_dir):
-        os.makedirs(config.temp_dir)
-    # create log folder if it does not exist
-
-    if not os.path.exists("./logs"):
-        os.makedirs("./logs")
-    # create levels folder if it does not exist
-
-    if not os.path.exists(config.levels_dir):
-        os.makedirs(config.levels_dir)
-    # create scenarios folder if it does not exist
-
-    if not os.path.exists(config.scenarios_dir):
-        os.makedirs(config.scenarios_dir)
-    log_filename = f'./logs/log_{datetime.now().strftime("%Y%m%d%H%M%S")}.log'
+def setup_logging(log_filename):
     handler = logging.FileHandler(log_filename)
     handler.setFormatter(
         logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s"
         )
     )
-    logging.getLogger("llmaker").setLevel(logging.DEBUG)
-    logging.getLogger("llmaker").addHandler(handler)
-    logging.getLogger("gui").setLevel(logging.DEBUG)
-    logging.getLogger("gui").addHandler(handler)
+    logger = logging.getLogger("llmaker")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+
+    gui_logger = logging.getLogger("gui")
+    gui_logger.setLevel(logging.DEBUG)
+    gui_logger.addHandler(handler)
+
+
+def setup_directories():
+    directories = [config.temp_dir, "./logs", config.levels_dir, config.scenarios_dir]
+    for directory in directories:
+        if os.path.exists(directory) and directory == config.temp_dir:
+            shutil.rmtree(directory)
+        os.makedirs(directory, exist_ok=True)
+
+
+if __name__ == "__main__":
+    domain_config.temp_dir = "./test_results/"
+
+    setup_directories()
+
+    log_filename = f'./logs/log_{datetime.now().strftime("%Y%m%d%H%M%S")}.log'
+    setup_logging(log_filename)
 
     logging.getLogger("llmaker").info(
         f"Username: {config.username}; Mode: {config.start_mode}; Can switch mode: {config.can_switch_mode}"
     )
 
     app = QApplication(sys.argv)
-
     splash_screen = get_splash_screen()
     splash_screen.show()
 
@@ -72,14 +68,13 @@ if __name__ == "__main__":
         else:
             tool_llm.load_local_llm(splash_screen)
     except ConnectionError as e:
+        logging.error(f"Connection error: {e}")
         QMessageBox.critical(None, "Connection Error", e.args[0])
         sys.exit(-1)
     splash_screen.showMessage("Loaded Large Language Models")
     win = MainWindow(level=Level())
-
     win.show()
     win.update()
 
     splash_screen.finish(win)
-
     sys.exit(app.exec())

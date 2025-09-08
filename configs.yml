@@ -7,8 +7,8 @@ start_mode: 'llm'
 llm_mode: 'freyr'
 theme: 'dark'
 can_switch_mode: True
-server_url: 'https://llmaker-server.url'
-username: 'your-username'
+server_url: 'https://llmaker.research.um.edu.mt'
+username: 'gallorob'
 icons:
   bleed: './assets/icons/bleed_icon.png'
   heal: './assets/icons/heal_icon.png'

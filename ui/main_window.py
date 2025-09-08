@@ -1,6 +1,11 @@
 import logging
 import os
+from logging import Logger
 from time import time
+from typing import List, Optional
+
+# Local imports
+
 
 from chat_message import Conversation
 from configs import config, resource_path
@@ -8,13 +13,15 @@ from dungeon_despair.domain.level import Level
 from dungeon_despair.domain.scenario import check_level_playability, ScenarioType
 from dungeon_despair.domain.utils import get_enum_by_value, make_corridor_name
 from dungeon_despair.functions import DungeonCrawlerFunctions
-from freyr_llm import get_freyr_model, LLMsCache
+from freyr_llm import get_freyr_model
+
+# Qt imports
+
 
 from PyQt6.QtCore import pyqtSlot, QPropertyAnimation, Qt, QThreadPool
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QDialog,
-    QErrorMessage,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -47,6 +54,12 @@ from ui.map_preview import MapPreviewWidget
 from utils import LLMMode, rgb_sum_app_entropy, ThemeMode, ToolMode
 from versioning import VersionHandler
 
+# Set up loggers
+
+
+gui_logger: Logger = logging.getLogger("gui")
+llmaker_logger: Logger = logging.getLogger("llmaker")
+
 
 def get_splash_screen():
     pixmap = QPixmap(resource_path("assets/llmaker_splash.png"))
@@ -57,24 +70,93 @@ def get_splash_screen():
 class MainWindow(QMainWindow):
     def __init__(self, level: Level):
         super().__init__()
-        self.level = level
+        # Core attributes
 
-        self.mode = get_enum_by_value(ToolMode, config.start_mode)
-        self.llm_mode = get_enum_by_value(LLMMode, config.llm_mode)
-        self.theme = get_enum_by_value(ThemeMode, config.theme)
+        self.level: Level = level
+        self.mode: ToolMode = get_enum_by_value(ToolMode, config.start_mode)
+        self.llm_mode: LLMMode = get_enum_by_value(LLMMode, config.llm_mode)
+        self.theme: ThemeMode = get_enum_by_value(ThemeMode, config.theme)
 
+        # UI components
+
+        self.main_ui_widget: QWidget
+        self.main_ui_layout: QHBoxLayout
+        self.previews: QGroupBox
+        self.room_label: QLabel
+        self.desc_scroll_area: QScrollArea
+        self.room_description: QLabel
+        self.room_preview: EncounterPreviewWidget
+        self.map_label: QLabel
+        self.map_preview: MapPreviewWidget
+        self.actions_groupbox: QGroupBox
+        self.user_mode_area: QGroupBox
+        self.chat_area: ConversationWidget
+        self.chat_box: QLineEdit
+        self.pbar: QProgressBar
+
+        # Menu items
+
+        self.menuFile: QMenu
+        self.menuOptions: QMenu
+        self.menuEdit: QMenu
+        self.menuHelp: QMenu
+        self.actionSave: QAction
+        self.actionLoad: QAction
+        self.actionClear: QAction
+        self.actionExport: QAction
+        self.actionSwitchMode: QAction
+        self.actionSwitchTheme: QAction
+        self.actionUndo: QAction
+        self.actionRedo: QAction
+        self.actionGuide: QAction
+        self.actionAbout: QAction
+        self.actionShowLevelString: QAction
+
+        # Threading
+
+        self.threadpool: QThreadPool
+
+        # Versioning
+
+        self.versioning: VersionHandler
+
+        # Timing metrics
+
+        self.time_to_first_action_start: float = time()
+        self.chat_box_pause_last_time: Optional[float] = None
+        self.chat_box_pause_times: List[float] = []
+
+        self._setup_ui()
+        self._setup_actions()
+        self._initialize_state()
+
+    def _setup_ui(self) -> None:
+        """Initialize and setup all UI components"""
         self.apply_theme()
-
         self.setObjectName("LLMaker")
-
         self.setWindowTitle(f"LLMaker - {self.level.level_name}")
         self.resize(1280, 720)
         self.setWindowIcon(QIcon(resource_path("assets/llmaker_logo.png")))
 
-        self.main_ui_widget = QWidget(parent=self)
+        # Setup main layout
 
+        self._setup_main_layout()
+        # Setup preview area
+
+        self._setup_preview_area()
+        # Setup actions area
+
+        self._setup_actions_area()
+
+        self.setCentralWidget(self.main_ui_widget)
+
+    def _setup_main_layout(self) -> None:
+        """Setup the main window layout"""
+        self.main_ui_widget = QWidget(parent=self)
         self.main_ui_layout = QHBoxLayout(self.main_ui_widget)
 
+    def _setup_preview_area(self) -> None:
+        """Setup the preview area with room and map widgets"""
         self.previews = QGroupBox(parent=self.main_ui_widget)
         self.previews.setTitle("Previews")
         self.main_ui_layout.addWidget(self.previews, 3)
@@ -107,12 +189,14 @@ class MainWindow(QMainWindow):
 
         self.map_label = QLabel(parent=self.previews)
         self.map_label.sizePolicy().setVerticalStretch(1)
-        self.map_label.setText("Mission Map:")
+        self.map_label.setText("Level Map:")
         self.previews_vertical_layout.addWidget(self.map_label)
 
         self.map_preview = MapPreviewWidget(parent=self.previews, level=self.level)
         self.previews_vertical_layout.addWidget(self.map_preview, 2)
 
+    def _setup_actions_area(self) -> None:
+        """Setup the actions area with chat and controls"""
         self.actions_groupbox = QGroupBox(parent=self.main_ui_widget)
 
         self.actions_groupbox.setTitle("Chat History")
@@ -202,8 +286,8 @@ class MainWindow(QMainWindow):
 
         self.actions_vertical_layout.addWidget(self.pbar)
 
-        self.setCentralWidget(self.main_ui_widget)
-
+    def _setup_actions(self) -> None:
+        """Setup all menu actions and their connections"""
         self.menuFile = self.menuBar().addMenu("&File")
         self.menuOptions = self.menuBar().addMenu("&Options")
         self.menuEdit = self.menuBar().addMenu("&Edit")
@@ -253,57 +337,6 @@ class MainWindow(QMainWindow):
         )
         self.menuOptions.addAction(self.actionSwitchTheme)
 
-        # self.menuOptions.addSeparator()
-
-        # self.llm_menu = self.menuOptions.addMenu("LLMs")
-
-        # self.llm_mode_action = QAction(
-        #     f"Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode",
-        #     parent=self.llm_menu,
-        # )
-        # self.llm_mode_action.triggered.connect(self.toggle_llm_mode)
-        # self.llm_menu.addAction(self.llm_mode_action)
-
-        # self.llm_menu.addSeparator()
-
-        # self.freyr_menu = self.llm_menu.addMenu("Freyr")
-        # self.freyr_intent = self.freyr_menu.addMenu("Intent")
-        # self.freyr_params = self.freyr_menu.addMenu("Parameters")
-        # self.freyr_chat = self.freyr_menu.addMenu("Chat")
-        # self.freyr_summary = self.freyr_menu.addMenu("Summary")
-
-        # self.llm_menu.addSeparator()
-        # self.tool_menu = self.llm_menu.addMenu("Tools")
-        # self.tool_model = self.tool_menu.addMenu("Model")
-
-        # for submenu, role in zip(
-        #     [self.freyr_intent, self.freyr_params, self.freyr_chat, self.freyr_summary],
-        #     ["intent", "params", "chat", "summary"],
-        # ):
-        #     for available_llm in LLMsCache.get_ollama_models():
-        #         llm_choice = QAction(available_llm, parent=submenu, checkable=True)
-        #         if (
-        #             self.llm_mode == LLMMode.FREYR
-        #             and get_freyr_model().cache.get_model_by_role(role) == available_llm
-        #         ):
-        #             llm_choice.setChecked(True)
-        #         llm_choice.triggered.connect(
-        #             self.create_freyr_models_handler(role, submenu, llm_choice)
-        #         )
-        #         submenu.addAction(llm_choice)
-
-        # for available_llm in LLMsCache.get_ollama_models():
-        #     llm_choice = QAction(available_llm, parent=self.tool_model, checkable=True)
-        #     if (
-        #         self.llm_mode == LLMMode.TOOL
-        #         and available_llm == get_tool_model().model_name
-        #     ):
-        #         llm_choice.setChecked(True)
-        #     llm_choice.triggered.connect(
-        #         self.create_tool_models_handler(self.tool_model, llm_choice)
-        #     )
-        #     self.tool_model.addAction(llm_choice)
-
         self.actionUndo = QAction("Undo", parent=self)
         self.actionUndo.setShortcut("Ctrl+Z")
         self.actionUndo.setToolTip("Undo latest change")
@@ -347,19 +380,15 @@ class MainWindow(QMainWindow):
         self.actionShowLevelString.triggered.connect(self.show_level_as_string)
         self.addAction(self.actionShowLevelString)
 
+    def _initialize_state(self) -> None:
+        """Initialize the application state"""
         self.threadpool = QThreadPool()
-
         self.switch_mode(keep=True)
         self.validate_actions_buttons()
         self.versioning = VersionHandler(
             level=self.level, chat=self.chat_area.conversation.messages
         )
-
         self.chat_box.setFocus()
-
-        self.time_to_first_action_start = time()
-        self.chat_box_pause_last_time = None
-        self.chat_box_pause_times = []
 
     def show_level_as_string(self):
         dlg = QDialog(self)
@@ -479,42 +508,80 @@ class MainWindow(QMainWindow):
         progress_bar_animation.setEndValue(progress)
         progress_bar_animation.start()
 
-    def handle_result(self, result):
-        logging.getLogger("gui").debug(f"Received LLM response")
-        self.chat_area.remove_animated_message()
-        self.chat_area.add_message(result, role="them")
-        self.room_preview.check_scene()
+    def handle_result(self, result: str) -> None:
+        """Handle the result from LLM processing"""
+        try:
+            gui_logger.debug("Received LLM response")
+            self.chat_area.remove_animated_message()
+            self.chat_area.add_message(result, role="them")
+            self.room_preview.check_scene()
+        except Exception as e:
+            gui_logger.error(f"Error handling LLM result: {str(e)}")
+            QMessageBox.critical(
+                self, "LLMaker Error", f"Failed to process LLM response: {str(e)}"
+            )
 
-    def task_new_message(self, message):
-        logging.getLogger("gui").debug(f"Received status message: {message}")
-        self.chat_area.add_animated_message(operation=message)
+    def task_new_message(self, message: str) -> None:
+        """Handle new status messages"""
+        try:
+            gui_logger.debug(f"Received status message: {message}")
+            self.chat_area.add_animated_message(operation=message)
+        except Exception as e:
+            gui_logger.error(f"Error handling new message: {str(e)}")
 
-    def task_error(self, err_data):
-        logging.getLogger("gui").error(f"{err_data[0].__name__} - {str(err_data[1])}")
+    def task_error(self, err_data: tuple) -> None:
+        """Handle task errors"""
+        error_type, error_msg = err_data
+        gui_logger.error(f"{error_type.__name__} - {str(error_msg)}")
         QMessageBox.critical(
-            self, f"LLMaker Error: {err_data[0].__name__}", str(err_data[1])
+            self, f"LLMaker Error: {error_type.__name__}", str(error_msg)
         )
         self.chat_area.remove_animated_message()
 
-    def task_finished(self):
-        logging.getLogger("gui").debug(f"Exchange finished")
-        self.chat_box.setDisabled(False)
-        self.chat_box.setFocus()
-        self.pbar.reset()
-        self.pbar.setHidden(True)
-        self.chat_area.remove_animated_message()
-        # Note: This commits every time a message is sent, regardless of the operation carried out
+    def task_finished(self) -> None:
+        """Handle task completion"""
+        try:
+            gui_logger.debug("Exchange finished")
+            self.chat_box.setDisabled(False)
+            self.chat_box.setFocus()
+            self.pbar.reset()
+            self.pbar.setHidden(True)
+            self.chat_area.remove_animated_message()
 
-        self.versioning.commit(self.level, self.chat_area.conversation.messages)
-        self.level.save_to_file(
-            filename=os.path.join(config.levels_dir, config.tmp_level),
-            conversation=self.chat_area.conversation.to_json(),
-        )
-        if self.mode == ToolMode.USER:
-            self.validate_actions_buttons()
-        logging.getLogger("gui").debug(f"RGB Entropy: {rgb_sum_app_entropy(self)}")
-        self.room_preview.refresh()
-        self.update()
+            # Commit changes and save temporary state
+
+            self.versioning.commit(self.level, self.chat_area.conversation.messages)
+            self._save_temporary_state()
+
+            if self.mode == ToolMode.USER:
+                self.validate_actions_buttons()
+            gui_logger.debug(f"RGB Entropy: {rgb_sum_app_entropy(self)}")
+            self.room_preview.refresh()
+            self.update()
+        except Exception as e:
+            gui_logger.error(f"Error in task completion: {str(e)}")
+            QMessageBox.critical(
+                self, "LLMaker Error", f"Error completing task: {str(e)}"
+            )
+
+    def _save_temporary_state(self) -> None:
+        """Save the current state to temporary file"""
+        try:
+            tmp_path = os.path.join(config.levels_dir, config.tmp_level)
+            self.level.save_to_file(
+                filename=tmp_path, conversation=self.chat_area.conversation.to_json()
+            )
+            gui_logger.debug(f"Temporary state saved to {tmp_path}")
+        except Exception as e:
+            gui_logger.error(f"Failed to save temporary state: {str(e)}")
+
+    def _validate_level_for_save(self) -> bool:
+        """Validate level before saving"""
+        if not self.level.rooms:
+            gui_logger.error("Cannot save empty level")
+            QMessageBox.critical(self, "LLMaker Error", "Cannot save an empty level!")
+            return False
+        return True
 
     @pyqtSlot()
     def process_user_input(self):
@@ -592,78 +659,95 @@ class MainWindow(QMainWindow):
         self.update()
 
     @pyqtSlot()
-    def save_level(self):
+    def save_level(self) -> None:
+        """Save the current level to a file"""
         try:
+            if not self._validate_level_for_save():
+                return
+            default_path = os.path.join(
+                config.levels_dir, f"{self.level.level_name}.bin"
+            )
             tmp_filename, _ = QFileDialog.getSaveFileName(
                 self,
                 caption="Save Level",
-                directory=os.path.join(
-                    config.levels_dir, f"{self.level.level_name}.bin"
-                ),
-                filter="All Files(*);;Binary Files(*.bin)",
+                directory=default_path,
+                filter="Binary Files(*.bin);;All Files(*)",
             )
-            if tmp_filename:
-                assert len(self.level.rooms) > 0, "Can't save an empty level!"
-                self.level.level_name = os.path.basename(tmp_filename).replace(
-                    ".bin", ""
-                )
-                self.level.save_to_file(
-                    filename=tmp_filename,
-                    conversation=self.chat_area.conversation.to_json(),
-                )
 
-                logging.getLogger("gui").debug(
-                    f"Level saved to {os.path.basename(tmp_filename)}"
-                )
-                QMessageBox.information(
-                    self,
-                    "LLMaker Message",
-                    f"The level has been successfully saved to <i>{os.path.basename(tmp_filename)}</i>!",
-                )
-                self.setWindowTitle(f"LLMaker - {self.level.level_name}")
+            if not tmp_filename:
+                return
+            # Update level name and save
+
+            self.level.level_name = os.path.splitext(os.path.basename(tmp_filename))[0]
+            self.level.save_to_file(
+                filename=tmp_filename,
+                conversation=self.chat_area.conversation.to_json(),
+            )
+
+            gui_logger.info(f"Level saved to {os.path.basename(tmp_filename)}")
+            QMessageBox.information(
+                self,
+                "LLMaker Message",
+                f"The level has been successfully saved to <i>{os.path.basename(tmp_filename)}</i>!",
+            )
+            self.setWindowTitle(f"LLMaker - {self.level.level_name}")
         except Exception as e:
-            logging.getLogger("gui").error(str(e))
-            QMessageBox.critical(self, "LLMaker Error", str(e))
+            gui_logger.error(f"Error saving level: {str(e)}")
+            QMessageBox.critical(
+                self, "LLMaker Error", f"Failed to save level: {str(e)}"
+            )
 
     @pyqtSlot()
-    def load_level(self):
-        tmp_filename, _ = QFileDialog.getOpenFileName(
-            self,
-            caption="Load Level",
-            directory=config.levels_dir,
-            filter="All Files(*);;Binary Files(*.bin)",
-        )
+    def load_level(self) -> None:
+        """Load a level from a file"""
+        try:
+            tmp_filename, _ = QFileDialog.getOpenFileName(
+                self,
+                caption="Load Level",
+                directory=config.levels_dir,
+                filter="Binary Files(*.bin);;All Files(*)",
+            )
 
-        if tmp_filename:
-            try:
-                level, conversation_json = Level.load_from_file(tmp_filename)
+            if not tmp_filename:
+                return
+            level, conversation_json = Level.load_from_file(tmp_filename)
 
-                self.chat_area.reset()
-                conversation = Conversation.from_json(conversation_json)
-                for msg in conversation.messages:
-                    self.chat_area.add_message(msg.content, role=msg.role)
-                # Temporary, should be saved and read back
+            # Reset chat area and rebuild conversation
 
-                freyr_llm = get_freyr_model()
-                freyr_llm.history_cutoff_idx = len(conversation)
-                self.set_level(level)
-                self.versioning = VersionHandler(self.level, conversation.messages)
-                logging.getLogger("gui").debug(
-                    f"Level {os.path.basename(tmp_filename)} loaded"
-                )
-                QMessageBox.information(
-                    self,
-                    "LLMaker Message",
-                    f"The level {os.path.basename(tmp_filename)} has been successfully loaded!",
-                )
-                self.room_preview.refresh()
-                self.update()
-                self.chat_area.scroll_to_bottom()
-                if self.mode == ToolMode.USER:
-                    self.validate_actions_buttons()
-            except Exception as e:
-                logging.getLogger("gui").error(str(e))
-                QMessageBox.critical(self, "LLMaker Error", str(e))
+            self.chat_area.reset()
+            conversation = Conversation.from_json(conversation_json)
+            for msg in conversation.messages:
+                self.chat_area.add_message(msg.content, role=msg.role)
+            # Update Freyr LLM history
+
+            freyr_llm = get_freyr_model()
+            freyr_llm.history_cutoff_idx = len(conversation)
+
+            # Update level and versioning
+
+            self.set_level(level)
+            self.versioning = VersionHandler(self.level, conversation.messages)
+
+            gui_logger.info(f"Level {os.path.basename(tmp_filename)} loaded")
+            QMessageBox.information(
+                self,
+                "LLMaker Message",
+                f"The level {os.path.basename(tmp_filename)} has been successfully loaded!",
+            )
+
+            # Update UI
+
+            self.room_preview.refresh()
+            self.update()
+            self.chat_area.scroll_to_bottom()
+
+            if self.mode == ToolMode.USER:
+                self.validate_actions_buttons()
+        except Exception as e:
+            gui_logger.error(f"Error loading level: {str(e)}")
+            QMessageBox.critical(
+                self, "LLMaker Error", f"Failed to load level: {str(e)}"
+            )
 
     @pyqtSlot()
     def clear_level(self):
@@ -678,35 +762,52 @@ class MainWindow(QMainWindow):
         logging.getLogger("gui").debug("Level cleared")
 
     @pyqtSlot()
-    def export_level(self):
+    def export_level(self) -> None:
+        """Export the current level as a scenario"""
         try:
+            if not self._validate_level_for_save():
+                return
+            default_path = os.path.join(
+                config.scenarios_dir, f"{self.level.level_name}.bin"
+            )
             tmp_filename, _ = QFileDialog.getSaveFileName(
                 self,
                 caption="Export Level as Scenario",
-                directory=os.path.join(
-                    config.scenarios_dir, f"{self.level.level_name}.bin"
-                ),
-                filter="All Files(*);;Binary Files(*.bin)",
+                directory=default_path,
+                filter="Binary Files(*.bin);;All Files(*)",
             )
-            if tmp_filename:
-                if check_level_playability(self.level, ScenarioType.EXPLORE):
-                    curr_level_name = self.level.level_name
-                    self.level.level_name = os.path.basename(tmp_filename).replace(
-                        ".bin", ""
-                    )
-                    self.level.export_level_as_scenario(filename=tmp_filename)
-                    logging.getLogger("gui").debug(
-                        f"Level {tmp_filename} exported as scenario"
-                    )
-                    self.level.level_name = curr_level_name
-                    QMessageBox.information(
-                        self,
-                        "LLMaker Message",
-                        f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!",
-                    )
+
+            if not tmp_filename:
+                return
+            if not check_level_playability(self.level, ScenarioType.EXPLORE):
+                gui_logger.error("Level failed playability check")
+                QMessageBox.critical(
+                    self,
+                    "LLMaker Error",
+                    "The level does not meet the requirements for a playable scenario!",
+                )
+                return
+            # Store current name, update for export, then restore
+
+            current_name = self.level.level_name
+            try:
+                self.level.level_name = os.path.splitext(
+                    os.path.basename(tmp_filename)
+                )[0]
+                self.level.export_level_as_scenario(filename=tmp_filename)
+            finally:
+                self.level.level_name = current_name
+            gui_logger.info(f"Level exported as scenario to {tmp_filename}")
+            QMessageBox.information(
+                self,
+                "LLMaker Message",
+                f"The level has been successfully exported as scenario to <i>{os.path.basename(tmp_filename)}</i>!",
+            )
         except Exception as e:
-            logging.getLogger("gui").error(str(e))
-            QMessageBox.critical(self, "LLMaker Error", str(e))
+            gui_logger.error(f"Error exporting level: {str(e)}")
+            QMessageBox.critical(
+                self, "LLMaker Error", f"Failed to export level: {str(e)}"
+            )
 
     @pyqtSlot()
     def undo_edit(self):
@@ -820,11 +921,20 @@ class MainWindow(QMainWindow):
             raise ValueError(f"Unknown theme: {self.theme.name}")
 
     @pyqtSlot()
-    def toggle_llm_mode(self):
-        self.llm_mode = LLMMode.FREYR if self.llm_mode == LLMMode.TOOL else LLMMode.TOOL
-        self.llm_mode_action.setText(
-            f"Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode"
-        )
-        logging.getLogger("gui").info(
-            f'Toggled LLM mode to {"FREYR" if self.llm_mode == LLMMode.FREYR else "TOOL"}'
-        )
+    def toggle_llm_mode(self) -> None:
+        """Toggle between FREYR and TOOL LLM modes"""
+        try:
+            self.llm_mode = (
+                LLMMode.FREYR if self.llm_mode == LLMMode.TOOL else LLMMode.TOOL
+            )
+            self.llm_mode_action.setText(
+                f"Use {LLMMode.TOOL.value if self.llm_mode == LLMMode.FREYR else LLMMode.FREYR.value} mode"
+            )
+            gui_logger.info(
+                f'Toggled LLM mode to {"FREYR" if self.llm_mode == LLMMode.FREYR else "TOOL"}'
+            )
+        except Exception as e:
+            gui_logger.error(f"Error toggling LLM mode: {str(e)}")
+            QMessageBox.critical(
+                self, "LLMaker Error", f"Failed to toggle LLM mode: {str(e)}"
+            )

@@ -11,3 +11,7 @@ pilot_study/*
 build/
 dist/
 configs.yml
+.venv
+.python-version
+__pycache__/
+uv.lock

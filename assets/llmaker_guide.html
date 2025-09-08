@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI';
             line-height: 1.6;
             color: #ffffff;
             margin: 0;
         }
+
         h1 {
             color: rgb(158, 158, 158);
             border-bottom: 1px solid #eaecef;
         }
+
         h2 {
             color: rgb(158, 158, 158);
         }
+
         a {
             color: #00d973;
             text-decoration: none;
         }
+
         a:hover {
             text-decoration: underline;
         }
+
         code {
             background-color: #abf5ed;
             color: #000000;
             border-radius: 3px;
             font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
         }
+
         pre {
             background-color: #abf5ed;
             color: #000000;
@@ -36,11 +43,14 @@
         }
     </style>
 </head>
+
 <body>
     <h1>LLMaker User Guide</h1>
 
     <h2>Introduction</h2>
-    <p>LLMaker is a graphical tool for designing video game levels for Dungeon Despair, powered by large language models (LLMs). It allows you to create, edit, and manage rooms, corridors, and entities (enemies, traps, treasures) in a visual and interactive way.</p>
+    <p>LLMaker is a graphical tool for designing video game levels for Dungeon Despair, powered by large language models
+        (LLMs). It allows you to create, edit, and manage rooms, corridors, and entities (enemies, traps, treasures) in
+        a visual and interactive way.</p>
 
     <h2>Getting Started</h2>
     <ol>
@@ -48,14 +58,18 @@
         <li><b>Main Window Layout:</b>
             <ul>
                 <li><b>Previews Panel:</b> Shows the current room, its description, and a map of the level.</li>
-                <li><b>Actions Panel:</b> Contains chat history, input box, and buttons for editing rooms, corridors, entities, and attacks.</li>
-                <li><b>Menu Bar:</b> Access file operations (Save, Load, Export), undo/redo, theme switching, and this guide.</li>
+                <li><b>Actions Panel:</b> Contains chat history, input box, and buttons for editing rooms, corridors,
+                    entities, and attacks.</li>
+                <li><b>Menu Bar:</b> Access file operations (Save, Load, Export), undo/redo, theme switching, and this
+                    guide.</li>
             </ul>
         </li>
         <li><b>Editing the Level:</b>
             <ul>
-                <li>In <b>user</b> mode: use the buttons in the Actions Panel to add, update, or remove rooms, corridors, entities, and attacks.</li>
-                <li>In <b>LLM</b> mode: use the chat box to interact with the LLM for suggestions or to process complex changes.</li>
+                <li>In <b>user</b> mode: use the buttons in the Actions Panel to add, update, or remove rooms,
+                    corridors, entities, and attacks.</li>
+                <li>In <b>LLM</b> mode: use the chat box to interact with the LLM for suggestions or to process complex
+                    changes.</li>
                 <li>The map and previews update as you make changes.</li>
             </ul>
         </li>
@@ -65,8 +79,10 @@
     <h3>Level Structure</h3>
     <ul>
         <li><b>Rooms:</b> Each room has a unique name and description. Rooms are connected by corridors.</li>
-        <li><b>Corridors:</b> Connect exactly two rooms. Each corridor has a direction and a length (must be within allowed limits).</li>
-        <li><b>Entities:</b> Rooms and corridors can contain enemies, treasures, or traps (traps only in corridors).</li>
+        <li><b>Corridors:</b> Connect exactly two rooms. Each corridor has a direction and a length (must be within
+            allowed limits).</li>
+        <li><b>Entities:</b> Rooms and corridors can contain enemies, treasures, or traps (traps only in corridors).
+        </li>
     </ul>
     <h3>Constraints</h3>
     <ul>
@@ -86,17 +102,21 @@
 
     <h2>Advanced Usage & Tips</h2>
     <ul>
-        <li><b>Keyboard Shortcuts:</b> Use shortcuts (e.g., Ctrl+H for this guide, Ctrl+S to save the level) to speed up your workflow.</li>
+        <li><b>Keyboard Shortcuts:</b> Use shortcuts (e.g., Ctrl+H for this guide, Ctrl+S to save the level) to speed up
+            your workflow.</li>
         <li><b>Undo/Redo:</b> Use the Edit menu to undo or redo changes.</li>
         <li><b>Switching Modes:</b> Toggle between USER and LLM modes for manual or AI-assisted editing.</li>
         <li><b>Theme Switching:</b> Change between light and dark themes in the Options menu.</li>
         <li><b>Exporting:</b> Use the Export option to finalize and save your level as a scenario.</li>
-        <li><b>Debugging:</b> If something breaks, use Ctrl+D to copy the level’s JSON and include it in a GitHub issue.</li>
+        <li><b>Debugging:</b> If something breaks, use Ctrl+D to copy the level’s JSON and include it in a GitHub issue.
+        </li>
         <li><b>Saving:</b> Avoid saving in the middle of an LLM conversation; save after edits are complete.</li>
         <li><b>Validation:</b> The app enforces domain constraints and will prevent invalid changes.</li>
     </ul>
 
     <h2>Need Help?</h2>
-    <p>Visit the <a href="https://github.com/gallorob/llmaker">LLMaker GitHub repository</a> for more information, updates, and support.</p>
+    <p>Visit the <a href="https://github.com/gallorob/llmaker">LLMaker GitHub repository</a> for more information,
+        updates, and support.</p>
 </body>
+
 </html>
