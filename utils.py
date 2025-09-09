@@ -350,7 +350,7 @@ def process_diff(obj: Any, additional_data: Dict[str, str]) -> None:
             obj.sprites[idx] = img_path
         elif additional_data["which_part"] == "cell":
             idx = additional_data["encounter_number"]
-            obj.sprites[idx + 1] = img_path
+            obj.sprites[idx] = img_path
     elif isinstance(obj, Entity):
         obj_data = additional_data
         logging.getLogger("llmaker").debug(
