@@ -279,7 +279,7 @@ def compute_level_diffs(
         elif None in corridor.sprites:
             for n in range(len(corridor.sprites)):
                 if corridor.sprites[n] is None:
-                    c, args = _get_corridor_cell_args(corridor, n)
+                    c, args = _get_corridor_cell_args(corridor, n - 1)
                     to_process.append(c)
                     additional_data.append(args)
         for i, encounter in enumerate(corridor.encounters):
@@ -350,7 +350,7 @@ def process_diff(obj: Any, additional_data: Dict[str, str]) -> None:
             obj.sprites[idx] = img_path
         elif additional_data["which_part"] == "cell":
             idx = additional_data["encounter_number"]
-            obj.sprites[idx] = img_path
+            obj.sprites[idx + 1] = img_path
     elif isinstance(obj, Entity):
         obj_data = additional_data
         logging.getLogger("llmaker").debug(
