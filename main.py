@@ -48,7 +48,7 @@ if __name__ == "__main__":
     setup_logging(log_filename)
 
     logging.getLogger("llmaker").info(
-        f"Username: {config.username}; Mode: {config.start_mode}; Can switch mode: {config.can_switch_mode}"
+        f"Version: v0.0.9.4-hotfix3; Username: {config.username}; Mode: {config.start_mode}; Can switch mode: {config.can_switch_mode}"
     )
 
     app = QApplication(sys.argv)
