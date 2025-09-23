@@ -1430,7 +1430,7 @@ class RemoveEntityDialog(UserModeDialog):
         else:
             encounter = self.level.corridors[
                 self.roomname_widget.currentText()
-            ].encounters[self.corridorcell_widget.value()]
+            ].encounters[self.corridorcell_widget.value() - 1]
         self.name_widget.clear()
         self.name_widget.addItems([x.name for x in encounter.entities[t_enum.value]])
 
@@ -1588,7 +1588,7 @@ class AddAttackDialog(UserModeDialog):
         else:
             encounter = self.level.corridors[
                 self.roomname_widget.currentText()
-            ].encounters[self.corridorcell_widget.value()]
+            ].encounters[self.corridorcell_widget.value() - 1]
         return encounter
 
     def roomname_changed(self, roomname: str) -> None:
@@ -1819,7 +1819,7 @@ class UpdateAttackDialog(UserModeDialog):
         else:
             encounter = self.level.corridors[
                 self.roomname_widget.currentText()
-            ].encounters[self.corridorcell_widget.value()]
+            ].encounters[self.corridorcell_widget.value() - 1]
         return encounter
 
     def roomname_changed(self, roomname: str) -> None:
@@ -2015,7 +2015,7 @@ class RemoveAttackDialog(UserModeDialog):
         else:
             encounter = self.level.corridors[
                 self.roomname_widget.currentText()
-            ].encounters[self.corridorcell_widget.value()]
+            ].encounters[self.corridorcell_widget.value() - 1]
         return encounter
 
     def roomname_changed(self, roomname: str) -> None:
