@@ -1236,12 +1236,7 @@ class UpdateEntityDialog(UserModeDialog):
             else:  # m_type is STUN
                 self.modifieramount_container.hide()
         self.ref_name_widget.clear()
-        self.ref_name_widget.addItems(
-            [
-                x.name
-                for x in self.get_encounter().entities[self.type_widget.currentText()]
-            ]
-        )
+        
 
     def get_encounter(self) -> Encounter:
         if self.roomname_widget.currentText() in self.level.rooms.keys():
