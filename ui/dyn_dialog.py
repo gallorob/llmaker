@@ -1235,7 +1235,6 @@ class UpdateEntityDialog(UserModeDialog):
                 self.modifieramount_widget.setMaximum(1.0)
             else:  # m_type is STUN
                 self.modifieramount_container.hide()
-        self.ref_name_widget.clear()
         
 
     def get_encounter(self) -> Encounter:
